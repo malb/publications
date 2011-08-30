@@ -1,0 +1,990 @@
+\documentclass{llncs}
+%\documentclass{birkmult}
+\usepackage[utf8x]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{moreverb}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings,color}
+\usepackage{varioref}
+\usepackage{xspace}
+%opening
+
+\newcommand{\blind}[1]{#1}
+%\newcommand{\blind}[1]{}
+
+\title{Algebraic Techniques in Differential Cryptanalysis}
+\blind{
+\author{Martin Albrecht\thanks{This author was supported by the Royal
+Holloway
+Valerie Myerscough Scholarship.} \and Carlos Cid}
+\institute{Information Security Group,\\
+Royal Holloway, University of London\\
+Egham, Surrey TW20 0EX, United Kingdom\\
+\email{\{M.R.Albrecht,carlos.cid\}@rhul.ac.uk}}
+}
+
+\newcommand{\PRESENT}{\textsc{Present}\xspace}
+\newcommand{\ord}[1]{\ensuremath{\mathcal{O}\!\left(#1\right)}}
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\MQ}{\mathcal{MQ}}
+\newcommand{\ideal}[1]{\langle {#1} \rangle}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+In this paper we propose a new cryptanalytic method against block ciphers, which
+combines both algebraic and statistical techniques. More specifically, we show
+how to use algebraic relations arising from differential characteristics
+to speed up and improve key-recovery differential attacks against block ciphers.
+To illustrate the new technique, we apply algebraic techniques to mount 
+differential attacks against round reduced variants of \PRESENT-128.
+% \PRESENT is an ultra lightweight block cipher proposed at CHES~2007,
+% particularly suitable for deployment in RFID tags.
+\end{abstract}
+
+\section{Introduction}
+The two most established cryptanalytic methods against block ciphers are linear
+cryptanalysis~\cite{Matsui1993} and differential
+cryptanalysis~\cite{des-dc}.
+These attacks are statistical in nature, in which the attacker attempts to
+construct probabilistic patterns through as many rounds of the cipher as
+possible, in order to distinguish the cipher from a random permutation, and
+ultimately recover the key. Due to their very nature, these attacks require a
+very large number of plaintext--ciphertext pairs, ensuring that (usually) they
+rapidly become impractical. In fact, most modern ciphers have been
+designed with these attacks in mind, and therefore do not generally have their
+security affected by them.
+
+A new development in block cipher cryptanalysis are the so-called algebraic
+attacks~\cite{xslpub,murphy-robshaw:crypto2002,alg-aes-book}. In contrast to
+linear and differential cryptanalysis, algebraic attacks attempt to exploit the
+algebraic structure of the cipher. In its most common form, the attacker
+expresses the encryption transformation as a large set of multivariate
+polynomial equations, and subsequently attempts to solve the system to recover
+information about the encryption key.
+
+The proposal of algebraic attacks against block ciphers has been the source of
+much speculation; while a well-established technique against some stream ciphers
+constructions~\cite{courtois-meier:eurocrypt2003}, the viability of algebraic
+attacks against block ciphers remains subject to debate. On one hand these
+attack techniques promise to allow the cryptanalyst to recover secret key bits
+given only one or very few plaintext--ciphertext pairs.
+On the other hand, the runtime of algebraic attacks against block ciphers is not
+well understood, and it is so far not clear whether algebraic attacks can
+break any proposed block cipher faster than other techniques.
+
+A promising approach however is to combine both statistical and algebraic
+techniques in block cipher cryptanalysis. In fact, many proposed algebraic
+approaches already involve statistical components. For instance, the equation
+systems usually considered for the
+AES~\cite{murphy-robshaw:crypto2002,alg-aes-book}, use
+the \emph{inversion equation} $xy = 1$ for the S-Box. While this equation
+only holds with probability $p = 255/256$, it may well offer some advantages
+when
+compared with the correct equation $x^{254} = y$ representing the S-Box (which
+due to its very high degree, is usually considered impractical). Further recent
+examples include key bit guesses \cite{alg-des}, the use of SAT-solvers
+\cite{bard-phd} and the Raddum-Semaev algorithm \cite{Raddum2006} for solving
+polynomial equations. In this paper we propose a new attack technique that
+combines results from algebraic and differential cryptanalysis.
+
+The paper is structured as follows. First, we briefly describe differential and
+algebraic cryptanalysis and give the basic idea of the attack in
+Section~\ref{sec:overview}. We then describe the block cipher \PRESENT in
+Section~\ref{sec:present} and existing attacks against a reduced round
+version of \PRESENT (Section~\ref{sec:present-dc}). In
+Section~\ref{sec:present-adc} we describe the application of our new attack
+technique against reduced round versions of \PRESENT. We present a brief
+discussion of the attack and possible extensions in
+Section~\ref{sec:discussion}.
+
+\section{Overview of the New Attack Technique}
+\label{sec:overview}
+Since our approach combines differential and algebraic cryptanalysis, we
+briefly describe both techniques below. 
+\subsection{Differential Cryptanalysis}
+Differential cryptanalysis was formally
+introduced by Eli Biham and Adi Shamir at
+Crypto'90 \cite{Biham1991}, and has since been successfully used to attack a
+wide range of block ciphers. In its basic form, the attack can be used to
+distinguish a $n$-bit block cipher from a random permutation. By
+considering the distribution of output \emph{differences} for the non-linear
+components of the cipher (e.g. the S-Box), the attacker may be able to construct
+\emph{differential characteristics} \mbox{$P^{'} \oplus P^{''} = \Delta P
+\rightarrow \Delta C_N = C_N^{'} \oplus C_N^{''}$} for a number of rounds
+$N$ that are valid with probability $p$. If $p \gg 2^{-n}$, then by
+querying the cipher with a large number of plaintext pairs with prescribed
+difference $\Delta P$, the attacker may be able to distinguish the cipher by
+counting the number of pairs with the output difference predicted by the
+characteristic. A pair for which the characteristic holds is called a
+\emph{right pair}.
+
+By modifying the attack, one can use it to recover key information. Instead
+of characteristics for the full $N$-round cipher, the attacker considers
+characteristics valid for $r$ rounds only ($r = N - R
+$, with $R>0$). If such characteristics exist with non-negligible probability
+the attacker
+can guess some key bits of the last rounds, partially decrypt the known
+ciphertexts, and verify if the result matches the one predicted by the
+characteristic. Candidate (last round) keys are counted, and as random noise is
+expected for wrong key guesses, eventually a peak may be observed in the
+candidate key counters, pointing to the correct round key\footnote{In some
+variants, as described in \cite{fulldes-dc}, no candidate key counters are
+required; see Section~\ref{sec:discussion} for a brief discussion of this
+attack.}.
+
+Note that due to its statistical nature, differential cryptanalysis requires a
+very large number of plaintext--ciphertext pairs (for instance, approximately
+$2^{47}$ chosen plaintext pairs are required to break DES \cite{fulldes-dc}).
+Many extensions and variants of differential cryptanalysis exist, such as
+the Boomerang attack \cite{Wagner1999} and truncated and higher-order
+differentials \cite{Knudsen1995}. The technique is however very well understood,
+and most modern ciphers are designed to resist to differential cryptanalysis.
+This is often achieved by carefully selecting the cipher's non-linear operations
+and diffusion layer to make sure that if such differential characteristics
+exist, then $r \ll N$ which ensures that backward key guessing is impractical.
+The AES is a prime example of this approach~\cite{Daemen2002}.
+
+\subsection{Algebraic Cryptanalysis}
+
+Algebraic cryptanalysis against block ciphers is an attack
+technique that has recently received much attention, particularly after it was
+proposed in~\cite{xslpub} against the AES and Serpent block ciphers. In
+its basic form, the attacker attempts to express the cipher as a set
+of low degree (often quadratic) equations, and then solve the resulting system.
+As these systems are usually very sparse, overdefined, and structured, it is
+conjectured that they may be solved much faster than generic non-linear equation
+systems. Several algorithms have been used and/or proposed to solve these
+systems including the Buchberger algorithm, XL and
+variants~\cite{courtois-klimov-patarin-shamir:eurocrypt2000,Yang2004,xslpub} ,
+the $F_4$ and $F_5$ algorithm~\cite{f4,f5}, and the Raddum-Semaev algorithm
+\cite{Raddum2006}. Another approach is to convert these equations to
+Boolean expressions in Conjunctive Normal Form (CNF) and use
+off-the-shelf SAT-solvers \cite{Bard2007a}. However, these methods have had so
+far limited success in targeting modern block ciphers, and no public modern
+block cipher, with practical relevance, has been successfully attacked using
+algebraic cryptanalysis faster than with other techniques.
+
+\subsection{Algebraic Techniques in Differential Cryptanalysis}
+
+A first idea in extending algebraic cryptanalysis is to use more
+plain\-text--cipher\-text pairs to construct the equation system. Given two
+equation systems $F'$ and $F''$ for two plaintext--ciphertext pairs $(P',C')$
+and $(P'',C'')$ under the same encryption key $K$, we can combine these
+equation systems to form a system $F = F' \cup F''$. Note that while $F'$ and
+$F''$ share the key and key schedule variables, they do not share most of the
+state variables. Thus the cryptanalyst gathers almost twice as many equations,
+involving however many new variables. Experimental evidence indicates that this
+technique may often help in solving a system of equations at least up to a
+certain
+number of rounds~\cite{faugere:fse2007}. The second step is to consider
+probabilistic relations that may arise from differential cryptanalysis, giving
+rise to what we call \emph{Attack-A}.
+
+\subsubsection{\emph{Attack-A}.}
+
+For the sake of simplicity, we assume the cipher is an
+Substitution-Permutation-Network (SP-network), which iterates
+layers of non-linear transformations (e.g. S-Box operations) and affine
+transformations. Now consider a differential characteristic $\Delta = (\delta_0,
+\delta_1, \ldots , \delta_r)$ for a number of
+rounds, where $\delta_{i-1} \rightarrow \delta_{i}$ is a one-round difference
+arising from round $i$ and valid with
+probability $p_{i}$. If we assume statistical independence of one-round
+differences, the characteristic $\Delta$ is valid with probability $p = \prod
+p_i$. Each
+one-round difference gives rise to equations relating the input and output pairs
+for active S-Boxes. Let $X'_{i,j}$ and $X''_{i,j}$ denote the $j$-th bit of the
+input to the S-Box layer in round $i$ for the systems $F'$ and $F''$,
+respectively. Similarly, let $Y'_{i,j}$ and $Y''_{i,j}$ denote the corresponding
+output bits. Then we have that the expressions
+$$
+X'_{i,j} + X''_{i,j} = \Delta X_{i,j} \rightarrow \Delta Y_{i,j} =
+Y'_{i,j} + Y''_{i,j},
+$$
+where $\Delta X_{i,j}, \Delta Y_{i,j}$
+are known values predicted by the characteristic, are valid with some
+non-negligible probability $q$ for bits of active S-Boxes. Similarly, for
+non-active S-Boxes (that are not involved in the characteristic $\Delta$ and
+therefore have input/output difference zero), we have the relations
+$$
+X'_{i,j} + X''_{i,j} = 0 = Y'_{i,j} + Y''_{i,j}
+$$
+also valid with a non-negligible probability.
+
+If we consider the equation system $F = F' \cup F''$, we can combine $F$ and
+all such linear relations arising from the characteristic $\Delta$.
+This gives rise to an equation system $\overline{F}$ which holds with
+probability $p$. If we attempt to solve such a system for
+approximately $1/p$ pairs of plaintext--ciphertext, we expect at least one
+non-empty solution, which should
+yield the encryption key. For a full algebraic key recover we expect the
+system $\overline{F}$ to be easier to
+solve than the original system $F'$ (or $F''$), because many linear constrains
+were added without adding any new variables. However, we do not know \emph{a
+priori} how difficult it will be to solve the system approximately $1/p$ times.
+This system $\overline{F}$ may be used however to recover some key information,
+leading to an attack we call \emph{Attack-B}.
+
+\subsubsection{\emph{Attack-B}.}
+Now, assume that we have an SP-network, a differential characteristic $\Delta =
+(\delta_0, \delta_1, \ldots , \delta_r)$ valid for $r$ rounds with probability
+$p$, and $(P',P'')$ a right pair for $\Delta$ (so that $\delta_0 = P' \oplus
+P''$ and $\delta_r$ holds for the output of round $r$). For
+simplicity, let us assume that only one S-Box is active in round 1, with input
+$X_{1,j}'$ and $X_{1,j}''$ (restricted to this S-Box) for the plaintext $P'$ and
+$P''$ respectively, and that there is a key addition immediately before the
+S-Box operation, that is $$S(P_j' \oplus K_{0,j}) = S(X_{1,j}') = Y_{1,j}' \
+\textrm{and} \ S(P_j'' \oplus K_{0,j}) = S(X_{1,j}'') = Y_{1,j}''.$$
+The S-Box operation $S$ can be described by a (vectorial) Boolean
+function, expressing each bit of the output $Y_{1,j}'$ as a polynomial function
+(over $\field{F}_2$) on the input bits of $X_{1,j}'$ and $K_{0,j}$. If
+$(P',P'')$ is a right pair, then the polynomial equations arising from the
+relation $\Delta Y_{1,j}= Y_{1,j}' \oplus Y_{1,j}'' = S(P_j' \oplus K_{0,j})
+\oplus S(P_j'' \oplus K_{0,j})$
+give us a very simple equation system to solve, with only the key variables
+$K_{0,j}$ as unknowns (and which do not vanish identically because we are
+considering nonzero differences, cf. Section~\ref{sec:discussion}).
+Consequently, if we had an effective distinguisher to determine whether
+$\Delta Y_{1,j}z$ holds, we could learn some bits of information about the
+round keys involved in the first round active S-Boxes.
+
+Experimentally, we found that, for some ciphers and up to a number of rounds, 
+\emph{Attack-A} can be used as such a distinguisher. More specifically, we
+noticed that finding a contradiction (i.e. the Gr\"obner basis equal to $\{1\}$)
+was much faster than computing the full solution of the system if the system was
+consistent (that is, when we have a right pair). 
+Thus, rather than fully solving the systems to eventually recover the secret key
+as suggested in \emph{Attack-A}, the \emph{Attack-B} proceeds by measuring the
+time $t$ it maximally takes to find that the system is inconsistent\footnote{
+Other features of the calculation
+--- like the size of the intermediate matrices created by $F_4$ --- may also be
+used instead of the time $t$.}, and assume
+we have a right pair with good probability if this time $t$ elapsed
+without a contradiction. More specifically, we expect $\Delta Y_{1,j}$ to
+hold with good probability. One needs to be able to experimentally estimate the
+time $t$, but for some ciphers this appears to be an efficient form of attack.
+
+An alternative form of \emph{Attack-B} is to recover key bits from the last
+round. Assume that the time $t$ passed for a pair ($P'$,$P''$), i.e. that we
+probably found a right pair. Now, if we guess and fix some subkey bits in the
+last rounds, we can check whether the time $t$ still passes without a
+contradiction. If this happens, we assume that we guessed correctly. However,
+for this approach to work we need to guess enough subkey bits to detect a
+contradiction quickly. An obvious choice is to guess all subkey bits involved
+in the last round, which effectively removes one round from the system.
+
+\subsubsection{\emph{Attack-C}.}
+
+Experimental evidence with \PRESENT (cf. Section~\ref{sec:present-adc})
+indicates that \emph{Attack-B} in fact only relies on the differential $\delta_0
+\rightarrow \delta_r$ rather than the characteristic $\Delta$ when finding
+contradictions in the systems. The runtimes for finding contradictions
+for $N=17$ and differential characteristic of length $r=14$ did
+not differ significantly from the runtimes for the same task with $N=4$
+and $r=1$ (cf. Appendix~\ref{app:present-att-b}).
+This indicates that the computational difficulty is mostly determined by the
+difference $R = N-r$, the number of ``free'' rounds. We thus define a new
+attack (\emph{Attack-C}) where we remove the equations for rounds $\leq
+r$. 
+
+This significantly reduces the number of equations and variables. After
+these equations are removed we are left with $R$ rounds for each
+plaintext--ciphertext pair to consider; these are related 
+by the output difference predicted by the differential. 
+As a result, the algebraic computation is essentially equivalent to solving
+a related cipher of $2R-1$ rounds (from $C'$ to $C''$ via the predicted
+difference $\delta_r$) using an algebraic meet-in-the-middle
+attack~\cite{alg-aes-book}. This ``cipher'' has a symmetric key schedule and
+only
+$2R-1$ rounds rather than $2R$ since the S-Box applications
+after the difference $\delta_r$ are directly connected and lack a key addition
+and diffusion layer application between them. Thus we can consider these two
+S-Box applications as one S-Box application of S-Boxes $S_{i}$ defined by the 
+known difference $\delta_r$: $S_{i}(x_{i,\dots,i+s}) = S(S^{-1}(x_{i,\dots,i+s})
++ \delta_{r,(i,\dots,i+s)})$ for $i \in \{0,s,\dots,n\}$ and $s$ the size of
+the S-Box.
+
+Again, we attempt to solve the system and wait for a fixed time $t$ to find a
+contradiction in the system. If no contradiction is found, we assume that the
+differential $\delta_0 \rightarrow \delta_r$ holds with good probability. Note
+that we cannot be
+certain about the output difference of the first
+round active S-Boxes. However,
+the attack can be adapted such that we can still recover key bits,
+for instance by considering multiple suggested right pairs. A second option is
+to
+attempt to solve the resulting smaller system, to recover the encryption key.
+Alternatively, we can execute the guess-and-verify step described above.
+
+To study the viability of these attacks, we describe experiments with
+reduced-round versions of the block cipher \PRESENT.
+
+\section{The Block Cipher PRESENT}
+\label{sec:present}
+\textsc{Present} \cite{present} was proposed by Bogdanov et al. at
+CHES~2007 as an ultra-lightweight block cipher, enabling a very
+compact implementation in hardware, and therefore particularly suitable for RFIDs
+and similar devices.
+There are two variants of \PRESENT: one with 80-bit keys and one with
+a 128-bit keys, denoted as \PRESENT-80 and \PRESENT-128 respectively. In our
+experiments, we consider reduced round variants of both ciphers denoted as
+\PRESENT-$K_s$-$N$, where $K_s \in \{80, 128\}$ represents the key size in
+bits
+and $1 \leq N \leq 31$ represents the number of rounds.
+
+\PRESENT is an SP-network with a blocksize of 64 bits and both versions have
+31
+rounds. Each round of the cipher has three layers of operations:
+\texttt{keyAddLayer}, \texttt{sBoxLayer} and \texttt{pLayer}. The operation
+\texttt{keyAddLayer} is a simple subkey addition to the
+current state, while the \texttt{sBoxLayer} operation consists of 16 parallel
+applications of a 4-bit S-Box.
+% given by $x \rightarrow S[x]$ where $ S = $[C, 5, 6, B, 9, 0, A, D, 3, E, F,
+%8, 4, 7, 1, 2].
+The operation
+\texttt{pLayer} is a permutation of wires.
+% given by the rule that the bit at position $s \cdot j + i$ ($0 \leq j < B$, $0
+%\leq i < s$) is moved to position $B \cdot i + j$, where $s=4$ is the S-Box
+%width and $B=16$ is the number of parallel S-Boxes.
+
+In both versions, these three operations are repeated $N=31$ times. On the
+final round, an extra subkey addition is performed. The subkeys are derived from
+the user-provided key in the key schedule, which by design is also
+quite simple and efficient involving a cyclic right shift, one ore two 4-bit
+S-Box applications (depending on the key size) and the addition of a round
+constant.
+%For the 80-bit variant the user-supplied key is
+%stored in a key register $K$ and represented as $k_{79} k_{78} \dots k_0$ . At
+%round $i$ the 64-bit round key $K_i = k_{i,63} k_{i,62} \dots k_{i,0}$ consists
+%of the 64 upmost bits of the current contents of register $K$:
+%$K_i = k_{i,63} k_{i,62} \dots k_{i,0} = k_{79} k_{78} \dots k_{16}.$
+%After round key $K_i$ is extracted, the key register $k = k_{79} k_{78} \dots
+%k_0$ is updated by a cyclic right shift, one S-Box application on the most
+%significant four bits and a round counter addition to the bits 15 to 19.
+%The key schedule for 128-bit keys is quite similar and presented in
+%Appendix~II of \cite{present}. 
+We note that the difference
+between the 80-bit and 128-bit variants is only the key schedule. In particular,
+both variants have the same number of rounds (i.e. $N=31$). The cipher
+designers explicitly describe in~\cite{present} the threat model considered when
+designing the cipher, and acknowledge that the security margin may be somewhat
+tight. Although they do not recommend immediate deployment of the cipher
+(especially the 128-bit version), they strongly encourage the analysis of both
+versions.
+
+% \subsection{An Equation System for PRESENT}
+% \label{sec:present-equ}
+% In Appendix~\ref{app:sbox-equ} we give 21 quadratic equations and one cubic
+% equation for the S-Box which form a \emph{degrevlex} Gr\"obner basis. This
+% basis
+% is used
+% for all computations in this paper. Each round of \PRESENT introduces $2 \cdot
+% 64$ new state variables for the input and output bits of the S-Box and thus we
+% have $128 \cdot N$. The 80-bit key schedule has
+% 80 user-provided key variables and 4 new key variables per round to account
+% for
+% one S-Box. Thus we have
+% $
+% N_v = (128 + 4) \cdot N + 80 = 132 \cdot N + 80
+% $ variables. Each round gives rise to $22 \cdot 16$ S-Box equations, 64 key
+% addition equations and 22 key schedule equations. We also have one additional
+% key addition (64 linear equations) at the end and $N_v$ field equations of the
+% form $x_i^2 + x_i = 0$.
+% Thus we have
+% $
+% N_e = (22 \cdot 16 + 22 + 64) N + 64 + N_v = 570 \cdot N + 144
+% $
+% equations. If we use two plaintext--ciphertext pairs, we
+% double the number of equations and variables for the state variables but not
+% the
+% number of equations
+% and variables for the key variables\footnote{If the weight on the difference
+% $\Delta P$ is small however,
+% some variables for the first few rounds may be the same for both systems.}.
+% Thus for \PRESENT-80-31 we would have a system of
+% 8140 variables in 34742 equations if we consider two plaintext--ciphertext
+% pairs.
+
+\subsection{Differential Cryptanalysis of 16 Rounds of PRESENT}
+\label{sec:present-dc}
+
+In the original proposal~\cite{present}, the designers of \PRESENT show that
+both linear and differential cryptanalysis are infeasible against the cipher. In
+\cite{present-dc:africacrypt,present-differentials} M. Wang provides 24 explicit
+differential characteristics for 14 rounds. These hold with
+probability $2^{-62}$ and are within the theoretical bounds provided
+by the \PRESENT designers. Wang's attack is reported to require
+$2^{64}$ memory accesses to cryptanalyse 16 rounds of \PRESENT-80. We use his
+characteristics (see Appendix~\ref{app:present-dc} for an example of one of
+these
+characteristics) to mount our attack. Furthermore, we also make use of the
+filter function presented in \cite{present-dc:africacrypt}, which we briefly describe below.
+
+Consider for example the differential characteristic provided
+in Appendix~\ref{app:present-dc}. It ends with the difference $\delta =
+\texttt{1001} = \texttt{9}$ as input for the two active S-Boxes of round 15.
+According to the difference distribution table of the \PRESENT S-Box, the
+possible output differences are \texttt{2}, \texttt{4}, \texttt{6}, \texttt{8},
+\texttt{C} and \texttt{E}. This means that the least significant bit is always
+zero and the weight of the output difference (with the two active S-Box) is
+at most 6. It then follows from \texttt{pLayer} that at most six
+S-Boxes are active in round 16. Thus we can discard any pair for which the
+outputs of round 16 have non-zero difference in the positions arising from the
+output of S-Boxes other than the active ones. There are ten inactive
+4-bit S-Boxes, and we expect a pair to pass this test with probability
+$2^{-40}$.
+
+Furthermore, it also follows from \texttt{pLayer} that the active
+S-Boxes in round 16 (which are at most six, as described above) will have input
+difference $\texttt{1}$ and thus all possible output differences are
+$\texttt{3}$, $\texttt{7}$, $\texttt{9}$, $\texttt{D}$ (and $\texttt{0}$, in
+case the S-Box is inactive). Thus we can discard any pair not satisfying these
+output differences for these S-Boxes. We expect a pair to pass this test with
+probability $\frac{16}{5}^{-6} = 2^{-10.07}$. Overall we expect pairs to
+path both tests with probability $2^{-50.07}$.
+We expect to be able to construct a similar filter function for all the 24
+differential characteristics presented in \cite{present-differentials}.
+
+\section{Experimental Results}
+\label{sec:present-adc}
+
+To mount the attacks, we generate systems of equations $\overline{F}$ as in
+Section~\ref{sec:overview} for pairs of encryptions with prescribed difference
+as described in Section~\ref{sec:present-dc},
+by adding linear equations for the differentials
+predicted by the 14-round characteristic given in the Appendix. For \PRESENT
+this is equivalent to adding 128 linear equations per round of the form $\Delta
+X_{i,j} = X_{i,j}' + X_{i,j}''$ and $\Delta Y_{i,j} = Y_{i,j}' + Y_{i,j}''$
+where $\Delta X_{i,j}$ and $\Delta Y_{i,j}$ are the values predicted by the
+characteristic (these are zero for non-active S-Boxes).
+
+To perform the algebraic part of the attack, we use either Gröbner basis
+algorithms or a SAT-solver: the
+\textsc{Singular}~3-0-4-4~\cite{singular} routine \texttt{groebner} with the
+monomial
+odering \emph{degrevlex}, the \textsc{PolyBoRi}~0.5rc6~\cite{polybori} routine
+\texttt{groebner\_basis} with the option \texttt{faugere=True} and the monomial
+ordering \texttt{dp\_asc}, or MiniSat~2.0~beta~\cite{minisat}.
+We note the maximal time $t$ these routines take to detect a contradiction in
+our experiments for a
+given differential length of $r$, and assume we have a pair satisfying the
+characteristic (or differential, in \emph{Attack-C}) with good probability if
+this time $t$ elapsed without a contradiction. We note that this
+assumption might be too optimistic in some cases. While the attack seems to
+perform well
+enough for a small number of rounds we cannot be certain that the lack of a
+contradiction after the time $t$ indeed indicates a right pair. However, with
+$t$ large enough (and enough computational resources) we are guaranteed to
+always identify the right pair.
+
+We performed experiments for \emph{Attack-B} and
+\emph{Attack-C}. Runtimes for \emph{Attack-B} and \emph{Attack-C} are given in
+Appendix~\ref{app:present-att-b} and~\ref{app:present-att-c} respectively. We
+note that Attack-C requires about 1GB of RAM to be carried out.
+The times were obtained on a 1.8Ghz Opteron with 64GB
+RAM. The attack was implemented in the mathematics software Sage \cite{sage}.
+
+If a characteristic $\Delta$ is valid with probability $p$, then after
+approximately $1/p$ attempts we expect to find a right pair and can thus
+set up our smaller systems for each first round active S-Box. These equations
+are given in Appendix~\ref{app:small-equ}. After substitution of $P'_i, P''_i,
+\Delta Y_i$ and elimination of the variables $X_i', X_i''$ in the system in
+Appendix~\ref{app:small-equ}, we get an equation system with four equations in
+the four key variables. If we compute the reduced Gr\"obner basis for this
+system we recover two relations of the form $K_i + K_j (+1) = 0$ for two key
+bits $K_i$,$K_j$ per S-Box, i.e. we recover 2 bits of information per first
+round active S-Box\footnote{This is as expected, since the probability of
+the differential used in the first round S-Box is $2^{-2}$; see
+Lemma~\ref{lem:sbox-prob}.}.
+
+In order to  study the behaviour of the attack, we ran simulations with small
+numbers of rounds to verify that the attack indeed behaves as expected. For
+instance, when using a 3R \emph{Attack-C} against \PRESENT-80-6 and
+\PRESENT-80-7 we found right pairs with the expected number of trials. However,
+we saw false positives, i.e. the attack suggested wrong information. Yet, a
+majority vote on a small number of runs (e.g., 3) always recovered the correct
+information. We are of course aware that it is in general difficult to reason
+from small scale examples to bigger instances.
+
+\subsection{PRESENT-80-16}
+To compare with the results of~\cite{present-dc:africacrypt}, we can apply \emph{Attack-C}
+against reduced round versions of \PRESENT-80. Using this approach and under
+the assumption above we expect to
+learn 4 bits of information about the key for \PRESENT-80-16 in about
+$2^{62-50.07} \cdot 6$ seconds to perform the consistency
+checks using about $2^{62}$ chosen plaintext--ciphertext pairs,
+where $6$ seconds represents the highest runtime to find a contradiction we have
+encountered in our experiments when using \textsc{PolyBoRi}. Even if there are
+instances that take longer to check, we assume that this is a safe
+margin because the majority should be shorter runtimes. This time
+gives a complexity of about $2^{62}$ ciphertext
+difference checks and about $2^{11.93} \cdot 6 \cdot 1.8
+\cdot 10^9 \approx 2^{46}$ CPU cycles to find a right pair on the given 1.8~Ghz
+Opteron CPU. We assume that a single encryption costs at least two CPU cycles
+per round -- one for the S-Box lookup and one for the key addition -- such that
+a brute force search would require approximately $16 \cdot 2 \cdot 2^{80} =
+2^{85}$ CPU cycles and two plaintext--ciphertext pairs due to the small
+blocksize.
+
+In~\cite{present-differentials}, 24 different 14-round
+differentials were presented, involving the $0$th, $1$st, $2$nd, $12$th, $13$th
+and $14$th S-Boxes in the first round, each having either \texttt{7} or
+\texttt{15} as plaintext difference restricted to one active S-Box. From these
+we expect to recover 18 bits of key information by repeating the
+attack
+for those S-Box configurations. We cannot recover 24 bits because
+we learn some redundant information. However, we can use this redundancy to
+verify the information recovered so far. We can then guess the remaining $80-18
+= 62$
+bits, and the complete attack has a complexity of about $6 
+\cdot 2^{62}$ filter function applications, about $6 \cdot
+2^{46}$ CPU cycles
+for the consistency checks and $2^{62}$ \PRESENT applications to guess the
+remaining key bits\footnote{Note that the attack can be improved by managing the
+plaintext--ciphertext pairs more intelligently and by using the fact that we can
+abort a \PRESENT trial encryption if it does not match the known
+differential.}. (Alternatively, we may add the 18 learned linear key bit
+equations to any equation system for the related cipher and attempt to
+solve this system.) The attack in~\cite{present-dc:africacrypt} on the other hand requires
+$2^{64}$ memory accesses. While this is a different metric --- memory access ---
+from the one we have to use in this case --- CPU cycles --- we can see that our
+approach has roughly the same time complexity, since the $2^{62}$ filter
+function applications cost at least $2^{62}$ memory accesses. However, our
+attack seems to have a slightly better data complexity because overall six right
+pairs are sufficient. When applying the attack against \PRESENT-128-16, we
+obtain a similar complexity. We note however that for \PRESENT-$K_s$-16, we can
+also make use of backward key guessing to recover more key bits. Because we
+assume to have
+distinguished a right pair already we expect the signal to noise ratio to be
+quite high and thus expect relatively few wrong suggestions for candidate keys.
+
+\subsection{PRESENT-128-17}
+
+Note that we cannot use the filter function for 17 rounds, thus the attack
+against
+\PRESENT-80-17 gives worse performance when compared to exhaustive key search.
+However, it may still be applied against \PRESENT-128-17. Indeed, we expect to
+learn 4 bits of information for \PRESENT-128-17 in about $
+2^{62} \cdot 18$ seconds using about $2^{62}$
+chosen plaintext--ciphertext pairs. This time is equivalent to about $2^{62}
+\cdot 18 \cdot 1.8 \cdot 10^9 \approx 2^{97}$
+CPU cycles. If this approach is repeated 6 times for the different active
+S-Boxes in the \PRESENT differentials, we expect to learn 18 bits of
+information about the key. We can then guess the remaining $128-18=110$ bits and
+thus have a complexity in the order of $2^{110}$ for the attack. 
+
+A better strategy is as follows. We identify one right pair using 
+$2^{62} \cdot 18 \cdot 1.8 \cdot 10^9 \approx 2^{97}$ CPU cycles. Then, we
+guess 64 subkey bits of the last round and fix the appropriate variables in the
+equation system for the consistency check. Finally, we attempt to solve this
+system again, which is equivalent to the algebraic part of the $2R$ attack. We
+repeat this guess-and-verify step until the right configuration is found,
+i.e. the system is not inconsistent. This strategy has a complexity of $2^{97}$
+CPU cycles for identifying the right pair and $2^{64} \cdot 6 \cdot 1.8 \cdot
+10^9 \approx 2^{98}$ CPU cycles to recover 64 subkey bits. Finally, we can
+either guess the remaining bits or repeat the guess-and-verify step for 1R to
+recover another 64 subkey bits.
+
+\subsection{PRESENT-128-18}
+We can also attack \PRESENT-128-18 using \emph{Attack-C} as follows.
+First note that the limiting factor for the attack on \PRESENT-128-18 is that we
+run out of plaintext--ciphertext pairs due to the small blocksize. On the other
+hand, we have not yet reached the time complexity of $2^{128}$ for 128-bit
+keysizes. One way to make use of this fact is to again consider the input
+difference for round 15 and iterate over all possible output differences.
+As discussed in Section~\ref{sec:present-dc}, we have six possible output
+differences and two active S-Boxes in round 15, which result in 36 possible
+output differences in total. We expect to learn 4 bits of information about the
+key for \PRESENT-128-18 in about $36 \cdot 2^{62} \cdot 18$
+seconds using about $2^{62}$ chosen plaintext--ciphertext
+pairs. This time is equivalent to about $36 \cdot 2^{62}
+\cdot 18 \cdot 1.8 \cdot 10^9 \approx 2^{102}$ CPU cycles. Again, we can
+iterate this process six times to learn 18 bits of information about the key and
+guess the remaining information with a complexity of approximately $2^{110}$
+\PRESENT applications.
+
+However, this strategy might lead to false positives for each guessed output
+difference. To address this we need to run the brute-force attack
+for the remaining 110 bits for each possible candidate. Thus the overall
+complexity of the attack is in the order of $36 \cdot 2^{110}$ \PRESENT
+applications. The final brute-force run will require for 2-3
+plaintext-ciphertext pairs due to the large key size compared to the blocksize.
+This hardly affects the time complexity since only candidates passing the first
+plaintext-ciphertext pair need to be tested against a second and potentially
+third pair and these candidates are few compared to $2^{110}$. 
+
+The best approach appears to be the guess-and-verify step from the
+$3R$ attack, which results in an overall complexity of about $36 \cdot 1.8 \cdot
+10^9 (2^{62} \cdot 18 + 2^{64} \cdot 6) \approx 2^{103}$ CPU
+cycles.
+
+Note that we were unable to reliably detect contradictions directly if $R = N
+- r \geq 4$ within 24 hours (compared to 18 seconds for $R=3$).
+
+\subsection{PRESENT-128-19}
+Similarly, we can use the filter function to mount an attack against
+\PRESENT-128-19 by iterating our attack $2^{64-50.07} = 2^{13.93}$ times
+(instead of 36) for all possible output differences of round 16. The overall
+complexity of this attack is about $2^{13.97} \cdot 1.8
+\cdot 10^9 \cdot (18 \cdot 2^{62} + 6 \cdot 2^{64}) \approx 2^{113}$ CPU
+cycles.
+
+\section{Discussion of the Attack}
+\label{sec:discussion}
+While the attack has many similarities with conventional differential
+cryptanalysis, such as the requirement of a high probability differential
+$\Delta$ valid for $r$ rounds and the use of filter functions to reduce the
+workload, there are however some noteworthy differences. First,
+\emph{Attack-C} requires fewer plaintext--ciphertext pairs for a given
+differential characteristic to learn information about the key than
+conventional differential cryptanalysis, because the attacker does not need to
+wait for a peak in the partial key counter. Instead one right pair is
+sufficient.
+Second, one flavour of the attack recovers more key bits if many
+S-Boxes are active in the first round. This follows from its reliance on those
+S-Boxes to recover key information. Also note that while a high probability
+differential characteristic is required, the attack recovers more bits per S-Box
+if the differences for the active S-Box in the first round are of low
+probability. This is a consequence of the simple Lemma below:
+\begin{lemma}
+\label{lem:sbox-prob}
+Given a differential $\Delta$ with a first round active S-Box with a difference
+that is true with probability $2^{-b}$, then \emph{Attack-B} and \emph{Attack-C} can recover $b$
+bits of information about the key from this S-Box.
+\end{lemma}
+
+Finally, key-recovery differential cryptanalysis is usually
+considered infeasible if the differential $\Delta$ is valid for $r$ rounds, and
+$r$ is much less than the full number of rounds $N$, since backward key
+guessing for $N-r$ rounds may become impractical. In that case the
+\emph{Attack-C} proposed here could \emph{possibly} still allow the successful
+cryptanalysis of the cipher. However, this depends on the algebraic structure of
+the cipher, as it may be the case that the time required for the consistency
+check is such that the overall complexity remains below the one required for
+exhaustive key search.
+
+We note that \emph{Attack-C} shares many properties with the differential
+cryptanalysis of the full 16-round DES \cite{fulldes-dc}. Both attacks are
+capable of detecting a right pair without maintaining a candidate key
+counter array. Also, both attacks use active S-Boxes of the outer rounds to
+recover bits of information about the key once such a right pair is found.
+In fact, one could argue that \emph{Attack-C} is a generalised algebraic
+representation of the technique presented in \cite{fulldes-dc}. From this
+technique \emph{Attack-C} inherits some interesting properties: first, the
+attack can be carried out fully in parallel because no data structures such as a
+candidate key array need to be shared between the nodes. Also, we allow the
+encryption keys to change during the data collection phase because exactly one
+right pair is sufficient to learn some key information.
+However, if we try to learn further key bits by repeating the attack with
+other characteristics we require the encryption key not to change. We note
+however that while the attack in \cite{fulldes-dc} seems to be very specific to
+the target cipher DES, \emph{Attack-C} can in principle be applied to any
+block cipher. Another way of looking at \emph{Attack-C} is to realise that it is
+in fact is a quite expensive but thorough filter function: we invest more work
+in
+the management of the outer rounds using algebraic techniques.
+
+In the particular case of \PRESENT-80-$N$, our attack seems to offer only
+marginal advantage when compared with the differential attack
+presented in~\cite{present-dc:africacrypt}: it should require slightly less data
+to distinguish a right pair and similar overall complexity.
+On the other hand, for \PRESENT-128-$N$ this attack seems to perform better
+than the one in~\cite{present-dc:africacrypt}. As in this case the limiting factor is the
+data and not the time complexity of the attack, i.e. we run out of
+plaintext--ciphertext pairs before running out of computation time, the attack
+has more flexibility.
+
+The use of Gr\"obner bases techniques to find contradictions in propositional
+systems is a well known idea \cite{Clegg1996}.
+In the context of cryptanalysis, it is also a natural idea to try to detect
+contradictions to attack a cipher. However, in probabilistic approaches used in
+algebraic attacks, usually key bits are guessed. This is an intuitive idea
+because polynomial systems tend to be easier to solve the more overdefined they
+are and because the whole system essentially depends on the key. Thus guessing
+key bits is a natural choice. However this simplification seems to bring few
+benefits to the attacker, and more sophisticated probabilistic approaches
+seem so far to have been ignored. The method
+proposed in this
+paper can thus highlight the advantages of combining conventional (statistical)
+cryptanalysis and algebraic cryptanalysis. By considering differential
+cryptanalysis we showed how to construct an equation system for a structurally
+weaker and shorter related ``cipher'' which can then be studied independently.
+To
+attack this ``cipher'' algebraic attacks seem to be the natural choice since
+very
+few "plaintext--ciphertext" pairs are available but the ``cipher'' has few
+rounds
+(i.e. $2R-1$). However, other techniques might also be considered.
+
+Future research might also investigate the use of other well established
+(statistical) cryptanalysis techniques in combination with algebraic cryptanalysis
+such as linear cryptanalysis (defining a version of \emph{Attack-A} in this case
+is straightforward), higher order and truncated differentials, the Boomerang
+attack or impossible differentials.
+
+We note that this attack may also offer a high degree of flexibility for
+improvements. For example, the development of more efficient algorithms for
+solving systems of equations (or good algebraic representation of ciphers that
+may result in more efficient solving) would obviously improve the attacks
+proposed. For instance, by switching from \textsc{Singular} to
+\textsc{PolyBoRi} for \emph{Attack-B}, we
+were able to make the consistency check up to $60$ times faster\footnote{We did not see any further speed improvement by
+using
+e.g. \textsc{Magma}~2.14~\cite{magma}}. As an illustration of the
+forementioned flexibility, if for instance an attacker could make use of an
+optimised method to find contradictions in $t \ll 2^{128-62} = 2^{66}$ CPU
+cycles for
+\PRESENT-128-20, this would allow the successful cryptanalysis of a version of
+\PRESENT\ with 6 more rounds than the best known differential, which is
+considered ``a situation without precedent'' by the cipher
+designers~\cite{present}. This task is equivalent to mount a
+meet-in-the-middle attack against an 11 round \PRESENT-like cipher with a
+symmetric key schedule. Unfortunately with the available computer resources,
+we are not able to verify whether this is currently feasible.
+
+Finally, as our results depend on experimental data and the set of data we
+evaluated is rather small due to the time consuming nature of our
+experiments,  we make our claims verifiable by providing the source code of
+the attack
+online
+\blind{\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/present.py}}.
+
+
+\section{Conclusion}
+We propose a new cryptanalytic technique combining differential cryptanalysis
+and algebraic techniques. We show that in some circumstances this
+technique can be effectively used to attack block ciphers, and in general
+may offer some advantages when compared to differential cryptanalysis.
+As an illustration, we applied it against reduced versions of \PRESENT-80 and
+\PRESENT-128. While this paper has no implications for the security of
+either \PRESENT-80 or \PRESENT-128, it was shown that the proposed techniques
+can improve upon existing differential cryptanalytic methods using the same
+difference characteristics. Also, we pointed out promising
+research directions for the field of algebraic attacks.
+
+\blind{
+\section*{Acknowledgements}
+The work described in this paper has been supported in part by the European
+Commission through the IST Programme under contract ICT-2007-216646 ECRYPT II.
+We would like to thank William Stein for allowing the use of his
+computers\footnote{purchased under National Science Foundation Grant No.
+0555776 and National Science Foundation Grant No. DMS-0821725}. We also would
+like to thank Sean Murphy, Matt Robshaw, Ludovic Perret, Jean-Charles
+Faug{\`e}re and anonymous referees for helpful comments.
+}
+%\clearpage
+
+\bibliographystyle{plain}
+\bibliography{literature}
+
+\newpage
+\appendix
+
+
+% \section{S-Box Equations for PRESENT}
+% \label{app:sbox-equ}
+% \begin{eqnarray*}
+% 0 &=& y_2x_3 + y_3x_3 + x_1x_3 + x_2x_3 + x_3,\\
+% 0 &=& y_0x_3 + y_3x_3 + x_1x_3 + x_2x_3 + y_0 + y_3 + x_1 + x_2 + x_3 + 1,\\
+% 0 &=& x_1x_2 + y_3 + x_0 + x_1 + x_3,\\
+% 0 &=& x_0x_2 + y_3x_3 + x_1x_3 + x_2x_3 + y_0 + y_1 + y_3 + x_0 + x_2 + x_3,\\
+% 0 &=& y_3x_2 + y_3x_3 + x_1x_3 + y_0 + y_1 + y_3 + x_0 + x_2 + x_3,\\
+% 0 &=& y_0x_2 + y_1x_2 + y_1x_3 + y_3x_3 + y_1 + x_0 + x_1 + x_2 + 1,\\
+% 0 &=& x_0x_1 + y_3x_3 + x_1x_3 + x_2x_3 + y_1 + y_2 + x_1 + x_2 + x_3 + 1,\\
+% 0 &=& y_3x_1 + y_3x_3 + x_2x_3 + y_1 + y_2 + y_3 + x_0 + x_1 + x_2 + 1,\\
+% 0 &=& y_2x_1 + y_2x_2 + y_3x_3 + x_0x_3 + x_1x_3 + y_0 + x_0 + 1,\\
+% 0 &=& y_1x_1 + y_2x_2 + y_1x_3 + x_0x_3 + x_1x_3 + y_0 + y_1 + y_2 + y_3 + x_2
+% + x_3,\\
+% 0 &=& y_0x_1 + y_1x_2 + y_1x_3 + x_0x_3 + x_2x_3 + y_1 + y_2 + y_3 + x_0 + x_1
+% + 1,\\
+% 0 &=& y_3x_0 + y_1x_2 + y_2x_2 + y_1x_3 + y_3x_3 + x_0x_3 + x_2x_3 + y_0 + y_1
+% + y_2 + x_1 + x_3,\\
+% 0 &=& y_2x_0 + y_1x_2 + x_0x_3 + y_0 + y_1 + y_2 + x_1 + x_2 + x_3,\\
+% 0 &=& y_1x_0 + y_1x_3 + x_0x_3 + x_1x_3 + x_2x_3 + y_0 + y_2 + y_3 + x_0 + x_1
+% + x_3 + 1,\\
+% 0 &=& y_0x_0 + y_2x_2 + y_1x_3 + x_1x_3 + y_0 + y_1 + y_3 + x_0 + x_3,\\
+% 0 &=& y_2y_3 + y_1x_3 + y_3x_3 + x_0x_3 + x_2x_3 + y_0 + y_1 + y_2 + y_3 +
+% x_0,\\
+% 0 &=& y_1y_3 + y_1x_2 + y_2x_2 + y_1x_3 + y_3x_3 + x_0x_3 + x_1x_3 + y_1 + y_3
+% + 1,\\
+% 0 &=& y_0y_3 + y_1x_3 + y_3x_3 + x_0x_3 + x_1x_3 + y_0 + y_2 + x_1 + x_3 +
+% 1,\\
+% 0 &=& y_1y_2 + y_1x_3 + x_0x_3 + x_1x_3 + y_0 + x_0 + 1,\\
+% 0 &=& y_0y_2 + y_1 + y_3 + x_3 + 1,\\
+% 0 &=& y_0y_1 + y_1x_3 + x_0x_3 + x_2x_3 + y_0 + y_1 + y_2 + x_2 + x_3 + 1,\\
+% 0 &=& y_1x_2x_3 + y_1x_2 + y_3x_3 + x_0x_3 + x_1x_3 + x_2x_3 + y_3 + x_0 + x_1
+% + x_2.\\
+% \end{eqnarray*}
+\clearpage
+
+\section{Small Key Bit Recovery System}
+\label{app:small-equ}
+\begin{eqnarray*}
+X'_0 &=& K_0 + P'_0, \ \ X'_1 = K_1 + P'_1, \ \ X'_2 = K_2 + P'_2, \ \ X'_3 =
+K_3 +
+P'_3,\\
+Y'_0 &=& X'_0X'_1X'_3 + X'_0X'_2X'_3 + X'_0 + X'_1X'_2X'_3 + X'_1X'_2 +
+X'_2 + X'_3 + 1,\\
+Y'_1 &=& X'_0X'_1X'_3 + X'_0X'_2X'_3 + X'_0X'_2 + X'_0X'_3 + X'_0 + X'_1 +
+X'_2X'_3 + 1,\\
+Y'_2 &=& X'_0X'_1X'_3 + X'_0X'_1 + X'_0X'_2X'_3 + X'_0X'_2 + X'_0 +
+X'_1X'_2X'_3 + X'_2,\\
+Y'_3 &=& X'_0 + X'_1X'_2 + X'_1 + X'_3,\\
+X''_0 &=& K_0 + P''_0,  \ \ X''_1 = K_1 + P''_1,  \ \ X''_2 = K_2 + P''_2,  \ \
+X''_3 = K_3
++ P''_3,\\
+Y''_0 &=& X''_0X''_1X''_3 + X''_0X''_2X''_3 + X''_0 + X''_1X''_2X''_3 +
+X''_1X''_2 + X''_2 + X''_3 + 1,\\
+Y''_1 &=& X''_0X''_1X''_3 + X''_0X''_2X''_3 + X''_0X''_2 + X''_0X''_3 +
+X''_0 + X''_1 + X''_2X''_3 + 1,\\
+Y''_2 &=& X''_0X''_1X''_3 + X''_0X''_1 + X''_0X''_2X''_3 + X''_0X''_2 +
+X''_0  X''_1X''_2X''_3 + X''_2,\\
+Y''_3 &=& X''_0 + X''_1X''_2 + X''_1 + X''_3,\\
+\Delta Y_0 &=& Y'_0 + Y''_0,  \ \  \Delta Y_1 = Y'_1 + Y''_1,  \ \  \Delta Y_2 =
+Y'_2 +
+Y''_2,  \ \  \Delta Y_3 = Y'_3 + Y''_3,\\
+\end{eqnarray*}
+where $\Delta Y_i$ are the \emph{known} difference values predicted by the
+characteristic.
+%\newpage
+
+\section{14-round Differential Characteristic for PRESENT}
+\label{app:present-dc}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c||c|c|c|c|}
+\hline
+Rounds  & &  Differences  &  Pr & Rounds & & Difference & Pr\\
+\hline
+ I & & $x_2=7$,$x_{14}=7$ & $1$ & & & &\\
+\hline
+
+R1 &S& $x_2=1$,$x_{14}=1$ & $2^{-4}$ & R8 &S& $x_8=9$,$x_{10}=9$ & $2^{-4}$\\
+R1 &P& $x_0=4$,$x_{3} =4$ & $1$      & R8 &P& $x_2=5$,$x_{14}=5$ & $1$\\
+
+\hline
+
+R2 &S& $x_0=5$,$x_{3}=5$ & $2^{-4}$ &  R9 &S& $x_2=1$,$x_{14}=1$ & $2^{-6}$\\
+R2 &P& $x_0=9$,$x_{8}=9$ & $1$      &  R9 &P& $x_0=4$,$x_{3}=4 $ & $1$\\
+
+\hline
+
+R3 &S& $x_0=4$,$x_{8}=4 $& $2^{-4}$ & R10 &S& $x_0=5$,$x_{3}=5$ & $2^{-4}$\\
+R3 &P& $x_8=1$,$x_{10}=1$& $1$      & R10 &P& $x_0=9$,$x_{8}=9 $& $1$\\
+
+\hline
+
+R4 &S& $x_8=9$,$x_{10}=9$& $2^{-4}$ & R11 &S& $x_0=4$, $x_{8} = 4 $& $2^{-4}$\\
+R4 &P& $x_2=5$,$x_{14}=5$& $1$      & R11 &P& $x_8=1$, $x_{10}= 4 $& $1$\\
+
+\hline
+
+R5 &S& $x_2=1$,$x_{14}=1$& $2^{-6}$ &  R12 &S& $x_8=9$, $x_{10}= 9 $& $2^{-4}$\\
+R5 &P& $x_0=4$,$x_{3}=4 $& $1$      &  R12 &P& $x_2=5$, $x_{14}= 5 $& $1$\\
+
+\hline
+
+R6 &S& $x_0=5$,$x_{3}=5$ & $2^{-4}$ &  R13 &S& $x_2=1$, $x_{14}= 1 $& $2^{-6}$\\
+R6 &P& $x_0=9$,$x_{8}=9$ & $1$      &  R13 &P& $x_0=4$, $x_{3} = 4 $& $1$\\
+
+\hline
+
+R7 &S& $x_0=4$,$x_{8}=4  $& $2^{-4}$ & R14 &S& $x_0=5$, $x_{3}=5 $&$2^{-4}$\\
+R7 &P& $x_8=1$,$x_{10}=1 $& $1$      & R14 &P& $x_0=9$, $x_{8}=9 $& $1$\\
+
+\hline
+\end{tabular}
+\end{center}
+
+\clearpage
+
+\section{Times in seconds for \emph{Attack-B}}
+\label{app:present-att-b}
+\begin{table}[htbp]
+\begin{center}
+%\caption{Times in seconds for \emph{Attack-B}}
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+$N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
+\textsc{PolyBoRi}\\
+\hline
+ 4 &  80 &  4 & $2^{-16}$ & 20 & $11.92-12.16$   & 50 & $0.72 - 0.81$ \\
+ 4 &  80 &  3 & $2^{-12}$ & 10 & $106.55-118.15$ & 50 & $6.18 - 7.10$ \\
+ 4 &  80 &  2 &  $2^{-8}$ & 10 & $119.24-128.49$ & 50 & $5.94 - 13.30$ \\
+ 4 &  80 &  1 &  $2^{-4}$ & 10 & $137.84-144.37$ & 50 & $11.83- 33.47$
+\\
+%\hline
+% 6 &  80 &  6 & $2^{-26}$ & 0 &  N/A               & 50 & $0.86 - 0.95$ \\
+% 6 &  80 &  5 & $2^{-22}$ & 0 &  N/A               & 25 & $11.93 - 13.74$ \\
+\hline
+ 8 &  80 &  5 & $2^{-22}$ & 0 &  N/A               & 50 & $18.45 - 63.21$\\
+\hline
+%10 &  80 & 10 & $2^{-44}$ & 0 &  N/A               & 20 & $3.24-3.92$ \\
+%10 &  80 &  9 & $2^{-40}$ & 0 &  N/A               & 20 & $21.43-26.41$ \\
+10 &  80 &  8 & $2^{-34}$ & 0 &  N/A               & 20 & $21.73-38.96$ \\
+10 &  80 &  7 & $2^{-30}$ & 0 &  N/A               & 10 & $39.27 - 241.17$\\
+10 &  80 &  6 & $2^{-26}$ & 0 &  N/A               & 20 & $56.30 - >4$ hours\\
+\hline
+16 &  80 & 14 & $2^{-62}$ & 0 & N/A                & 20 & $43.42-64.11$ \\
+16 & 128 & 14 & $2^{-62}$ & 0 & N/A                & 20 & $45.59-65.03$ \\
+16 &  80 & 13 & $2^{-58}$ & 0 & N/A                & 20 & $80.35-262.73$\\
+16 & 128 & 13 & $2^{-58}$ & 0 & N/A                & 20 & $81.06-320.53$ \\
+16 &  80 & 12 & $2^{-52}$ & 0 & N/A                & 5 & $>4$ hours\\
+%16 & 128 & 12 & $2^{-52}$ & 0 & N/A                & 5 & $>4$ hours \\
+\hline
+17 &  80 & 14 & $2^{-62}$ & 10 & $12,317.49-13,201.99$ & 20 & $55.51 - 221.77$\\
+17 & 128 & 14 & $2^{-62}$ & 10 & $12,031.97-13,631.52$ & 20 & $94.19 - 172.46$\\
+17 &  80 & 13 & $2^{-58}$ & 0 & N/A                & 5 & $>4$ hours\\
+17 & 128 & 13 & $2^{-58}$ & 0 & N/A                & 5 & $>4$ hours\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+%\clearpage
+\section{Times in seconds for \emph{Attack-C}}
+\label{app:present-att-c}
+\begin{table}
+\begin{center}
+%\caption{Times in seconds for \emph{Attack-C}}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+\hline
+$N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
+\textsc{PolyBoRi} & \#trials & \textsc{MiniSat2}\\
+\hline
+ 4 &  80 &  4 & $2^{-16}$ & 10 & $ 0.07 -  0.09$ & 50 & $0.05 -  0.06$ & 0 &
+N/A\\
+ 4 &  80 &  3 & $2^{-12}$ & 10 & $ 6.69 -  6.79$ & 50 & $0.88 -  1.00$ & 50 &
+$0.14 - 0.18$\\
+ 4 &  80 &  2 &  $2^{-8}$ & 10 & $28.68 - 29.04$ & 50 & $2.16 -  5.07$ & 50 &
+$0.32 - 0.82$\\
+ 4 &  80 &  1 &  $2^{-4}$ & 10 & $70.95 - 76.08$ & 50 & $8.10 - 18.30$ & 50 &
+1.21 - 286.40\\
+\hline
+16 &  80 & 14 & $2^{-62}$ & 10 & $123.82 -  132.47$ & 50 & $2.38 -  5.99$ &
+0 & N/A\\
+16 & 128 & 14 & $2^{-62}$ &  0 & N/A                & 50 & $2.38 -  5.15$ & 
+0 & N/A\\
+16 &  80 & 13 & $2^{-58}$ & 10 & $301.70 -  319.90$ & 50 & $8.69 - 19.36$ & 
+0 & N/A\\
+16 & 128 & 13 & $2^{-58}$ &  0 & N/A                & 50 & $9.58 - 18.64$ & 
+0 & N/A\\
+16 &  80 & 12 & $2^{-52}$ &  0 & N/A                &  5 & $>4$ hours  & 
+0 & N/A\\
+\hline
+17 &  80 & 14 & $2^{-62}$ & 10 & $318.53 - 341.84$ & 50 & $9.03 - 16.93$  &
+50 & $0.70 - 58.96$\\
+17 & 128 & 14 & $2^{-62}$ &  0 & N/A & 50 & $8.36 - 17.53$  & 50 & $0.52 -
+8.87$\\
+17 &  80 & 13 & $2^{-58}$ &  0 & N/A &  5 & $>4$ hours  & 5 & $>4$ hours\\
+\hline
+\end{tabular}
+\end{center}
+\label{table:present-att-c}
+\end{table}
+
+\end{document}
