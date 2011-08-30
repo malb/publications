@@ -1,5 +1,4 @@
 \documentclass{llncs}
-%\documentclass{birkmult}
 \usepackage[utf8x]{inputenc}
 \usepackage{url}
 \usepackage{graphicx}
@@ -9,7 +8,6 @@
 \usepackage{listings,color}
 \usepackage{varioref}
 \usepackage{xspace}
-%opening
 
 \newcommand{\blind}[1]{#1}
 %\newcommand{\blind}[1]{}
@@ -42,8 +40,6 @@ how to use algebraic relations arising from differential characteristics
 to speed up and improve key-recovery differential attacks against block ciphers.
 To illustrate the new technique, we apply algebraic techniques to mount 
 differential attacks against round reduced variants of \PRESENT-128.
-% \PRESENT is an ultra lightweight block cipher proposed at CHES~2007,
-% particularly suitable for deployment in RFID tags.
 \end{abstract}
 
 \section{Introduction}
@@ -344,13 +340,8 @@ rounds. Each round of the cipher has three layers of operations:
 \texttt{keyAddLayer} is a simple subkey addition to the
 current state, while the \texttt{sBoxLayer} operation consists of 16 parallel
 applications of a 4-bit S-Box.
-% given by $x \rightarrow S[x]$ where $ S = $[C, 5, 6, B, 9, 0, A, D, 3, E, F,
-%8, 4, 7, 1, 2].
 The operation
 \texttt{pLayer} is a permutation of wires.
-% given by the rule that the bit at position $s \cdot j + i$ ($0 \leq j < B$, $0
-%\leq i < s$) is moved to position $B \cdot i + j$, where $s=4$ is the S-Box
-%width and $B=16$ is the number of parallel S-Boxes.
 
 In both versions, these three operations are repeated $N=31$ times. On the
 final round, an extra subkey addition is performed. The subkeys are derived from
@@ -358,16 +349,6 @@ the user-provided key in the key schedule, which by design is also
 quite simple and efficient involving a cyclic right shift, one ore two 4-bit
 S-Box applications (depending on the key size) and the addition of a round
 constant.
-%For the 80-bit variant the user-supplied key is
-%stored in a key register $K$ and represented as $k_{79} k_{78} \dots k_0$ . At
-%round $i$ the 64-bit round key $K_i = k_{i,63} k_{i,62} \dots k_{i,0}$ consists
-%of the 64 upmost bits of the current contents of register $K$:
-%$K_i = k_{i,63} k_{i,62} \dots k_{i,0} = k_{79} k_{78} \dots k_{16}.$
-%After round key $K_i$ is extracted, the key register $k = k_{79} k_{78} \dots
-%k_0$ is updated by a cyclic right shift, one S-Box application on the most
-%significant four bits and a round counter addition to the bits 15 to 19.
-%The key schedule for 128-bit keys is quite similar and presented in
-%Appendix~II of \cite{present}. 
 We note that the difference
 between the 80-bit and 128-bit variants is only the key schedule. In particular,
 both variants have the same number of rounds (i.e. $N=31$). The cipher
@@ -376,39 +357,6 @@ designing the cipher, and acknowledge that the security margin may be somewhat
 tight. Although they do not recommend immediate deployment of the cipher
 (especially the 128-bit version), they strongly encourage the analysis of both
 versions.
-
-% \subsection{An Equation System for PRESENT}
-% \label{sec:present-equ}
-% In Appendix~\ref{app:sbox-equ} we give 21 quadratic equations and one cubic
-% equation for the S-Box which form a \emph{degrevlex} Gr\"obner basis. This
-% basis
-% is used
-% for all computations in this paper. Each round of \PRESENT introduces $2 \cdot
-% 64$ new state variables for the input and output bits of the S-Box and thus we
-% have $128 \cdot N$. The 80-bit key schedule has
-% 80 user-provided key variables and 4 new key variables per round to account
-% for
-% one S-Box. Thus we have
-% $
-% N_v = (128 + 4) \cdot N + 80 = 132 \cdot N + 80
-% $ variables. Each round gives rise to $22 \cdot 16$ S-Box equations, 64 key
-% addition equations and 22 key schedule equations. We also have one additional
-% key addition (64 linear equations) at the end and $N_v$ field equations of the
-% form $x_i^2 + x_i = 0$.
-% Thus we have
-% $
-% N_e = (22 \cdot 16 + 22 + 64) N + 64 + N_v = 570 \cdot N + 144
-% $
-% equations. If we use two plaintext--ciphertext pairs, we
-% double the number of equations and variables for the state variables but not
-% the
-% number of equations
-% and variables for the key variables\footnote{If the weight on the difference
-% $\Delta P$ is small however,
-% some variables for the first few rounds may be the same for both systems.}.
-% Thus for \PRESENT-80-31 we would have a system of
-% 8140 variables in 34742 equations if we consider two plaintext--ciphertext
-% pairs.
 
 \subsection{Differential Cryptanalysis of 16 Rounds of PRESENT}
 \label{sec:present-dc}
@@ -777,7 +725,6 @@ computers\footnote{purchased under National Science Foundation Grant No.
 like to thank Sean Murphy, Matt Robshaw, Ludovic Perret, Jean-Charles
 Faug{\`e}re and anonymous referees for helpful comments.
 }
-%\clearpage
 
 \bibliographystyle{plain}
 \bibliography{literature}
@@ -785,41 +732,6 @@ Faug{\`e}re and anonymous referees for helpful comments.
 \newpage
 \appendix
 
-
-% \section{S-Box Equations for PRESENT}
-% \label{app:sbox-equ}
-% \begin{eqnarray*}
-% 0 &=& y_2x_3 + y_3x_3 + x_1x_3 + x_2x_3 + x_3,\\
-% 0 &=& y_0x_3 + y_3x_3 + x_1x_3 + x_2x_3 + y_0 + y_3 + x_1 + x_2 + x_3 + 1,\\
-% 0 &=& x_1x_2 + y_3 + x_0 + x_1 + x_3,\\
-% 0 &=& x_0x_2 + y_3x_3 + x_1x_3 + x_2x_3 + y_0 + y_1 + y_3 + x_0 + x_2 + x_3,\\
-% 0 &=& y_3x_2 + y_3x_3 + x_1x_3 + y_0 + y_1 + y_3 + x_0 + x_2 + x_3,\\
-% 0 &=& y_0x_2 + y_1x_2 + y_1x_3 + y_3x_3 + y_1 + x_0 + x_1 + x_2 + 1,\\
-% 0 &=& x_0x_1 + y_3x_3 + x_1x_3 + x_2x_3 + y_1 + y_2 + x_1 + x_2 + x_3 + 1,\\
-% 0 &=& y_3x_1 + y_3x_3 + x_2x_3 + y_1 + y_2 + y_3 + x_0 + x_1 + x_2 + 1,\\
-% 0 &=& y_2x_1 + y_2x_2 + y_3x_3 + x_0x_3 + x_1x_3 + y_0 + x_0 + 1,\\
-% 0 &=& y_1x_1 + y_2x_2 + y_1x_3 + x_0x_3 + x_1x_3 + y_0 + y_1 + y_2 + y_3 + x_2
-% + x_3,\\
-% 0 &=& y_0x_1 + y_1x_2 + y_1x_3 + x_0x_3 + x_2x_3 + y_1 + y_2 + y_3 + x_0 + x_1
-% + 1,\\
-% 0 &=& y_3x_0 + y_1x_2 + y_2x_2 + y_1x_3 + y_3x_3 + x_0x_3 + x_2x_3 + y_0 + y_1
-% + y_2 + x_1 + x_3,\\
-% 0 &=& y_2x_0 + y_1x_2 + x_0x_3 + y_0 + y_1 + y_2 + x_1 + x_2 + x_3,\\
-% 0 &=& y_1x_0 + y_1x_3 + x_0x_3 + x_1x_3 + x_2x_3 + y_0 + y_2 + y_3 + x_0 + x_1
-% + x_3 + 1,\\
-% 0 &=& y_0x_0 + y_2x_2 + y_1x_3 + x_1x_3 + y_0 + y_1 + y_3 + x_0 + x_3,\\
-% 0 &=& y_2y_3 + y_1x_3 + y_3x_3 + x_0x_3 + x_2x_3 + y_0 + y_1 + y_2 + y_3 +
-% x_0,\\
-% 0 &=& y_1y_3 + y_1x_2 + y_2x_2 + y_1x_3 + y_3x_3 + x_0x_3 + x_1x_3 + y_1 + y_3
-% + 1,\\
-% 0 &=& y_0y_3 + y_1x_3 + y_3x_3 + x_0x_3 + x_1x_3 + y_0 + y_2 + x_1 + x_3 +
-% 1,\\
-% 0 &=& y_1y_2 + y_1x_3 + x_0x_3 + x_1x_3 + y_0 + x_0 + 1,\\
-% 0 &=& y_0y_2 + y_1 + y_3 + x_3 + 1,\\
-% 0 &=& y_0y_1 + y_1x_3 + x_0x_3 + x_2x_3 + y_0 + y_1 + y_2 + x_2 + x_3 + 1,\\
-% 0 &=& y_1x_2x_3 + y_1x_2 + y_3x_3 + x_0x_3 + x_1x_3 + x_2x_3 + y_3 + x_0 + x_1
-% + x_2.\\
-% \end{eqnarray*}
 \clearpage
 
 \section{Small Key Bit Recovery System}
@@ -851,7 +763,6 @@ Y''_2,  \ \  \Delta Y_3 = Y'_3 + Y''_3,\\
 \end{eqnarray*}
 where $\Delta Y_i$ are the \emph{known} difference values predicted by the
 characteristic.
-%\newpage
 
 \section{14-round Differential Characteristic for PRESENT}
 \label{app:present-dc}
@@ -907,7 +818,6 @@ R7 &P& $x_8=1$,$x_{10}=1 $& $1$      & R14 &P& $x_0=9$, $x_{8}=9 $& $1$\\
 \label{app:present-att-b}
 \begin{table}[htbp]
 \begin{center}
-%\caption{Times in seconds for \emph{Attack-B}}
 \begin{tabular}{|c|c|c|c|c|c|c|c|}
 \hline
 $N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
@@ -918,14 +828,9 @@ $N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
  4 &  80 &  2 &  $2^{-8}$ & 10 & $119.24-128.49$ & 50 & $5.94 - 13.30$ \\
  4 &  80 &  1 &  $2^{-4}$ & 10 & $137.84-144.37$ & 50 & $11.83- 33.47$
 \\
-%\hline
-% 6 &  80 &  6 & $2^{-26}$ & 0 &  N/A               & 50 & $0.86 - 0.95$ \\
-% 6 &  80 &  5 & $2^{-22}$ & 0 &  N/A               & 25 & $11.93 - 13.74$ \\
 \hline
  8 &  80 &  5 & $2^{-22}$ & 0 &  N/A               & 50 & $18.45 - 63.21$\\
 \hline
-%10 &  80 & 10 & $2^{-44}$ & 0 &  N/A               & 20 & $3.24-3.92$ \\
-%10 &  80 &  9 & $2^{-40}$ & 0 &  N/A               & 20 & $21.43-26.41$ \\
 10 &  80 &  8 & $2^{-34}$ & 0 &  N/A               & 20 & $21.73-38.96$ \\
 10 &  80 &  7 & $2^{-30}$ & 0 &  N/A               & 10 & $39.27 - 241.17$\\
 10 &  80 &  6 & $2^{-26}$ & 0 &  N/A               & 20 & $56.30 - >4$ hours\\
@@ -935,7 +840,6 @@ $N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
 16 &  80 & 13 & $2^{-58}$ & 0 & N/A                & 20 & $80.35-262.73$\\
 16 & 128 & 13 & $2^{-58}$ & 0 & N/A                & 20 & $81.06-320.53$ \\
 16 &  80 & 12 & $2^{-52}$ & 0 & N/A                & 5 & $>4$ hours\\
-%16 & 128 & 12 & $2^{-52}$ & 0 & N/A                & 5 & $>4$ hours \\
 \hline
 17 &  80 & 14 & $2^{-62}$ & 10 & $12,317.49-13,201.99$ & 20 & $55.51 - 221.77$\\
 17 & 128 & 14 & $2^{-62}$ & 10 & $12,031.97-13,631.52$ & 20 & $94.19 - 172.46$\\
@@ -945,12 +849,10 @@ $N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
 \end{tabular}
 \end{center}
 \end{table}
-%\clearpage
 \section{Times in seconds for \emph{Attack-C}}
 \label{app:present-att-c}
 \begin{table}
 \begin{center}
-%\caption{Times in seconds for \emph{Attack-C}}
 \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
 \hline
 $N$ & $K_s$ & $r$ & $p$ & \#trials & \textsc{Singular}& \#trials &
