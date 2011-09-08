@@ -1,0 +1,1030 @@
+\documentclass[draft]{llncs}
+\pagestyle{plain}
+\usepackage[utf8x]{inputenc}
+
+\usepackage{url}
+\usepackage{amsmath,amssymb}
+\usepackage[vlined,ruled,linesnumbered]{algorithm2e}
+\usepackage{color}
+\usepackage{xspace}
+\usepackage{xargs}
+\usepackage{todonotes}
+\usepackage{embedfile}
+\parindent 0em
+\parskip 0.5em
+
+\newcommand{\heading}[1]{{\vspace{6pt}\noindent\sc{#1.}}}
+
+\newcommand{\NN}{{\mathbb N}}
+\newcommand{\ring}[1]{\mathbb{#1}}
+\newcommand{\F}{\ensuremath{\ring{F}}\xspace}
+\newcommand{\Z}{\ensuremath{\ring{Z}}\xspace}
+\newcommand{\FX}{\ensuremath{\F[x_0,\dots,x_{n-1}]}\xspace}
+\newcommand{\FqX}{\ensuremath{\F_q[x_0,\dots,x_{n-1}]}\xspace}
+\newcommand{\sys}{\ensuremath{f_0,\dots,f_{m-1}}\xspace}
+\newcommand{\ideal}[1]{\ensuremath{\langle #1 \rangle}\xspace}
+\newcommand{\I}{\ensuremath{\mathcal{I}}\xspace}
+
+\newcommand{\M}[1]{\ensuremath{\textsc{M}(#1)}\xspace}
+\newcommand{\LM}[1]{\ensuremath{\textsc{LM}(#1)}\xspace}
+\newcommand{\LC}[1]{\ensuremath{\textsc{LC}(#1)}\xspace}
+\newcommand{\LT}[1]{\ensuremath{\textsc{LT}(#1)}\xspace}
+\newcommand{\LCM}[1]{\ensuremath{\textsc{LCM}(#1)}\xspace}
+
+
+\newcommand{\Mac}[1]{\ensuremath{\mathcal{M}^{\mathrm{acaulay}}_{#1}}}
+
+\newcommand{\ord}[1]{\ensuremath{\mathcal{O}\!\left(#1\right)}}
+
+\newcommand{\ReduceGB}[1]{\ensuremath{\mathsf{ReduceGB}(#1)}\xspace}
+\newcommandx*\GBGen[2][1={}]{\ensuremath{\mathsf{GBGen}_{\mathsf{#1}}(#2)}\xspace}
+
+\newcommand{\SPC}{\ensuremath{\mathcal{SPC}}\xspace}
+
+\newcommand{\GB}{\ensuremath{\mathsf{GB}}\xspace}
+\newcommand{\IR}{\ensuremath{\mathsf{IR}}\xspace}
+\newcommand{\IM}{\ensuremath{\mathsf{IM}}\xspace}
+
+\newcommand{\GBN}{\ensuremath{\mathsf{GBN}}\xspace}
+\newcommand{\IRN}{\ensuremath{\mathsf{IRN}}\xspace}
+\newcommand{\IMN}{\ensuremath{\mathsf{IMN}}\xspace}
+\newcommand{\LWE}{\ensuremath{\mathsf{LWE}}\xspace}
+
+
+\newcommand{\SKE}{\ensuremath{\mathcal{SKE}}\xspace}
+\newcommand{\Hom}{\ensuremath{\mathcal{H}}}
+\newcommand{\PKE}{\ensuremath{\mathsf{PKE}}\xspace}
+
+\newcommand{\FunSp}{\ensuremath{\mathsf{FunSp}}}
+\newcommand{\secpar}{\lambda}
+
+\newcommand{\Gen}{\mathsf{Gen}}
+\newcommand{\Enc}{\mathsf{Enc}}
+\newcommand{\Eval}{\mathsf{Eval}}
+\newcommand{\Dec}{\mathsf{Dec}}
+\newcommand{\SK}{\mathsf{SK}}
+\newcommand{\PK}{\mathsf{PK}}
+\newcommand{\msg}{\mathsf{m}}
+\newcommand{\cph}{\mathsf{c}}
+\newcommand{\key}{\mathsf{k}}
+\newcommand{\MsgSp}{\mathsf{MsgSp}}
+\newcommand{\RndSp}{\mathsf{RndSp}}
+\newcommand{\ReRand}{\mathsf{ReRand}}
+\newcommand{\Circt}{C}
+
+\newcommand{\A}{\ensuremath{\mathcal{A}}\xspace}
+\newcommand{\B}{\ensuremath{\mathcal{B}}\xspace}
+\newcommand{\IND}{\mathsf{IND}}
+\newcommand{\ind}{\mathsf{ind}}
+\newcommand{\CPA}{\mathsf{CPA}}
+\newcommand{\INDCPA}{\ensuremath{\IND\mbox{-}\CPA}\xspace}
+\newcommand{\BCPA}{\mathsf{BCPA}}  
+\newcommand{\cpa}{\mathsf{cpa}}
+\newcommand{\bcpa}{\mathsf{bcpa}}
+\newcommand{\KDM}{\ensuremath{\mathsf{KDM}}\xspace}
+\newcommand{\kdm}{\mathsf{kdm}}
+\newcommand{\Initialize}{\mathbf{Initialize}}
+\newcommand{\Finalize}{\mathbf{Finalize}}
+\newcommand{\LR}{\mathbf{Left\mbox{-}Right}}
+\newcommand{\Encrypt}{\mathbf{Encrypt}}
+\newcommand{\Sample}{\mathbf{Sample}}
+\newcommand{\Challenge}{\mathbf{Challenge}}
+\newcommand{\sample}{{\;{{\leftarrow}_\$}\;}}
+\newcommand{\Adv}{\mathbf{Adv}}
+\newcommand{\true}{\mathsf{T}}
+\newcommand{\false}{\mathsf{F}}
+\newcommand{\Gm}{\mathsf{Game}}
+
+\newcommand{\Encode}[1]{\ensuremath{\mathbf{Encode}}(#1)\xspace}
+\newcommand{\Decode}[1]{\ensuremath{\mathbf{Decode}}(#1)\xspace}
+
+\newcommand{\poly}[1]{\ensuremath{\mathrm{poly}(#1)}\xspace}
+
+\newcommand{\px}{\phantom{i}}
+
+\title{Polly Cracker, Revisited \\ {(Extended Abstract)}\thanks{The work described in this paper has been supported by the Royal Society grant JP090728 and by the Commission of the European Communities through the ICT program under contract ICT-2007-216676 (ECRYPT-II). 
+M.~Albrecht, J-C. Faug{\`e}re, and L. Perret were also supported by the french ANR under the 
+Computer Algebra and Cryptography (CAC) project (ANR-09-JCJCJ-0064-01) and the EXACTA project (ANR-09-BLAN-0371-01).
+P. Farshim was funded in part by the US Army Research laboratory, the UK Ministry of Defense and was accomplished under Agreement Number W911NF-06-3-0001. Due to space limitations this work is only an extended abstract of the full work available in~\cite{full}.} }
+
+\vspace{-3mm}
+\author{M.R. Albrecht \inst{1} \and P. Farshim \inst{2} \and J.-C. Faugère \inst{1} \and L. Perret \inst{1}}
+
+\institute{
+INRIA, Paris-Rocquencourt Center, SALSA Project\\
+UPMC Univ Paris 06, UMR 7606, LIP6, F-75005, Paris, France\\
+CNRS, UMR 7606, LIP6, F-75005, Paris, France \and
+Department of Computer Science, Darmstadt University of Technology, Germany \\
+\email{malb@lip6.fr, farshim@cased.de, jean-charles.faugere@inria.fr, ludovic.perret@lip6.fr} \\ 
+}
+
+
+\begin{document}
+
+\maketitle
+\vspace{-6mm}
+\begin{abstract}
+We initiate the formal treatment of cryptographic constructions (``Polly Cracker'') based on the hardness of computing remainders modulo an ideal over multivariate polynomial rings. We start by formalising the relation between the ideal remainder problem and the problem of computing a Gröbner basis. 
+We show both positive and negative results.
+On the negative side, we define a symmetric Polly Cracker encryption scheme and prove that this scheme only achieves bounded $\CPA$ security. Furthermore, we show that a large class of algebraic transformations cannot convert this scheme to a fully secure Polly-Cracker-style scheme. On the positive side, we formalise noisy variants of the ideal membership, ideal remainder, and Gröbner basis problems. These problems can be seen as natural generalisations of the \LWE problem and the approximate GCD problem over polynomial rings. We then show that noisy encoding of messages results in a fully \INDCPA-secure somewhat homomorphic encryption scheme. Our results provide a new family of somewhat homomorphic encryption schemes based on new, but natural, hard problems. Our results also imply that Regev's \LWE-based public-key encryption scheme is (somewhat) {\em multiplicatively} homomorphic for appropriate choices of parameters.\smallskip
+
+\noindent {{\small \bf Keywords.}} Polly Cracker, Gröbner bases, LWE, Noisy encoding, Homomorphic encryption, Public-key encryption, Provable security. 
+\end{abstract}
+
+\vspace{-8mm} \section{Introduction} \vspace{-2mm} \label{sec:intro} 
+\heading{Background}
+Homomorphic encryption~\cite{Gen09} is a cryptographic primitive which allows performing arbitrary computations over encrypted data. From an algebraic perspective, this homomorphic feature can be seen as the ability to evaluate multivariate polynomials over ciphertexts. Hence, an instantiation of homomorphic encryption over multivariate polynomials is perhaps the most natural strategy.
+
+Indeed, let $\I \subset P = \FX$ be some ideal. We can encrypt a message $m \in P/\I$ as $c = f + m \textnormal{ for } f \mbox{ randomly chosen in } \I.$ Decryption is performed by computing remainders modulo $\I$. From the definition of an ideal the homomorphic features of this scheme follow. The problem of computing remainders modulo an ideal was solved by Buchberger in~\cite{Buchberger65}, where he introduced the notion of Gröbner bases, and gave an algorithm for computing such bases. 
+ 
+In fact, all known doubly homomorphic schemes are based on variants of the ideal remainder problem over various rings. For example in~\cite{DGHV10} the ring $\ideal{p} \in \mathbb{Z}$ for $p$ an odd integer is considered. In~\cite{Gen09} ideals in a number field play the same role (cf.~\cite{SV10}). One can even view Regev's \LWE-based public-key encryption scheme~\cite{regev:lwe} in this framework. Finally, we note that the construction displayed above is essentially Polly Cracker (PC)~\cite{Fellows&Koblitz:1994}. However, despite their simplicity, our confidence in PC-style schemes has been shaken as almost all such proposals have been broken~\cite{LdVMPT09}. In fact, it is a long standing open research challenge to propose a secure PC-style encryption scheme~\cite{DBLP:journals/jsc/BarkeeCEMR94}.
+
+\heading{Contributions \& Organisation}
+Our contributions can be summarised as follows: 1)~we initiate the formal treatment of PC-style schemes and characterise their security; 2)~we show the impossibility of converting such sche\-mes to fully \INDCPA-secure schemes through a large class of transformations; 3)~we introduce natural noisy variants of classical problems related to Gröbner bases which also generalise previously considered noisy problems; and 4)~we present a new somewhat (and doubly) homomorphic encryption scheme based on a new class of computationally hard problems. 
+
+In more detail, after settling notation in Section~\ref{sec:preliminaries}, we formalise various problems from commutative algebra in the language of game-based security definitions in Section~\ref{sec:probs}. In particular,
+we show that computing remainders modulo an ideal with overwhelming probability is equivalent to computing a Gröbner basis for zero-dimensional ideals. We then show that deciding ideal membership and computing ideal remainders are equivalent for certain choices of parameters. We then introduce a symmetric variant of Polly Cracker and characterise its security guarantees. We show that this scheme achieves {\em bounded} \INDCPA security, and that this level of security is the best that one can hope for: we give an attacker which breaks the cryptosystem once enough ciphertexts are obtained. 
+
+In Section~\ref{sec:conv}, we show the security limitations of the constructed scheme are in some sense {\em intrinsic}. More precisely, we show that a large class of algebraic transformation cannot turn this scheme into a (fully) $\INDCPA$ secure and additively homomorphic PC-style scheme.
+
+To go beyond this limitation, we consider a constructions where the encoding of messages is randomised. To prove security for such schemes, we consider noisy variants of the ideal membership and related problems. These can be seen as natural generalisations of the (decisional) \LWE and the approximate GCD problems over polynomial rings (Section~\ref{sec:noisy}). After formalising and justifying the hardness of the noisy assumptions in Section~\ref{sec:noisypollycracker}, we show that noisy encoding of messages can indeed be used to construct a fully $\INDCPA$-secure somewhat homomorphic scheme. This result also implies that Regev's \LWE-based public-key scheme is {\em multiplicatively} homomorphic under appropriate choices of parameters. Our result, together with a standard symmetric-to-asymmetric conversion for homomorphic schemes, provides a positive answer to the long standing open problem proposed by Barkee et al.~\cite{DBLP:journals/jsc/BarkeeCEMR94}. In addition, we provide a new family of somewhat homomorphic schemes which are based on new natural variants of well-studied hard problems. Due to space limitations, we discuss concrete parameter choices and include a reference implementation in the full version of the paper~\cite{full}. There, we also show how our scheme allows proxy re-encryption of ciphertexts. This re-encryption procedure can be seen as trading noise for degree in ciphertexts. That is, we can control the growth of the ciphertext size due to multiplication by tolerating more noise. We note that this technique was recently and independently developed in~\cite{LWEhom}. In~\cite{full}, we also show that our scheme achieves a limited form of key-dependent message (KDM) security in the standard model, where the least significant bit of the constant term of the key is encrypted. We leave it as an open problem to adapt the techniques of~\cite{ACPS09} to achieve full KDM security for the Polly Cracker with noise scheme. 
+
+\vspace{-4mm} \subsection{Related Work}
+\vspace{-2mm}
+{\it Polly Cracker.} In 1993, Barkee et al. wrote a paper~\cite{DBLP:journals/jsc/BarkeeCEMR94} whose aim was to dispel the urban legend that ``Gröbner bases are hard to compute''. Another goal of this paper was to direct research towards \emph{sparse} systems of multivariate equations.
+To do so, the authors proposed the most obvious dense Gröbner-based cryptosystem, namely an instantiation of the construction mentioned at the beginning of the introduction. In their scheme, the public key is a set of polynomials $\{ \sys \} \subset \I$ which is used to construct an element $f \in \I$. Encryption of messages $m \in P/\I$ are computed as $c = \sum h_i f_i + m = f + m$ for $f \in \I$. The private key is a Gröbner basis $G$ which allows to compute $m = c \mod \I = c \mod G$. As highlighted in~\cite{DBLP:journals/jsc/BarkeeCEMR94} this scheme can be broken using results from~\cite{DFGS91} (cf.\ Theorem~\ref{theorem:dfgs}).
+At about the same time, and independently from the work of Barkee et al., Fellows and Koblitz~\cite{Fellows&Koblitz:1994} proposed a framework for the design of public-key cryptosystems. The ideas in~\cite{Fellows&Koblitz:1994} were similar to Barkee et al.'s, but differed in some details. However, the main instantiation of such a system was the Polly Cracker cryptosystem. 
+Subsequently, a variety of sparse PC-style schemes were proposed. The focus on sparse polynomials aimed to prevent the attack based on Theorem~\ref{theorem:dfgs}, yet almost all of these schemes were broken. We point the reader to~\cite{LdVMPT09} for a good survey of various constructions and attacks. Currently, the only PC-style scheme which is not broken is the scheme in~\cite{Caboara:2011:LPC:1950980.1951071}. This scheme is based on binomial ideals (which in turn are closely related to lattices). Not only can our constructions be seen as instantiations of Polly Cracker (with and without noisy encoding of messages), they also allow security proofs based on the hardness of computational problems related to (multivariate) polynomial ideals with respect to random systems.
+
+{\it Homomorphic Encryption.} With respect to doubly (i.e., additively and multiplicatively) homomorphic schemes, a number of different hardness assumptions and constructions appeared in the literature. These include the Ideal Coset Problem of Gentry~\cite{Gen09}, the approximate GCD problem over the Integers of van Dijk et al.~\cite{DGHV10}, the Polynomial Coset Problem as proposed by Smart and Vercauteren in~\cite{SV10}, the Approximate Unique Shortest Vector Problem, the Subgroup Decision Problem, and the Differential Knapsack Vector Problem which appear in ~\cite{MelGH10}.
+The main difference between our work and previous work is that we base the security of our somewhat homomorphic scheme on {\em new} computational problems related to ideals over multivariate polynomial rings. Furthermore, due to the versatility of Gröbner basis theory, our work can be seen as a generalisation of a number of known schemes and their underlying hardness assumptions. However, while our construction is doubly homomorphic and reasonably efficient for low multiplicative circuit depths, it is currently an open problem how to make it bootstrappable and hence turn it into a fully homomorphic scheme.
+
+{\it $\mathcal{MQ}$ Cryptography.} Our work bears some connection with public-key cryptosystems based on the hardness of solving multivariate quadratic equations ($\mathcal{MQ}$). The difference is that our cryptographic constructions enjoy strong reductions to the known and hard problem of solving a \emph{random} system of equations, whereas the bulk of work in $\mathcal{MQ}$ cryptography relies on heuristic security arguments~\cite{DingYangSurvey}. In contrast, our work is more in the direction of research initiated by Berbain et al.~\cite{DBLP:journals/jsc/BerbainGP09} who proposed a stream cipher whose security was reduced to the difficulty of solving a system of random multivariate quadratic equations over $\F_2$. Note also that the concept of adding noise to a system of multivariate equations has been also proposed by Gouget and Patarin in~\cite{DBLP:conf/vietcrypt/GougetP06} for the design of an authentication scheme. Our work, however, presents a more general and complete treatment of problems related to ideals over multivariate polynomials -- both with and without noise -- and aims to provide a formal basis to assess the security of cryptosystems based on such problems.
+
+
+\vspace{-4mm} \section{Preliminaries} \vspace{-2mm} \label{sec:preliminaries}
+\heading{Notation} We write $\mathsf{x} \gets \mathsf{y}$ for assigning value $\mathsf{y}$ to a variable $\mathsf{x}$, and $\mathsf{x} \sample \mathsf{X}$ for sampling $\mathsf{x}$ from a set $\mathsf{X}$ uniformly at random. If $\mathsf{A}$ is a probabilistic algorithm we write $\mathsf{y}\sample \mathsf{A}(\mathsf{x}_1,\ldots,\mathsf{x}_n)$ for the action of running $\mathsf{A}$ on inputs $\mathsf{x}_1,\ldots,\mathsf{x}_n$ with uniformly chosen random coins, and assigning the result to $\mathsf{y}$. For a random variable $\mathsf{X}$ we denote by $[\mathsf{X}]$ the support of $\mathsf{X}$, i.e., the set of all values that $\mathsf{X}$ takes with non-zero probability. We use ppt for probabilistic polynomial-time. We call $\eta(\lambda)$ negligible if $|\eta(\lambda)| \in \lambda^{-\omega(1)}$. 
+
+\heading{Commutative Algebra Notation}
+In~\cite{full} we recall some basic definitions related to Gröbner bases. For a more detailed treatment we refer to, for instance,~\cite{Cox2007}.
+We consider a polynomial ring $P = \FX$ over some finite field (typically $\F_q$), some monomial ordering on elements of $P$, and a set of polynomials \sys. We denote by $\M{f}$ the set of all monomials appearing in $f \in P$. By $\LM{f}$ we denote the leading monomial appearing in $f \in P$ according to the chosen term ordering. We denote by $\LC{f}$ the coefficient $\in \F$ corresponding to $\LM{f}$ in $f$ and set $\LT{f} = \LC{f}\cdot \LM{f}$. We denote by $P_{< d}$ the set of polynomials of degree $< d$ (and analogously for the $>,\leq,\geq$, and $=$ relations). We define $P_{=0}$ as the underling field including $0 \in \F$. We define $P_{<0}$ as zero. Finally, we denote by $M_{< m}$ the set of all monomials $< m$ for some monomial $m$ (and analogously for the $>,\leq,\geq$, and $=$ relations). We assume the usual power product representation for elements of $P$. 
+ 
+\vspace{-4mm} \section{Gröbner Basis and Ideal Membership Problems} \vspace{-2mm} \label{sec:probs}
+Following~\cite{CS03}, we define {\em a computational polynomial ring scheme}. This is a general framework allowing to discuss in a concrete way the different families of rings that may be used in cryptographic applications. More formally, a computational polynomial ring scheme $\mathcal{P}$ is a sequence of probability distribution of {\em polynomial ring descriptions} $(\mathbf{P}_\secpar)_{\secpar\in\mathbb{N}}$. A polynomial ring description $P$ specifies various algorithms associated with $P$ such as computing ring operations, sampling elements, testing membership, encoding of elements, ordering of monomials, etc. We assume each polynomial ring distribution is over $n=n(\secpar)$ variables, for some polynomial $n(\secpar)$, and is over a finite prime field of size $q(\secpar)$.
+
+In this work we denote by $\GBGen{1^\secpar,P,d}$ an arbitrary ppt algorithm which outputs a reduced Gröbner basis $G$ for some zero-dimensional ideal $\I \subset P$ such that every element of $G$ is of degree at most $d$. Of particular interest to this paper is the Gröbner basis generation algorithm shown in Algorithm~\ref{alg.gbgen} called $\GBGen[dense]{\cdot}$. (Algorithm $\ReduceGB{\cdot}$ is given in~\cite{full}.) We show in~\cite{full} that $\GBGen[dense]{\cdot}$ returns a Gröbner basis. Throughout the paper we assume an implicit dependency of various parameters associated with $P$ on the security parameter. Thus, we drop $\secpar$ to ease notation. 
+
+\vspace{-2mm}
+\begin{algorithm}[ht]
+\SetAlFnt{\scriptsize}
+\Begin{
+ \lIf{$d = 0$}{\Return{$\{ 0 \}$}\;}
+ \For{$0 \leq i < n$}{
+ \For{$m_j \in M_{<x_i^d}$}{
+ $c_{ij} \sample \F_q$;
+ $g_i \gets g_i + c_{ij} m_j$\;
+ }
+ }
+ \Return{$\ReduceGB{\{ x_0^d + g_0,\ldots,x_{n-1}^d + g_{n-1} \}}$} \;
+}
+\caption{Algorithm $\mathsf{GBGen}_{\mathsf{dense}}(1^\secpar,P,d)$} 
+\label{alg.gbgen}
+\end{algorithm}
+
+\smallskip
+We can now formally define the problem of computing a Gröbner basis.
+\begin{definition}
+The Gröbner basis problem is defined through the game denoted $\GB_{\mathcal{P},\GBGen{\cdot},d,b,m}$ as shown in Figure~\ref{fig.cgp}. The advantage of a ppt algorithm $\A$ in solving the \GB problem is defined as the probability of winning the game (i.e., the game returning $\true$).
+An adversary is legitimate if it calls the $\Sample$ procedure at most $m=m(\secpar)$ times.
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{lll}
+\begin{minipage}{0.32\textwidth}
+\underline{\bf $\Initialize(1^\secpar,\mathcal{P},d)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $P \sample \mathbf{P}_\secpar$; \\
+\vline \px $G \sample \GBGen{1^\secpar,P,d}$; \\
+\vline \px {\bf return $(1^\secpar,P)$}; \\
+{\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.32\textwidth}
+\underline{\bf $\Sample()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$;\\
+\vline \px $f \gets f - (f \mod G)$;\\
+\vline \px {\bf return $f$};\\
+{\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.28\textwidth}
+\underline{\bf $\Finalize()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px {\bf return} $(G=G')$; \\ 
+{\bf end}\\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{Game $\GB_{\mathcal{P},\GBGen{\cdot},d,b,m}$. }
+\label{fig.cgp}
+\vspace{-6mm} \end{figure}
+\end{definition}
+We show in~\cite{full} that $\Sample$ returns elements of degree $b$ which are uniformly distributed in $\ideal{G}$.
+We recall that given a Gröbner basis \(G\) of an ideal \(\I\), $r = f \mod \I= f \mod G$ is the normal form of $f$ with respect to the ideal $\I$. We sometimes drop the explicit reference to $\I$ when it is clear from the context which ideal we are referring to, and simply refer to $r$ as the normal form of $f$. Computing normal forms is the ideal remainder problem which we formalise below.
+\begin{definition}
+The ideal remainder problem is defined through the game shown in Figure~\ref{fig.ir}: $\mathsf{IR}_{\mathcal{P},\GBGen{\cdot},d,b,m}$. The advantage of a ppt algorithm $\A$ in solving the \IR problem is defined as the probability of winning the game minus $1/q^{\dim_{\F_q}(P/\ideal{G})}$.
+An adversary is legitimate if it calls the $\Sample$ procedure at most $m=m(\secpar)$ times.
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{llll}
+\begin{minipage}{0.28\textwidth}
+\underline{\bf $\Initialize(1^\secpar,\mathcal{P},d)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $P \sample \mathbf{P}_\secpar$; \\
+\vline \px $G \sample \GBGen{1^\secpar,P,d}$; \\
+\vline \px {\bf return} $(1^\secpar,P)$; \\
+{\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.22\textwidth}
+\underline{\bf $\Sample()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$;\\
+\vline \px $f' \gets (f \mod G)$;\\
+\vline \px {\bf return} $f - f'$; \\
+{\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.21\textwidth}
+\underline{\bf $\Challenge()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$;\\
+\vline \px {\bf return} $f$;\\
+{\bf end}\\
+\ \\
+\end{tabular} 
+ \end{minipage}
+&
+\begin{minipage}{0.20\textwidth}
+ \underline{\bf $\Finalize(r')$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $r \gets f \mod G$;\\
+\vline \px {\bf return $r = r'$};\\
+{\bf end}\\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{Game $\IR_{\mathcal{P},\GBGen{\cdot},d,b,m}$.}
+\label{fig.ir}
+\vspace{-6mm} \end{figure}
+\end{definition}
+In Lemma~\ref{lem:IR=GB} below we prove a weak form of equivalence between the above problems. That is, we require that the \IR adversary returns the correct answer with an \emph{overwhelming} probability. This is due to the restriction that $\Sample$ can only be called a bounded number of times, and thus one cannot amplify the success probability of the \IR adversary through repetition. The weak statement is sufficient in our context.
+
+\begin{lemma}
+\label{lem:IR=GB}
+If the \GB problem is hard, then the \IR problem is weakly hard (i.e., cannot be solved with overwhelming probability). 
+Furthermore, if the \IR problem is hard then so is the \GB problem. 
+\end{lemma}
+
+The precise theorem statement and a proof is given in~\cite{full}. Informally, the reduction of the \GB problem to the \IR problem works as follows. Consider an arbitrary element $g_i$ in the Gröbner basis $G$. We can write $g_i$ as $m_i + \tilde{g}_i$ for some $\tilde{g}_i < g_i$ and $m_i = \LM{g_i}$. Now, assume the normal form of $m_i$ is $r_i$ and suppose that $r_i < m_i$. This implies that $m_i = \sum_{j=0}^{n-1} h_jg_j + r_i$ for some $h_i \in P$. Hence, we have $m_i - r_i \in \ideal{G}$, an element $\in \ideal{G}$ with leading monomial $m_i$. Repeat this process for all monomials up to and including degree $d$ and accumulate the results $m_i - r_i$ in a list $\tilde{G}$. The list $\tilde{G}$ is a list of elements $\in \ideal{G}$ with $\LM{\tilde{G}} \supseteq \LM{G}$ which implies $\tilde{G}$ is a Gröbner basis. We note that this is the core idea behind the FGLM algorithm~\cite{FGLM}. 
+
+\smallskip
+The decisional variant of the \IR problem is to decide whether the normal form of some element modulo an ideal is zero or not, i.e., whether this element is in the ideal or not. This is the ideal membership problem formalised below.
+\begin{definition}
+The ideal membership problem is defined through the the game denoted $\IM_{\mathcal{P},\GBGen{\cdot},d,b,m}$ as shown in Figure~\ref{fig.im}.
+The advantage of a ppt algorithm $\A$ in solving \IM is defined as twice the probability of winning the game minus $1$. 
+An adversary is legitimate if it calls the $\Sample$ procedure at most $m=m(\secpar)$ times. 
+
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{llll}
+\begin{minipage}{0.28\textwidth}
+ \underline{\bf $\Initialize(1^\secpar,\mathcal{P},d)$}: \\
+ \begin{tabular}{l}
+ {\bf begin}\\
+ \vline \px $P \sample \mathbf{P}_\secpar$; \\
+ \vline \px $G \sample \GBGen{1^\secpar,P,d}$; \\
+ \vline \px $c \sample \{ 0,1 \}$; \\
+ \vline \px {\bf return} $(1^\secpar,P)$; \\
+ {\bf end}\\
+ \end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.19\textwidth}
+ \underline{\bf $\Sample()$}: \\
+ \begin{tabular}{l}
+ {\bf begin}\\
+ \vline \px $f \sample P_{\leq b}$;\\
+ \vline \px $f' \gets f \mod G$;\\
+ \vline \px {\bf return} $f - f'$; \\
+ {\bf end}\\
+ \ \\
+ \end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.24\textwidth}
+ \underline{\bf $\Challenge()$}: \\
+ \begin{tabular}{l}
+ {\bf begin}\\
+ \vline \px $f \sample P_{\leq b}$;\\
+ \vline \px {\bf if} $c = 1$ {\bf then}\\
+ \vline \px \px $f \gets f - (f\mod{G})$;\\
+ \vline \px {\bf return} $f$;\\
+ {\bf end}\\
+ \end{tabular}
+ \end{minipage}
+&
+\begin{minipage}{0.20\textwidth}
+ \underline{\bf proc. $\Finalize(c')$}: \\
+ \begin{tabular}{l}
+ {\bf begin}\\
+ \vline \px {\bf return} $(c=c')$;\\
+ {\bf end}\\
+ \ \\
+ \ \\
+ \ \\
+ \end{tabular} 
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{Game $\IM_{\mathcal{P},\GBGen{\cdot},d,b,m}$.}
+\label{fig.im}
+\vspace{-6mm} \end{figure}
+\end{definition}
+Clearly any adversary which can solve the \IR problem can also solve the \IM problem. However, if the search space of reminders modulo $\ideal{G}$ is sufficiently small, i.e., when $q^{\dim_{\F_q}(P/\ideal{G})}=\mathrm{poly}(\secpar),$ and under similar assumptions as for Lemma~\ref{lem:IR=GB}, one can also perform the converse reduction. That is, one can solve the \IR problem using an oracle for the \IM problem. Lemma~\ref{lem:IM=IR} below proves this equivalence for the special case of $\GBGen[dense]{\cdot}$. Once again, this is sufficient in our context. As before, for Lemma~\ref{lem:IM=IR} to be meaningful we require that the \IM adversary returns the correct answer with {\em overwhelming} probability.
+
+\begin{lemma}
+\label{lem:IM=IR}
+If the \IR problem is hard, then the \IM problem is weakly hard for poly-sized $q^{\dim_{\F_q}(P/\ideal{G})}$. 
+Furthermore, if the \IM problem is hard, then the \IR problem is also hard.
+\end{lemma}
+
+Informally, the construction of an \IR adversary from an \IM adversary proceeds as follows. Let $\tilde{f}$ be the challenge polynomial. The attacker simply exhaustively searches all elements of the $\F_q$ vector space $P/\ideal{G}$ until the right remainder $r$ is found. This occurs if $f - r \in \ideal{G}$ and can be then detected using an \IM adversary. However, there is a technical difficulty here. In general, the attacker does not necessarily know the support of $P/\ideal{G}$ and hence cannot know how to construct $r$. However, in our case we assume that $\GBGen{\cdot} = \GBGen[dense]{\cdot}$ and this difficulty does not arise. 
+In a more general setting, we would have to discover $P/\ideal{G}$ as well (cf.\ proof of Lemma~\ref{lem:IMN=IRN}). See~\cite{full} for the proof. 
+
+\smallskip
+Complexity estimation about Gröbner basis computations~\cite{full}, together with the above results, lead to the following hardness assumptions.
+
+\begin{definition}
+\label{def.GB.assump}
+Let $\mathcal{P}$ be such that $n(\secpar)=\mathrm{\Omega}(\secpar)$. Assume $b-d >0$, $b>1$, and that $m(\secpar) = c\cdot n(\secpar)$ for a constant $c \ge 1$. Then the advantage of any ppt algorithm in solving the \GB/\IR/\IM problem is negligible as function of $\secpar$. 
+\end{definition}
+
+
+\vspace{-4mm} \section{Symmetric Polly Cracker: Noise-Free Version} \vspace{-2mm} \label{sec:pollycracker}
+ \subsection{Homomorphic Symmetric Encryption}
+\vspace{-3mm}
+
+\heading{Syntax} A {\em homomorphic symmetric-key encryption scheme} (HSKE) is specified by four ppt algorithms: 1)~$\Gen(1^\secpar)$ is the key generation algorithm and returns a key pair $(\SK,\PK)$, a message space $\MsgSp(\PK)$ and a function space $\FunSp(\PK)$. 2)~$\Enc(\msg,\SK)$ is the encryption algorithm and returns a ciphertext $\cph$. 3)~$\Eval(\cph_0,\ldots,\cph_{t-1},\Circt,\PK)$ is the evaluation algorithm and outputs a ciphertext $\cph_{\mathsf{evl}}$. 4)~$\Dec(\cph_{\mathsf{evl}},\SK)$ is the deterministic decryption algorithm and returns either a message $\msg$ or a special failure symbol $\perp$. 
+
+\heading{Correctness} An HSKE scheme is correct if for any $\secpar \in \mathbb{N}$, any $(\SK,\PK) \in [\Gen(1^\secpar)]$, any $t$ messages $\msg_i \in \MsgSp(\PK)$, any $\cph \in [\Enc(\msg,\SK)]$, any circuit $\Circt \in \FunSp(\PK)$, any $t$ ciphertexts $\cph_i \in [\Enc(\msg_i,\PK)]$, and any evaluated ciphertext $\cph_{\mathsf{evl}} \in [\Eval(\cph_0,\ldots,\cph_{t-1},\Circt,\PK)]$, we have that $\Dec(\cph_{\mathsf{evl}},\SK) = \Circt(\msg_0,\ldots,\msg_{t-1})$. We do not necessarily require correctness over freshly created ciphertexts.
+
+\heading{Compactness} An HSKE scheme is compact if there exists a fixed polynomial bound $\mathrm{B}(\cdot)$ so that for any key pair $(\SK, \PK) \in[\Gen(1^\secpar)]$, any circuit $\Circt \in \FunSp(\PK)$, any set of $t$ messages $\msg_i\in\MsgSp(\PK)$, any ciphertext $\cph_i \in [\Enc(\msg_i,\SK)]$, and any evaluated ciphertext $\cph_{\mathsf{evl}} \in [\Eval(\cph_0,\ldots,\cph_{t-1},\Circt,\PK)]$, the size of $\cph_{\mathsf{evl}}$ is at most $\mathrm{B}(\secpar+|\Circt(\msg_0,\ldots,\msg_{t-1})|)$ (independently of the size of $\Circt$).
+
+The syntax, correctness, and compactness of a homomorphic public-key encryption scheme is defined similarly. 
+
+\vspace{-3mm} \subsection{The Scheme} \vspace{-2mm}
+In this section we formally define the (noise-free) symmetric Polly Cracker encryption scheme. We present a family of schemes parameterised not only by the underlying computational polynomial ring scheme $\mathcal{P}$, but also by a Gröbner basis generation algorithm, which itself depends on a degree bound $d$, and a second degree bound $b$. Our parameterised scheme, which we write as $\SPC_{\mathcal{P},\GBGen{\cdot},d,b}$, is presented in Figure~\ref{fig.spc}. The message space is $P/\I$.
+
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{llll}
+\begin{minipage}{0.28\textwidth}
+\underline{\bf $\Gen_{\mathcal{P},\GBGen{\cdot},d,b}(1^\secpar)$:}
+\begin{tabular}{l}
+	{\bf begin}\\
+	\vline \px $P \sample \mathbf{P}_\secpar$;\\
+	\vline \px $G \sample \mathsf{GBGen}(1^\secpar,P,d)$;\\
+	\vline \px $\SK \gets (G,P,b)$;\\
+ \vline \px $\PK \gets (P,b)$;\\
+	\vline \px {\bf return} $(\SK,\PK)$;\\
+	{\bf end}\\
+\end{tabular} 
+\end{minipage}
+&
+\begin{minipage}{0.18\textwidth}
+\underline{\bf $\Enc(m,\SK)$}: \\
+\begin{tabular}{l}
+ {\bf begin}\\
+ \vline \px $f \sample P_{\leq b}$;\\
+ \vline \px $f' \gets f \mod G$;\\
+ \vline \px $f \gets f - f'$;\\
+ \vline \px $c \leftarrow m + f$; \\
+ \vline \px {\bf return} $c$;\\
+ {\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.18\textwidth}
+\underline{\bf $\Dec(c,\SK)$}: \\
+\begin{tabular}{l}
+	{\bf begin}\\
+	\vline \px $m \leftarrow c \mod G$;\\
+	\vline \px {\bf return} $m$;\\
+	{\bf end}\\
+\ \\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.26\textwidth}
+\underline{\bf $\Eval(c_0,\dots,c_{t-1},\Circt,\PK)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px apply the $\mathsf{Add}$ and $\mathsf{Mult}$ \\
+\vline \phantom{xi} gates of $\Circt$ over $P$; \\
+\vline \px {\bf return} the result;\\
+{\bf end}\\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{The (noise-free) Symmetric Polly Cracker scheme $\SPC_{\mathcal{P},\GBGen{\cdot},d,b}$.}
+\label{fig.spc}
+\vspace{-6mm} \end{figure}
+
+Correctness of evaluation can be verified by a straight-forward calculation.
+
+This scheme is not compact since multiplications square the size of the ciphertext.
+
+\vspace{-3mm} \subsection{Security} \vspace{-2mm}
+We will show that the above scheme only achieves a weak version of chosen-plaintext security, which allows access to a limited number of ciphertexts.
+\begin{definition}
+The $m$-time $\IND\mbox{-}\BCPA$ security of a (homomorphic) symmetric-key encryption scheme $\SKE$ is defined though a game $\IND\mbox{-}\BCPA_{m,\SKE}$, which is similar to \INDCPA except that the adversary can query its encryption and left-or-right oracles a total of at most $m=m(\secpar)$ times. We say $\SKE$ is $m\mbox{-}\IND\mbox{-}\BCPA$ secure if the advantage of any ppt adversary $\A$, defined as twice the probability of wining the game minus $1$ is negligible.  
+ \end{definition}
+
+\begin{theorem}
+\label{thm:spc}
+The scheme in Figure~\ref{fig.spc} is $m\mbox{-}\IND\mbox{-}\BCPA$ secure iff the \IM problem is hard.
+\end{theorem}
+
+
+See~\cite{full} for the proof. As a corollary, observe that when $m(\secpar) = \ord{\secpar^b}$ one can construct an adversary which breaks the $\IND\mbox{-}\BCPA_{m,\SKE}$ security of $\SPC$ in polynomial time. Thus we can only hope to achieve security in the bounded model for this scheme. 
+
+\vspace{-4mm} \section{Symmetric-to-Asymmetric Conversion} \vspace{-2mm} \label{sec:conv}
+Our goal for the rest of the paper is to convert the above scheme to one which is both fully $\IND\mbox{-}\CPA$ secure and somewhat homomorphic. Once we achieve this, it is possible to construct a public-key scheme using the homomorphic features of the symmetric scheme by applying various generic conversions. In the literature there are two prominent such conversions:
+\begin{enumerate}
+\item[(A)] Publish a set of encryptions of zero $F_0$ as part of the public key. To encrypt $m \in \{ 0,1 \}$ compute $c = \sum_{f_i \in S} f_i + m$ where $S$ is a sparse subset of $F_0$~\cite{DGHV10}.
+\item[(B)] Publish two sets $F_0$ and $F_1$ of encryptions of zero and one as part of the public key. To encrypt $m \in \{ 0,1 \}$ compute $c = \sum_{f_i \in S_0} f_i + \sum_{f_j \in S_1} f_j$, with $S_0$ and $S_1$ being sparse subsets of $F_0$ and $F_1$ respectively such that the parity of $|S_1|$ is $m$. Decryption checks whether $\Dec(c,\SK)$ is even or odd~\cite{Ro10}.
+\end{enumerate}
+
+The security of the above transformations rests upon the (computational) indistinguishability of asymmetric ciphertexts from those produced directly using the symmetric encryption algorithm. 
+As noted above, since $\SPC$ is not $\IND\mbox{-}\CPA$ secure the above transformations cannot be used. However, one could envisage a larger class of transformations which might lead to a fully secure additively homomorphic SKE (or equivalently an additively homomorphic PKE) scheme. 
+In this section we rule out a large class of such transformations. To this end, we consider PKE schemes which lie within the following design methodology.
+\begin{enumerate}
+\item The secret key is the Gröbner basis $G$ of a zero-dimensional ideal $\I \subset P$. The decryption algorithm computes $c \mod \I = c \mod G$ (perhaps together with some post-processing such as a mod $2$ operation). Thus, the message space is (essentially) $P/\I$. We assume that $P/\I$ is known.
+\item The public key consists of elements $f_i \in P$. We assume that the remainder of these elements modulo the ideal $\I$, i.e., $r_i : = f_i \mod \I$, are known.
+\item A ciphertext is computed using ring operations. In other words, it can be expressed as $f = \sum_{i=0}^{N-1} h_if_i + r.$
+Here $f_i$ are as in the public key, $h_i$ are some polynomials (possibility depending on $f_i$), and $r$ is an encoding in $P/\I$ of the message. 
+\item The construction of the ciphertext does not encode know\-ledge of $\I$ beyond $f_i$. That is, we have 
+$\left( \sum_{i=0}^{N-1} h_if_i + r\right) \mod \I = \sum_{i=0}^{N-1} h_ir_i + r.$
+Hence we have that $\left( \sum_{i=0}^{N-1} h_ir_i + r\right) \in P/\I$ as an element of $P$.
+\item The security of the scheme relies on the fact that elements $f$ produced at step (3) are computationally indistinguishable from random elements in $P_{\le b}$. 
+\end{enumerate}
+
+Condition 4 imposes some real restrictions on the set of allowed transformation, but strikes a reasonable balance between allowing a general statement without ruling out too large a class of conversions. It requires that the $r_i$ and $r$ do not encode any information about the secret key. We currently require this restriction on the ``expressive power'' of $r_i$ and $r$ so as to make a general impossibility statement. If $r_i$ and $r$ produce a non-zero element in $\I$ using some arbitrary algorithm $\A$, we are unable to prove anything about the transformation. Furthermore, it is plausible that for any given $\A$ a similar impossibility result can be obtained if the remaining conditions hold.
+
+Note that the two transformations above are special linear cases of this methodology. For transformation (A) we have that $f_i \in \I$ (hence $r_i = 0$), $h_i \in \{ 0,1 \}$ and $r = m$. For transformation (B) we have $r_i = 0$ if $f_i \in F_0$, $r_i = 1$ if $f_i \in F_1$, $h_i \in \{ 0,1 \}$, and $r=0$.
+
+To show that any conversion of the above form cannot lead to an $\IND\mbox{-}\CPA$-secure public-key scheme, we will use the following theorem which was also used in~\cite{DBLP:journals/jsc/BarkeeCEMR94} to discourage the use of Gröbner bases for public-key schemes.
+\begin{theorem}[\cite{DFGS91}] \label{theorem:dfgs}
+Let $\I = \ideal{f_0,\dots, f_{m-1}}$ be an ideal in the polynomial ring $P = \F[x_0,\dots,x_{n-1}], h$ be such that $\deg(h) \leq D$, and $$h - (h \mod \I) = \sum_{i=0}^{m-1}h_if_i, \textnormal{ where } h_i \in P \textnormal{ and } \deg(h_i f_i ) \leq D.$$ Let $G$ be the output of some Gröbner basis computation algorithm up to degree $D$. Then $h \!\mod \I$ can be computed by polynomial reduction of $h$ via $G$.
+\end{theorem}
+The main result of this section is a consequence of the above theorem. It essentially states that uniformly sampling elements of the ideal up to some degree is equivalent to compute a Gröbner basis for the ideal. Note that in itself Theorem~\ref{theorem:dfgs} does not provide this result, since there is no assumption about the ``quality'' of $h$. Hence, to prove this result we first show that the above methodology implies sampling as in Theorem~\ref{theorem:dfgs} but with uniformly random output. Theorem~\ref{theorem:dfgs} then allows us to compute normal forms which (because of the randomness of $h$) allows the computation of a Gröbner basis by Lemma~\ref{lem:IR=GB}. The proof of Theorem~\ref{theorem:gbeasy} is given in~\cite{full}.
+\begin{theorem} \label{theorem:gbeasy}
+Let $G = \{ g_0,\dots,g_{s-1} \}$ be the reduced Gröbner basis of the zero-dim\-ensional ideal $\I$ in the polynomial ring $P = \F[x_0,\dots,x_{n-1}]$ where each $\deg(g_i) \leq d$. Assume that $P/\I$ is known. Furthermore, let $F = \{ f_0,\dots, f_{N-1} \}$ be a set of polynomials with known $r_i := f_i \mod \I$. Let $\A$ be a ppt algorithm which given $F$ produces elements $f = \sum h_if_i + r$ with $\deg(f) \leq b$, $h_i \in P$, $b\leq B$, $\deg(h_if_i) \leq B$, and $(f \mod \I) = \sum h_ir_i + r$. Suppose further that the outputs of $\A$ are computationally indistinguishable from random elements in $P_{\leq b}$. Then there exists an algorithm which computes a Gröbner basis for $\I$ from $F$ in $\ord{n^{3B}}$ field operations.
+\end{theorem}
+
+Therefore, if for some degree $b\geq d$ computationally uniform elements of $P_{\le b}$ can be produced using the public key $f_0,\dots,f_{N-1}$, there is an attacker which recovers the secret key $g_0,\dots,g_{s-1}$ in essentially the same complexity. Hence, while conceptually simple and provably secure up to some bound, our symmetric Polly Cracker scheme $\mathcal{SPC}_{\mathcal{P},\GBGen{\cdot},d,b}$ does not provide a valid building block for constructing a fully homomorphic public-key encryption scheme.
+
+\heading{Remark} Although the above impossibility result is presented for public-key encryption schemes, due to the equivalence result of~\cite{Ro10}, it also rules out the existence of additively homomorphic symmetric PC-style schemes with full $\IND\mbox{-}\CPA$ security.
+
+\vspace{-4mm} \section{Gröbner Bases with Noise} \vspace{-2mm} \label{sec:noisy}
+In this section, we introduce noisy variants of the problems presented in Section~\ref{sec:probs}. The goal is to lift the restriction on the number of samples that the adversary can obtain, and following a similar design methodology to Polly Cracker, construct an \INDCPA-secure scheme. That is, we consider problems which naturally arise if we consider noisy encoding of messages in $\SPC$. Similarly to~\cite{DGHV10,lwesurvey} we expect a problem which is efficiently solvable in the noise-free setting to be hard in the noisy setting. We will justify this assumption in Section \ref{sec:noisy:hard} by arguing that our construction can be seen as a generalisation of~\cite{DGHV10,lwesurvey}. 
+The games below will be parameterised by a noise distribution. The discrete Gaussian distribution -- denoted for $\chi_{\alpha,q}$ for standard deviation $\alpha q$ and modulus $q$ -- is of particular interest to us (cf.~\cite{regev:lwe}).
+
+We now define a noisy variant of the Gröbner basis problem.
+The task here is still to compute a Gröbner basis for some ideal $\I$. However, we are now only given access to a noisy sample oracle which provides polynomials which are not necessarily in $\I$ but rather are ``close'' approximations to elements of $\I$. Here the term ``close'' is made precise using a noise distribution $\chi$ on $P/\mathcal{I}$. 
+\begin{definition}
+The Gröbner basis with noise problem is defined through the game $\GBN_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$ as shown in Figure~\ref{fig.gpn}. The advantage of a ppt algorithm $\A$ in solving the \GBN problem is the probability of winning the game. 
+
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{lll}
+\begin{minipage}{0.30\textwidth}
+\underline{\bf $\Initialize(1^\secpar,\mathcal{P},d)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $P \sample \mathbf{P}_\secpar$; \\
+\vline \px $G \sample \GBGen{1^\secpar,P,d}$; \\
+\vline \px {\bf return} $(1^\secpar,P)$; \\
+{\bf end}\\
+\ \\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.32\textwidth}
+\underline{\bf $\Sample()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$; \\
+\vline \px $e \sample \chi$;\\
+\vline \px $f \gets f - (f \mod G) + e$; \\
+\vline \px {\bf return} $f$;\\
+{\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.30\textwidth}
+\underline{\bf $\Finalize(G')$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px {\bf return} $(G=G')$; \\ 
+{\bf end}\\
+\ \\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{Game $\GBN_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$.}
+\label{fig.gpn}
+\vspace{-6mm} \end{figure}
+\end{definition}
+The essential difference between the noisy and noise-free versions of the \GB problem is that by adding noise we have eliminated the restriction on the adversary to call the $\Sample$ oracle a bounded number of times. The choice of $\chi$ greatly influences the hardness of the \GBN problem.
+
+As in the noise-free setting, we can ask various questions about the ideal $\I$ spanned by $G$. One such example is solving the ideal remainder problem with access to noisy samples from $\I$. 
+\begin{definition}
+The ideal remainder with noise problem is defined through the game $\mathsf{IRN}_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$ as shown in Figure~\ref{fig.irn}. The advantage of a ppt algorithm $\A$ is defined as the probability of winning the game minus $1/q(\secpar)^{\dim_\F(P/\ideal{G})}$.
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{llll}
+\begin{minipage}{0.25\textwidth}
+\underline{\bf $\Initialize(1^\secpar,\mathcal{P},d)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $P \sample \mathbf{P}_\secpar$; \\
+\vline \px $G \sample \GBGen{1^\secpar,P,d}$; \\
+\vline \px {\bf return} $(1^\secpar,P)$; \\
+{\bf end} \\
+\ \\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.28\textwidth}
+\underline{\bf $\Sample()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$; \\
+\vline \px $e \sample \chi$;\\
+\vline \px $f \gets f - (f \mod G)+e$;\\
+\vline \px {\bf return} $f$; \\
+{\bf end}
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.18\textwidth}
+\underline{\bf $\Challenge()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$;\\
+\vline \px {\bf return} $f$;\\
+{\bf end}\\
+\ \\
+\ \\
+\end{tabular} 
+\end{minipage}
+&
+\begin{minipage}{0.19\textwidth} 
+\underline{\bf $\Finalize(r')$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $r" = f \mod G$;\\
+\vline \px {\bf return} $r'= r"$;\\
+{\bf end}\\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{Game $\IRN_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$.}
+\label{fig.irn}
+\vspace{-6mm} \end{figure}
+\end{definition}
+In fact, the above two problems are equivalent as shown in the lemma below. Compared to the noise-free version, we no longer need the \IM adversary to be overwhelmingly successful, as there are  no restrictions on the number of calls that can be made to the $\Sample$ procedure. The proof is given in~\cite{full}. 
+\begin{lemma}
+The \IRN problem is hard iff the \GBN problem is hard. \label{lem:IRN=GBN}
+\end{lemma}
+
+Similarly to the noise-free setting, the ideal membership with noise (\IMN) problem is the decisional variant of the \IRN (and hence the \GBN) problem. However, in the noisy setting we have the choice between a noisy and noise-free challenge polynomial. In the definition below noisy challenges are provided and the adversary wins the game if he can distinguish whether an element was sampled uniformly from $P_{\leq b}$ or from $\I + \chi$. 
+\begin{definition}
+The ideal membership with noise problem is defined through the game 
+$\IMN_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$ as shown in Figure~\ref{fig.imn}.
+The advantage of a ppt algorithm $\A$ in solving the \IMN problem is as twice the probability of winning the game minus $1$.
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{llll}
+\begin{minipage}{0.25\textwidth}
+\underline{\bf $\Initialize(1^\secpar,\mathcal{P},d)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $P \sample \mathbf{P}_\secpar$; \\
+\vline \px $G \sample \GBGen{1^\secpar,P,d}$; \\
+\vline \px $c \sample \{ 0,1 \}$; \\
+\vline \px {\bf return} $(1^\secpar,P)$; \\
+{\bf end}\\
+\ \\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.18\textwidth}
+\underline{\bf $\Sample()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$; \\
+\vline \px $e \sample \chi$;\\
+\vline \px $f' \gets f \mod G$;\\
+\vline \px $f \gets f - f' +e$;\\
+\vline \px {\bf return} $f$; \\
+{\bf end}\\
+
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.28\textwidth}
+\underline{\bf $\Challenge()$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{\leq b}$;\\
+\vline \px {\bf if} $c=1$ {\bf then}\\
+\vline \px \px $e \sample \chi$;\\
+\vline \px \px $f \gets f - (f \mod G) + e$;\\
+\vline \px {\bf return} $f$;\\
+{\bf end}\\
+\end{tabular} 
+\end{minipage}
+&
+\begin{minipage}{0.20\textwidth} 
+\underline{\bf $\Finalize(c')$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px {\bf return} $(c'=c)$;\\
+{\bf end}\\
+\ \\
+\ \\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{Game $\IMN_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$.}
+\label{fig.imn}
+\vspace{-8mm} \end{figure}
+\end{definition}
+Our definition of the \IMN problem can be seen as an instantiation of Gentry's ideal coset problem~\cite{gentry09thesis} since both problems require distinguishing uniformly chosen elements in $P_{\leq b}$ from those in $\I + \chi$. Our problem, however, assumes noisy samples since it is clear from Section~\ref{sec:probs} that otherwise the problem is easy.
+
+Again, we would like to have a decision-to-search reduction; that is, we would like to have an equivalence between the \IRN and \IMN problems. This equivalence holds when the search space of remainders is polynomial in $\secpar$, namely when 
+$
+q(\secpar)^{\dim_{\F_q}(\mathcal{P}(\secpar)/\GBGen{\cdot)}}=\poly{\secpar}.
+$ 
+The intuition behind this reduction is that the adversary can exhaustively search the quotient ring and use the \IMN oracle to verify his guess. Once again, a technical difficulty arises as the adversary does not know the search space $P/\I$ and thus has to discover it during the attack. Again, the \IMN adversary provides an oracle to accomplish this. This is formalised in the lemma below whose proof is in~\cite{full}.
+\begin{lemma}
+The \IMN problem is hard iff the \IRN problem is hard for poly-sized $q^{\dim_{\F_q}(P/\ideal{G})}$.
+\label{lem:IMN=IRN}
+\end{lemma}
+Hence \GBN is equivalent to \IRN and \IRN is equivalent to \IMN under some additional assumptions about the size $P/\I$. Finally, for $d=1$ (but arbitrarily $b$) we show that if we can solve the \GBN problem on average, then we can also solve it for worst-case instances. This is turn increases our confidence in hardness of the \GBN problem. The proof of the follow lemma is given in~\cite{full}.
+\begin{lemma}
+If the \GBN problem is worst-case hard, then it is also average-case hard. 
+\end{lemma}
+
+\vspace{-4mm} \subsection{Hardness Assumptions and Justifications} \vspace{-2mm}
+\label{sec:noisy:hard}
+Let us now investigate the hardness of the \GBN, \IRN, and \IMN problems. 
+
+\heading{Relation to LWE}
+It is easy to see that \GBN can be considered as a non-linear generalisation of \LWE if $q={\rm poly}(n)$ is a prime. In other words, we have equivalence between these problems when $b = d = 1$ in \GBN. This is formalised below (proof is in~\cite{full}).
+
+\begin{lemma}
+If the \LWE problem is hard then the \GBN problem is also hard for $b=d=1$.
+\label{lem:GBN=LWE}
+\end{lemma}
+In the noise-free setting we assume that solving systems of equations of degree greater than $1$ is harder than solving those of degree $1$. More generally, we assume that equations of degree $b>b'$ are harder to solve than those of degree $b'$. Intuitively, equations of degree $b'$ can be seen as those of degree $b$ where the coefficients of higher degree monomials are set to zero. However, formalising this intuition for an adversary which expects uniformly distributed equations of degree $b$ seems futile since producing such equations is equivalent to solving the system by Theorem~\ref{theorem:gbeasy}.
+
+In the noisy setting this equivalence (i.e., Theorem~\ref{theorem:gbeasy}) between sampling and solving no longer holds. However, we still need to deal with the distribution of noise. One strategy to show that difficulty increases with the degree parameter $b$ is to allow for an increase of the noise level in the samples. We formalise this below (a proof is given in~\cite{full}). 
+\begin{lemma}
+If the \GBN problem is hard for degree $2b$ with noise $\chi_{\sqrt{N} \alpha^2q, q}$, $N = {n + b \choose b}$, then it is also hard for degree $b$ with noise $\chi_{\alpha, q}$. \label{lem:GBN-degrees}
+\end{lemma}
+
+
+\heading{Relation to the Approximate GCD Problem}
+The \GBN problem for $n=1$ is the approximate GCD problem over $\F_q[x]$. Contrary to the approximate GCD problem over the integers (cf.~\cite{DGHV10}), this problem has not yet received much attention, and hence it is unclear under which parameters it is hard. However, as we discuss in~\cite{full}, the notion of a Gröbner basis can be extended to $\Z[x_0,\dots,x_{n-1}]$, which in turn implies a version of the \GBN problem over $\Z$. This can be seen as a direct generalisation of the approximate GCD problem in $\Z$.
+
+\heading{The Case $q=2$} Recall that if $b=d=1$ we have an equivalence with the \LWE problem (or the well-known problem of learning parity with noise (\textsf{LPN}) if $q=2$). More generally, for $d=1$ we can reduce \textsf{Max-3SAT} instances to \GBN instances by translating each clause individually to a Boolean polynomial. However, in \textsf{Max-3SAT} the number of samples is bounded and hence this reduction only shows the hardness of \GBN with a bounded number of samples. Still, the Gröbner basis returned by an arbitrary algorithm $\A$ solving \GBN using a bounded number of samples will provide a solution to the \textsf{Max-3SAT} problem. Vice versa, we may convert a \GBN instance for $d=1$ to a \textsf{Max-SAT} instance (more precisely \textsf{Partial Max-Sat}) by running an ANF to CNF conversion algorithm~\cite{Bard2007a}.
+
+\heading{Known Attacks} Finally, we consider known attacks to understand the difficulty of the \GBN problem. Recall that if $b=1$ Lemma~\ref{lem:GBN=LWE} states that we can solve the \LWE problem if we can solve the \GBN problem. The converse also applies. Indeed, for any $b\geq d$ and $d=1$ the best known attack against the \GBN problem for $d=1$ is to reduce it to the \LWE problem, similarly to the linearisation technique used for solving non-linear systems of equations in the noise-free setting.
+Let $N = {n + b \choose b}$ be the number of monomials up to degree $b$. Let $\mathcal{M}: P \rightarrow \F_q^N$ be a function which maps polynomials in $P$ to vectors in $\F_q^N$ by assigning the $i$-th component of the image vector the coefficient of the $i$-th monomial $\in M_{\leq b}$. Then, in order to reduce \GBN with $n$ variables and degree $b$ to \LWE with $N$ variables, reply to each \LWE $\Sample$ query by calling the \GBN $\Sample$ oracle to retrieve $f$, compute $v = \mathcal{M}(f)$ and return $(a,b)$ with $a=(v_{N-1},\dots,v_{1})$ and $b=-v_0$. When the \LWE adversary queries $\Finalize$ on $s$, query the \GBN $\Finalize$ on $[x_0 - s_0,\dots,x_{n-1} - s_{n-1}]$. Correctness follows from the correctness of linearisation in the noise-free setting~\cite{Gr}. Furthermore, the \LWE problem in $N$ variables and with respect to the discrete Gaussian noise distribution $\chi_{\alpha,q}$ is considered to be hard if
+$
+\alpha \geq 3/2 \cdot \max ( \frac{1}{q}, 2^{-2\sqrt{N \log q \log d}} )
+$
+for an appropriate choice of $\delta$ which is the quality of the approximation for the shortest vector problem. 
+ With current lattice algorithms $\delta = 1.01$ is hard and $1.005$ infeasible~\cite{MR09}. 
+
+Perhaps the most interesting attack on \LWE from the perspective of this work is that due to Arora and Ge~\cite{Gr} which reduces the problem of solving linear systems with noise to the problem of solving (structured) non-linear noise-free systems. We may apply this technique directly to \GBN, i.e., without going to \LWE first, and reduce it to \GB with large $b$. However, it seems this approach does not improve the asymptotic complexity of the attack. Finally, certain conditions to rule out exhaustive search must be imposed.
+
+\begin{definition}
+Let $b,d \in\mathbb{N}$ with $b \geq d \geq 1$. Let $\mathcal{P}$ be a polynomial ring distribution and $\chi_{\alpha,q}$ be the discrete Gaussian distribution. Suppose the parameters $n$, $\alpha$, and $q$ (all being a function of $\secpar$) satisfy the following set of conditions: 1)~$n \geq \sqrt[b]{\secpar}$; 2)~$(\alpha q)^{nd^n} \approx 2^\secpar$ so exhaustive search over the noise or the secret key space is ruled out; 3)~$\alpha q \geq 8$ as suggested in~\cite{DBLP:conf/ctrsa/LindnerP11}; and 4)~for $N := {n + b \choose b}$, and $\delta := 1.005$ we have
+$\alpha \geq 3/2 \cdot \max \{ \frac{1}{q},2^{-2\sqrt{N \log q \log \delta }} \}$, and 
+hence the best known attacks against the \LWE problem are ruled out~\cite{MR09,cryptoeprint:2010:137}. 
+Then the advantage of any ppt algorithm in solving the \GBN, \IRN, and \IMN problems is negligible.
+\end{definition}
+
+
+\vspace{-4mm} \section{Polly Cracker with Noise} \vspace{-2mm} \label{sec:noisypollycracker}
+In this section we present a fully $\IND\mbox{-}\CPA$-secure PC-style symmetric encryption scheme.
+Our parameterised scheme, $\mathcal{SPCN}_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$, is shown in Figure~\ref{fig.spcn}. Here we represent elements in $\F_q$ as integers in the interval $(-\lfloor \frac{q}{2} \rfloor, \lfloor \frac{q}{2} \rfloor]$. This representation is also used in the definition of noise. All the computations are performed in the ring $P$ as generated by $\Gen$. Furthermore we assume that $\gcd(2,q)=1$. This condition is needed for the correctness and the security of our scheme. The message space is $\F_2$ (although we remark that this can be generalised to other small fields). Correctness of evaluation up to overflows can be established by a straight-forward calculation.
+
+\begin{figure}[ht]
+\framebox{
+\begin{scriptsize}
+\begin{tabular}{llll}
+\begin{minipage}{0.26\textwidth}
+\underline{\bf $\Gen_{\mathcal{P},\GBGen{\cdot},d,b,\chi}(1^\secpar)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $P \sample \mathbf{P}_\secpar$; \\
+\vline \px $G \sample \mathsf{GBGen}(1^\secpar,P,d)$; \\
+\vline \px $\SK \gets (G,P,b,\chi)$; \\
+\vline \px $\PK \gets (P,b,\chi)$; \\
+\vline \px {\bf return} $(\SK,\PK)$; \\
+{\bf end}\\
+\ \\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.19\textwidth}
+\underline{\bf $\Enc(m,\SK)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $f \sample P_{= b}$;\\
+\vline \px $f' \gets f \mod G$;\\
+\vline \px $f \gets f - f'$;\\
+\vline \px $e \sample \chi$; \\
+\vline \px $c \leftarrow f + 2e + m$; \\
+\vline \px {\bf return} $c$;\\
+{\bf end}\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.19\textwidth}
+\underline{\bf $\Dec(c,\SK)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px $m' \gets c \mod G$; \\
+\vline \px $m \gets m' \mod 2$; \\
+{\bf end}\\
+\ \\
+\ \\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}{0.27\textwidth}
+\underline{\bf $\Eval(c_0,\dots,c_{t-1},\Circt,\PK)$}: \\
+\begin{tabular}{l}
+{\bf begin}\\
+\vline \px apply $\textsf{Add}$ and $\textsf{Mul}$ gates\\
+\vline \px of $\Circt$ over $P$; \\
+\vline \px {\bf return} the result; \\
+{\bf end}\\
+\ \\
+\ \\
+\ \\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+\end{scriptsize}
+}
+\caption{The Symmetric Polly Cracker with Noise scheme $\mathcal{SPCN}_{\mathcal{P},\GBGen{\cdot},d,b,\chi}$.}
+\label{fig.spcn}
+\vspace{-6mm} \end{figure}
+
+\heading{Permitted Circuits} Circuits composed of \textsf{Add} and \textsf{Mul} gates can be seen as multivariate Boolean polynomials in $t$ variables over $\F_2$. We can consider the generalisation of this set of polynomials to $\F_q$ (i.e., the coefficients are in $\F_q$). In order to define the set of permitted circuits (which will be parameterised by $\alpha>0$) we first embed the Boolean polynomials into the ring of polynomials over $\Z$. For $\chi_{\alpha,q}$ we have that the probability of the noise being larger than $k\alpha q$ is $< \exp(-k^2/2)$. We now say that a circuit is valid if for any $(s_0,\ldots,s_{t-1})$ with $s_i \le t\alpha q$ we have that the outputs are less than $q$ for some parameter $t$. This restriction ensures that no overflows occur when polynomials are evaluated over $\F_q$. In~\cite{full} we discuss how to set $\alpha$ and $q$ in order to allow for evaluation of polynomials of some fixed degree $\mu$ and provide a Sage implementation~\cite{sage}.
+
+\heading{Compactness} Additions do not increase the size of the ciphertext, but they do increase the size of the error by at most one bit. Multiplications square the size of the ciphertext and the bit-size of the the noise by approximately $\log(5e_0e_1)$ bits. In~\cite{full} we also provide a discussion on how to trade ciphertext size with noise, an avenue which is investigated independently in~\cite{LWEhom}. The theorem below, which is proven in~\cite{full}, states the security properties of the above scheme. 
+\begin{theorem}
+\label{thm:spcn}
+If the $\IMN$ problem is hard, then the scheme in Figure~\ref{fig.spcn} is secure. 
+\end{theorem}
+
+The above theorem together with the recent results in~\cite{Ro10} which establish the equivalence of symmetric and asymmetric homomorphic encryption schemes leads to the first provably secure public-key encryption scheme from assumptions related to Gröbner bases for random systems. This provides a positive answer to the challenges raised by Barkee et al.~\cite{DBLP:journals/jsc/BarkeeCEMR94} (and later also by Gentry~\cite{gentry09thesis}). We note here that the transformation -- as briefly described in Section~\ref{sec:conv} -- only use the additive features of the scheme and does not require full homomorphicity. 
+
+\vspace{-3mm}
+\paragraph{Acknowledgments.} We would like to thank Carlos Cid for valuable feedback and discussions on this work. We would also like to thank Frederik Armknecht for helpful discussions on an earlier draft of this work. 
+
+\vspace{-3mm}
+\begin{thebibliography}{10}
+
+\bibitem{full}
+M.R. Albrecht, P. Farshim, J.-C. Faugère, and L. Perret.
+\newblock Polly Cracker, revisited.
+\newblock Cryptology ePrint Archive, Report 2011/289, 2011.
+
+\bibitem{ACPS09}
+B. Applebaum, D. Cash, C. Peikert, and A. Sahai.
+\newblock Fast cryptographic primitives and circular-secure encryption based on
+ hard learning problems.
+\newblock In {\em Advances in Cryptography - CRYPTO 2009}, vol. 5677 of {\em
+ LNCS}, pp. 595--618, Springer, 2009.
+
+\bibitem{Gr}
+S. Arora and R. Ge.
+\newblock New algorithms for learning in presence of errors.
+\newblock In {ICALP (1)},
+vol. 6755 of {\em LNCS}, pp. 403--415, Springer, 2011.
+
+\bibitem{Bard2007a}
+G.V. Bard, N.T. Courtois, and C. Jefferson.
+\newblock {E}fficient methods for conversion and solution of sparse
+ systems of low-degree multivariate polynomials over $\mathrm{GF}(2)$ via
+ {SAT}-solvers.
+\newblock Cryptology ePrint Archive, Report 2007/024, 2007.
+
+\bibitem{DBLP:journals/jsc/BarkeeCEMR94}
+B. Barkee, D.C. Can, J. Ecks, T. Moriarty, and R.F. Ree.
+\newblock Why you cannot even hope to use {G}r{ö}bner bases in public key
+ cryptography: An open letter to a scientist who failed and a challenge to
+ those who have not yet failed.
+\newblock {\em J. of Symbolic Computations}, 18(6):497--501, 1994.
+
+\bibitem{DBLP:journals/jsc/BerbainGP09}
+C. Berbain, H. Gilbert, and J. Patarin.
+\newblock {QUAD}: A multivariate stream cipher with provable security.
+\newblock {\em J. Symb. Comput.}, 44(12):1703--1723, 2009.
+
+\bibitem{LWEhom}
+Z. Brakerski and V. Vaikuntanathan.
+\newblock Efficient fully homomorphic encryption from (standard) LWE.
+\newblock To appear in FOCS 2011, 2011.
+
+\bibitem{Buchberger65}
+B. Buchberger.
+\newblock {\em Ein {A}lgorithmus zum {A}uffinden der {B}asiselemente des {R}estklassenrings nach einem nulldimensionalen {P}olynomideal}.
+\newblock PhD thesis, Universität Innsbruck, 1965.
+
+\bibitem{Caboara:2011:LPC:1950980.1951071}
+M. Caboara, F. Caruso, and C. Traverso.
+\newblock Lattice {P}olly {C}racker cryptosystems.
+\newblock {\em Journal of Symbolic Computation}, 46:534--549, May 2011.
+
+\bibitem{Cox2007}
+D. Cox, J. Little, and D. O'Shea.
+\newblock {\em {I}deals, {V}arieties, and {A}lgorithms}.
+\newblock Springer, 3rd ed., 2005.
+
+\bibitem{CS03}
+R. Cramer and V. Shoup.
+\newblock Design and analysis of practical public-key encryption schemes secure against adaptive chosen ciphertext attack.
+\newblock {\em SIAM J. of Computing}, pp. 167--226, 2003.
+
+\bibitem{DFGS91}
+A. Dickenstein, N. Fitchas, M. Giusti, and C. Sessa.
+\newblock The membership problem for unmixed polynomial ideals is solvable in single exponential time.
+\newblock {\em Discrete Appl. Math.}, 33(1-3):73--94, 1991.
+
+\bibitem{DGHV10}
+M.van Dijk, C. Gentry, S. Halevi, and V. Vaikuntanathan.
+\newblock Fully homomorphic encryption over the integers.
+\newblock In {\em Advances in Cryptology -- EUROCRYPT 2010}, 
+vol. 6110 of {\em LNCS}, pp. 24--43, Springer, 2010.
+
+\bibitem{DingYangSurvey}
+J. Ding and B.-Y. Yang.
+\newblock Multivariate public key cryptography.
+\newblock In {\em Post-Quantum Cryptography}, pp. 193--234, Springer, 2009.
+
+\bibitem{LdVMPT09}
+F.L. dit Vehel, M.G. Marinari, L. Perret, and C. Traverso.
+\newblock A survey on {P}olly {C}racker systems.
+\newblock In {\em Gröbner Bases. Coding and Cryptography}, pp. 285--305, Springer, 2009.
+
+\bibitem{FGLM}
+J.-C. Faug{\`e}re, P.M. Gianni, D. Lazard, and T. Mora.
+\newblock {E}fficient computation of zero-dimensional {G}r{ö}bner bases by change of ordering.
+\newblock In {\em Journal of Symbolic Computation 16}, pp. 329--344. Academic Press, 1993.
+
+\bibitem{Fellows&Koblitz:1994}
+M. Fellows and N. Koblitz.
+\newblock Combinatorial cryptosystems galore!
+\newblock In{\em Finite Fields: Theory, Applications, and Algorithms}, vol. 168 of {\em Contemporary Mathematics}, pp. 51--61. AMS, 1994.
+
+\bibitem{gentry09thesis}
+C. Gentry.
+\newblock {\em A fully homomorphic encryption scheme}.
+\newblock PhD thesis, Stanford University, 2009.
+
+\bibitem{Gen09}
+C. Gentry.
+\newblock Fully homomorphic encryption using ideal lattices.
+\newblock In {\em ACM symposium on Theory of computing}, pp. 169--178, 2009.
+
+\bibitem{GH10}
+C. Gentry and S. Halevi.
+\newblock Implementing {G}entry's fully-homomorphic encryption scheme.
+\newblock In {\em Advances in Cryptology –- EUROCRYPT 2010}, 
+vol. 6632 of {\em LNCS}, pp. 129-148, Springer, 2010. 
+
+\bibitem{DBLP:conf/vietcrypt/GougetP06}
+A. Gouget and J. Patarin.
+\newblock Probabilistic multivariate cryptography.
+\newblock In {\em Progress in Cryptology - VIETCRYPT 2006}, 
+vol. 4341 of {\em LNCS}, pp. 1--18, Springer, 2006.
+
+\bibitem{DBLP:conf/ctrsa/LindnerP11}
+R. Lindner and C. Peikert.
+\newblock Better key sizes (and attacks) for {LWE}-based encryption.
+\newblock In {\em CT-RSA 2011}, 
+vol. 6558 of {\em LNCS}, pp. 319--339, Springer, 2011.
+
+\bibitem{MelGH10}
+C.A. Melchor, P. Gaborit, and J. Herranz.
+\newblock Additively homomorphic encryption with $d$-operand multiplications.
+\newblock In {\em Advances in Cryptology -- {CRYPTO} 2010}, 
+vol. 6223 of {\em LNCS}, pp. 138--154, Springer, 2010. 
+
+\bibitem{MR09}
+D. Micciancio and O. Regev.
+\newblock Lattice-based cryptography.
+\newblock In {\em Post-Quantum Cryptography}, pp. 147--191, Springer, 2009.
+
+\bibitem{regev:lwe}
+O. Regev.
+\newblock On lattices, learning with errors, random linear codes, and cryptography.
+\newblock {\em Journal of the ACM}, 56:34:1--34:40, September 2009.
+
+\bibitem{lwesurvey}
+O. Regev.
+\newblock The learning with errors problem.
+\newblock In {\em IEEE Conference on Computational Complexity 2010}, pages 191--204, 2010.
+
+\bibitem{Ro10}
+R. Rothblum.
+\newblock Homomorphic encryption: from private-key to public-key.
+\newblock In {\em Theory of Cryptography -- TCC 2011}, 
+vol. 6597 of {\em LNCS}, pp. 219--234, Springer, 2011. 
+
+\bibitem{cryptoeprint:2010:137}
+M. Rückert and M. Schneider.
+\newblock Estimating the security of lattice-based cryptosystems.
+\newblock Cryptology ePrint Archive, Report 2010/137, 2010.
+
+\bibitem{SV10}
+N.P. Smart and F. Vercauteren.
+\newblock Fully homomorphic encryption with relatively small key and ciphertext sizes.
+\newblock In {\em Public Key Cryptography -- PKC 2010}, 
+vol. 6056 of {\em LNCS}, pp. 420--443, Springer, 2010. 
+
+\bibitem{sage}
+W.A. Stein et~al.
+\newblock {\em {S}age {M}athematics {S}oftware}.
+\newblock The Sage~Development Team (Version 4.7.0), 2011.
+\newblock Available at \url{http://www.sagemath.org}.
+\end{thebibliography}
+
+\end{document}
