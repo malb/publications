@@ -1,0 +1,103 @@
+In this section we discuss the relation between MXL$_3$ and $F_4$.  It was shown in \cite{DBLP:conf/asiacrypt/ArsFIKS04} that XL can be understood as a redundant variant of $F_4$ (cf.\ Lemma~\ref{lem:xl}).  Thus, we know that the ``framework'' of MXL$_3$ is compatible with $F_4$. In particular, we know that in each iteration of the main loop XL will not compute any non-redundant polynomials not computed by $F_4$. Thus in order to study the connection between the two algorithms, we only have to consider the modifications made in MXL$_3$ compared to XL. That is, we consider each of these modifications independently and argue that these still perform the same useful computations as the $F_4$ algorithm.
+
+\subsection{Mutants}
+The most visible change to XL in MXL$_3$ is the special treatment given to mutants, i.e.\ when $Mu\neq\varnothing$. That is, instead of increasing the degree $d$ in each iteration, if there is a fall of degree, 
+then these new elements are treated at the current or perhaps a smaller degree before the algorithm proceeds to increase the degree as normally. Thus, compared to XL, the MXL family of algorithms may terminate at a lower degree. 
+
+On the other hand, the $F_4$ algorithm does not specify how to choose polynomials in each iteration of the main loop. Instead, the user passes a function \textsc{Sel} which specifies how to select
+pairs of polynomials. 
+However, in \cite{F4} it is suggested to choose the normal selection strategy \cite[p. 225]{Becker1991} for most inputs. We recall here how the normal strategy has been adopted in $F_4$.   
+
+\begin{definition}[Normal Strategy]
+Let $F=\{f_0,\dots,f_{m-1} \}$.
+We shall say that a pair $(f_i,f_j) \in F \times F$ with $f_i \ne f_j$ is a critical pair. Let then $\mathcal{P} \subset F \times F $ be the set of critical pairs. We denote by $\LCM{p_{ij}}$ the least common multiple of the leading monomials of the critical pair $p_{ij} = (f_i,f_j) \in \mathcal{P}$. We also call $\deg(\LCM{p_{ij}})$ the degree of the critical pair $p_{ij}$. Further, let $$d = \min\{\deg(\LCM{p}) \mid  p \in \mathcal{P}\}$$ be the minimal degree of those least common multiples of $p$ in $\mathcal{P}$. Then the normal selection strategy selects the subset 
+$$
+\mathcal{P}' = \{ p \in \mathcal{P} \mid \deg(\LCM{p})=d\}.
+$$
+\end{definition}
+
+We can now state our main result.
+\begin{theorem}
+\label{theorem:main}
+Let both MXL$_3$ and $F_4$ compute a Gr\"obner basis with respect to the same degree compatible ordering on the same input. Assume that until iteration $i$ (inclusive) of the main loop both $F_4$ and MXL$_3$ computed the same list of polynomials except for redundant polynomials, i.e., the leading monomials appearing in $F_4$ divide the leading monomials appearing in MXL$_3$. Furthermore, assume that $Mu \neq \varnothing$ in Algorithm~\ref{alg:mutantxl3} at line \ref{mxl3:mutants_found} and define $k$ to be the minimal degree of a polynomial in $Mu$. The set of polynomials $F_{\leq k+1}$ considered by MXL$_3$ in the next iteration of the main loop is a {\it superset} of the polynomials considered by $F_4$ when using the \emph{Normal Selection Strategy} in the next iteration $i+1$. Furthermore, every polynomial in $F_{\leq k+1}$ not in the set considered by $F_4$ is {\it redundant} in this iteration.
+\end{theorem}
+
+\begin{proof}
+We note that it follows from Corollary~\ref{corollary:iteration} that the first assumption of the theorem will be satisfied while $Mu = \varnothing$. Now assume we have $Mu \neq \varnothing$.
+First consider the $F_4$ algorithm, and let \textsc{Sel} be the Normal Selection Strategy. Then, the set $\mathcal{P}_{i+1}$ will contain the S-polynomials of lowest degree in $\mathcal{P}$. Every S-polynomial in $\mathcal{P}_{i+1}$ will have at least degree $k+1$, since the set $Mu_{=k}$ is in row echelon form and $k$ is the minimal degree in $Mu$. If there exists an S-poly\-nomial of degree $k+1$ then it is of the form $t_i f_i - t_j f_j$ with $\deg(t_i f_i) = k+1$ and $\deg(t_j f_j) = k+1$, where at least one of $t_i,t_j$ has degree 1. MXL$_3$, on the other hand, constructs all multiples $t_{ij} f_i$ with $\deg(t_{ij}) = 1$ if $\deg(f_i) = k$. Furthermore, it considers all elements of degree $k+1$ in the next iteration which covers the case that one of $t_i,t_j$ is $1$.  Hence, both components of the S-polynomial are included in $F_{\leq k+1}$.
+
+In the \emph{Symbolic Preprocessing} phase $F_4$ also constructs all components of \emph{potential} S-polynomials that could arise during the elimination. These are always of the form $f_i - t_jf_j$ where $\deg(f_i) = \deg(t_jf_j)$. Since MXL$_3$ considers all monomial multiplies of all $f_j$ up to degree $k+1$ in the next iteration, these components are also included in the set $F_{k+1}$.
+
+Recall from Corollary~\ref{corollary:cancel_general} that all $f = \Sigma^{t-1}_{i=0} c_ix^{\alpha(i)}f_i$ can be rewritten as $$f = \sum_{j=0}^{t-2} b_{j}x^{\delta-\tau_{j}}S(f_j,f_{j+1})$$ if $f < \max\{x^{\alpha(i)}f_i\}$. Note that $\deg(x^\delta) \leq k+1$ for $F_{\leq k+1}$ and that $\deg(x^{\tau_{j}}) = k + 1$ for all S-polynomials contained in $F_{\leq k+1}$. It follows that $\deg(x^{\delta - \tau_{j}}) = 0$ if $b_{j} \neq 0$. That is, any $f$ with a smaller leading term than its representation $\Sigma^{t-1}_{i=0} c_ix^{\alpha(i)}f_i$ can be computed by an $\F$-linear combination of S-polynomials: $f = \sum_{j=0}^{t-2} b_{j}S(f_j,f_{j+1})$.
+
+It follows immediately from Corollary~\ref{corollary:cancel_general} that any multiple of $f_i$ which does not correspond to an S-polynomial is redundant in this iteration since it cannot lead to a drop of a leading monomial. \qed
+\end{proof}
+
+For the MXL algorithm, which only differs from XL when $Mu \neq\varnothing$, the following corollary is a direct consequence of Theorem~\ref{theorem:main} and Corollary~\ref{corollary:iteration}.
+
+\begin{corollary}
+MXL can be simulated using  $F_4$  (described in Algorithm~\ref{alg:f4}) by adding redundant pairs and using the \emph{Normal Selection Strategy}.
+\end{corollary}
+
+We note however that the MXL$_3$ algorithm may improve upon MXL when $Mu = \varnothing$ by using a ``partial enlargement'' strategy, which we discuss below.
+
+\subsection{Partial Enlargement}
+\label{sec:partion}
+The ``partial enlargement'' technique was introduced in MXL$_2$ and is also applied in MXL$_3$. Instead of multiplying every polynomial $f_i \in F$ by all variables $x_0,\ldots,x_{n-1}$ only a subset $\LV{F,x}$ is considered. This subset is increased in each iteration by increasing $x$. In the language of linear algebra, the algorithm first computes the row echelon form of a submatrix in the lower right corner. If that does not suffice to produce elements of smaller degree, a larger submatrix is considered.
+
+This corresponds to selecting a subset of S-polynomials with small least common multiple in $\textsc{Sel}$ instead of selecting all polynomials of minimal degree. We note that both the \textsc{PolyBoRi} package \cite{polybori} and \textsc{Magma} computer algebra system \cite{magma} accept an option to restrict the number of S-polynomials considered in each iteration. However, the strategy for how the number of S-polynomials is chosen in \textsc{Magma} and \textsc{PolyBoRi} is different from MXL$_3$. In the former ones, a \emph{constant} number of S-polynomials is chosen as specified by the user; in the latter (MXL$_3$) a 
+\emph{changeable} number of S-polynomials is chosen based on the partition by leading variable. The strategy employed in MXL$_3$ will consider S-polynomials $S(f,g)$ where both $f$ and $g$ have leading variable at most $x$ (inclusive). That is, if there is an S-polynomial $S(f,g) = t_f\cdot f - t_g\cdot  g$ with $\LV{f} < \LV{g}$, MXL$_3$ will construct $t_f \cdot f$ when considering $\LV{F,\LV{f}}$ and $t_g \cdot g$ when considering $\LV{F, \LV{g}}$. Since $F_{\leq d}$ contains all elements of degree at most $d$, both components are included in the matrix when $\LV{F,\LV{g}}$ are considered. 
+
+It is currently not clear which strategy for selecting subsets of S-polynomials is beneficial under which conditions. It should be noted however that if the size of the matrix is the main concern then selecting exactly the smallest S-polynomial in each iteration would be optimal; just as Buchberger's algorithm does. On the other hand, the contribution of algorithms such as $F_4$ is to improve performance by considering more than one S-polynomial in each iteration. Thus, it is not certain that using matrix sizes as a main measure of comparison gives an adequate picture of the performance of these algorithms.
+
+\subsection{Termination Criterion} \label{sec:termination}
+The key contribution of the MXL$_3$ algorithm is the introduction of a new criterion to detect when a Gr\"obner basis is found. Since the MXL family does not use the concept of critical pairs, standard termination criteria such as an empty list of pairs are not immediately applicable. In Lemma~\ref{lem:terminate} we give an equivalent variant  of this criterion, rephrased  to be more suitable for our discussion. 
+\begin{lemma}[Proposition 3 in \cite{mxl3}] \label{lem:terminate}
+Let $G=\{g_0,\ldots, g_{s-1}\}$ be a finite subset of $\FX$ with $D$ being the highest degree of its elements. Suppose that the following hold:
+\begin{enumerate}
+ \item all monomials of degree $D$ in $\FX$ are divisible by a leading monomial of some $g_i \in G$; and
+ \item if $H = G \cup \{t \cdot g_i \mid g_i \in G, t \textnormal{ a monomial and } \deg(t \cdot g_i) \leq D + 1\}$, there exists $\tilde{H}$ -- a row echelon form of $H$ -- such that $\LM{\tilde{H}_{\leq D}} \subset \ideal{\LM{G}}$.
+\end{enumerate}
+Then $G$ is a Gr\"obner basis.
+\end{lemma}
+Note that condition 1 implies that the ideal generated by $G$ is 0-dimensional.
+
+The MXL$_3$ algorithm uses a termination criterion based on Lemma~\ref{lem:terminate} and thus will consider matrices up to degree $D+1$ (where $D$ is defined as in Lemma~\ref{lem:terminate}). The $F_4$ algorithm, on the other hand, will terminate once the list of critical pairs is empty. It is obvious that no new pairs will be created after the Gr\"obner basis is found, since all reductions will lead 
+to zero in this situation. However, if we consider $F_4$ as given in Algorithm~\ref{alg:f4}, one can see that the algorithm may consider pairs of degree $>D+1$ after a Gr\"obner basis is discovered, if those pairs were constructed before the Gr\"obner basis is found. Put differently, the simplified $F_4$ variant considered in this work does not prune the list of critical pairs based on the current basis $G$. However, the {\em full} $F_4$ algorithm as specified in \cite[p. 69]{F4} does indeed prune the list $P$ by calling a subroutine called \textsc{Update}. In \cite{F4} a reference to \cite[p. 230]{Becker1991} is made -- which applies Buchberger's first and second criteria using the Gebauer-M\"oller installation -- as an example of such a routine. 
+
+The question thus becomes whether Buchberger's first and/or second criterion will remove all pairs of degree $>D+1$ if the conditions (1) and (2) of Lemma~\ref{lem:terminate} hold. An algorithmic variant of Buchberger's second criterion is given in the Lemma below.
+\begin{lemma}[Buchberger's second criterion]
+Let $p, g_1,g_2 \in  \FX$  be
+such that $$\LM{p} \mid  \LCM{ \LM{g_1}, \LM{g_2}}.$$ and $S(g_1, p)$, $S(g_2,p)$ have already been considered. Then $S(g_1, g_2)$ does not need to be considered and can be discarded.
+\end{lemma}
+We can now prove that the full $F_4$ algorithm will not consider pairs of higher degree than the MXL$_3$ 
+when applying Buchberger's second criterion.
+\begin{proposition}
+We assume a degree compatible ordering on $\FX$.
+If during a Gr\"obner basis computation using the full $F_4$ algorithm 
+conditions (1) and (2) of Lemma~\ref{lem:terminate} hold, then Buchberger's second criterion will remove any pair of degree $> D+1$ from the list of critical pairs. As a result $F_4$ will consider critical pairs of degree at most $D+1$.
+\end{proposition}
+Our proof follows very closely the original proof of Lemma~\ref{lem:terminate} in \cite{mxl3}.
+\begin{proof}
+Let $G=\{g_0,\ldots, g_{s-1}\}$ be a finite subset of $\FX$ with $D$ being the highest degree of its elements such that: 
+\begin{enumerate}
+ \item all monomials of degree $D$ in $\FX$ are divisible by a leading monomial of some $g_i \in G$; and
+ \item if $H = G \cup \{t \cdot g_i \mid g_i \in G, t \textnormal{ a monomial and } \deg(t \cdot g_i) \leq D + 1\}$, there exists $\tilde{H}$ -- a row echelon form of $H$ -- such that $\LM{\tilde{H}_{\leq D}} \subset \ideal{\LM{G}}$.
+\end{enumerate}
+We denote the S-polynomial $S(g_i,g_j)$ by $f$, and let $d={\rm deg}(f)$. We only have to consider pairs of degree $d>D+1$. 
+
+To do so, let $m=\LCM{\LM{g_i}, \LM{g_j}}$. There exist monomials $m_i, m_j$ such that $m = m_i \cdot \LM{g_i} = m_j \cdot \LM{g_j}$. 
+It is clear that $\textsc{GCD}(m_i,m_j) = 1$.
+
+By assumption ${\rm deg}(g_i)$ and ${\rm deg}(g_j)$ are at most equal to $D$. This implies that ${\rm deg}(m_j) \geq 2$ (resp. ${\rm deg}(m_j) \geq 2$)
+since $d>D+1$. It is then possible to write $m_i=m_{i,1}\cdot m_{i,2}$ such that  ${\rm deg}(g_i) +{\rm deg}(m_{i,2})=D+1$ 
+and  ${\rm deg}(m_{i,1}) \geq 1$.
+A similar decomposition can be found for $m_j=m_{j,1}\cdot m_{j,2}$.         
+Thus, we have that all monomials $m_{i,1}, m_{i,2}, m_{j,1}\cdot m_{j,2}$ are of degree $\geq 1$. 
+
+Now, let $m^*= \frac{m}{m_{i,1}\cdot m_{j,1}}$. By construction, we have $$\LCM{m^*, \LM{g_i}}=m/m_{i,1} \textnormal{ (resp. } \LCM{m^*, \LM{g_j}}=m/m_{j,1}\textnormal{)},$$ which divides $m$ properly.  
+We also have ${\rm deg}(m^*) \leq D$. Since $m_1$ and $m_2$ must be distinct, we have that $m^*$ cannot be equal to either $\LM{g_i}$ or $\LM{g_j}$. By condition $1$, there exists $g \in G \setminus \{g_1, g_2 \}$ such that  with $\LM{g}= m^*$.  In addition $$\deg(\LCM{\LM{g}, \LM{g_i}} < \deg(m)$$ and $\deg(\LCM{\LM{g}, \LM{g_j}} < \deg(m).$ Thus, $S(g,g_i)$ and $S(g,g_j)$ are being considered at a lower degree than $D+1$.
+
+Finally, $m^*$ divides $m=\LCM{\LM{g_i}, \LM{g_j}}$ by construction. It then follows from Buchberger's second criterion  that $f=S(g_i,g_j)$ does not need to be considered and is discarded.
+\qed
+\end{proof}

@@ -1,0 +1,45 @@
+In this section we briefly recall the well-known XL algorithm.
+An iterative variant of the algorithm is given in Algorithm~\ref{alg:xl}. We adopt the notation from \cite{mxl3} and,
+given a set of polynomials $S$, we denote by $S_{(op)d}$ the subset of $S$ with elements of degree $(op)d$ where $(op) \in \{=,<,\leq,>,\geq\}$.
+
+\begin{algorithm}
+\KwIn{$F$ -- a tuple of polynomials}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a $D$-Gröbner basis for $F$} 
+\SetKw{KwContinue}{continue}
+\Begin{
+$G \longleftarrow \varnothing$\;
+\For{$1 \leq d \leq D$}{
+  $F_{=d} \longleftarrow \varnothing$\;
+  
+  \For{$f \in F$}{
+    \uIf{$\deg(f) = d$}{add $f$ to $F_{=d}$\;}
+    \ElseIf{$\deg(f) < d$}{
+      $M_{=d-\deg(f)} \longleftarrow$ all monomials of degree $d-\deg(f)$\;
+      \For{$m \in M_{=d-\deg(f)}$}{
+        add $m\cdot f$ to $F_{=d}$\;
+      }
+    }
+  }
+  $G \longleftarrow$ the row echelon form (of the matrix) of $G\ \cup F_{=d}$\;
+ }
+\Return{$G$}
+}
+\caption{XL \label{alg:xl}}
+\end{algorithm}
+
+It was shown in \cite{DBLP:conf/asiacrypt/ArsFIKS04} that the XL algorithm can be emulated using the $F_4$ algorithm.
+In particular, \cite{DBLP:conf/asiacrypt/ArsFIKS04} proves that:
+\begin{lemma}
+\label{lem:xl}
+XL (described in Algorithm~\ref{alg:xl}) can be simulated using  $F_4$  (described in Algorithm~\ref{alg:f4}) by adding redundant pairs.
+\end{lemma}
+
+\noindent
+A simple corollary of this result is that the following holds when both algorithms only compute up to a fixed degree $D$.
+\begin{corollary}
+\label{corollary:iteration}
+Let $G_{XL,D}$ be the set of polynomials computed by the XL algorithm up to degree $D$.
+Then  $\forall g \in G_{XL,D}$, there exists $f \in G_{F4,D}$ with $\LM{f} \mid \LM{g}$,  where $G_{F4,D}$ is the set of polynomials computed by the $F_4$ algorithm up to degree $D$.
+\end{corollary}
+

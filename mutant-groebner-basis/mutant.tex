@@ -1,0 +1,163 @@
+\documentclass[preprint,draft]{elsarticle}
+
+\hyphenation{Mu-tant-XL}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath,amssymb}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{mathptmx}
+
+\usepackage[normalem]{ulem}
+
+\usepackage[vlined,linesnumbered]{algorithm2e}
+
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\replace}[2]{\sout{#1} {#2}}
+
+\newcommand{\NN}{{\mathbb N}}
+\newcommand{\ZZ}{{\mathbb Z}}
+\newcommand{\QQ}{{\mathbb Q}}
+\newcommand{\RR}{{\mathbb R}}
+\newcommand{\CC}{{\mathbb C}}
+\newcommand{\F}{{\mathbb F}}
+\newcommand{\ie}{\textit{i.e.},\xspace}
+\newcommand{\f}{\mathbf{f}}
+\newcommand{\PK}{\mathbf{g}}
+\newcommand{\HM}{{\rm HM}}
+
+\newcommand{\sig}[1]{\textnormal{sig}(#1)\xspace}
+\newcommand{\e}{\textbf{e}}
+\newcommand{\LV}[1]{\ensuremath{\textsc{LV}(#1)\xspace}}
+\newcommand{\LT}[1]{\ensuremath{\textsc{LT}(#1)\xspace}}
+\newcommand{\LM}[1]{\ensuremath{\textsc{LM}(#1)\xspace}}
+\newcommand{\LC}[1]{\ensuremath{\textsc{LC}(#1)\xspace}}
+\newcommand{\LCM}[1]{\ensuremath{\textsc{LCM}(#1)\xspace}}
+
+\newcommand{\GLn}{GL_{n}(\F)}
+\newcommand{\GLu}{GL_{u}(\F)}
+\newcommand{\Sn}{{\mathcal S}_n}
+
+\newcommand{\FX}{\ensuremath{{{\F}[x_0,\ldots,x_{n-1}]}}}
+\newcommand{\sys}{\ensuremath{f_0,\ldots,f_{m-1}}\xspace}
+\newcommand{\ideal}[1]{\ensuremath{\langle #1\rangle}}
+
+\newcommand{\malbnote}[1]{\red{malb: #1}}
+\newcommand{\lpnote}[1]{\red{Ludovic: #1}}
+\newcommand{\jcfnote}[1]{\red{JCF: #1}}
+\newcommand{\ccnote}[1]{\red{Carlos: #1}}
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newdefinition{definition}{Definition}
+\newdefinition{example}{Example}
+\newproof{proof}{Proof}
+\newtheorem{corollary}{Corollary}
+
+
+\begin{document}
+
+\title{On the relation between the MXL family of algorithms and Gr\"obner basis algorithms}
+\author[lip6]{Martin R.~Albrecht}
+\ead{malb@lip6.fr}
+\author[rhul]{Carlos Cid} 
+\ead{carlos.cid@rhul.ac.uk}
+\author[lip6]{Jean-Charles Faug\`ere}
+\ead{jean-charles.faugere@inria.fr}
+\author[lip6]{Ludovic Perret}
+\ead{ludovic.perret@lip6.fr}
+
+\address[lip6]{
+INRIA, Paris-Rocquencourt Center, POLSYS Project\\
+UPMC Univ Paris 06, UMR 7606, LIP6, F-75005, Paris, France\\
+CNRS, UMR 7606, LIP6, F-75005, Paris, France\\
+}
+\address[rhul]{Information Security Group, Royal Holloway, University of London, UK}
+
+
+\begin{abstract}
+The computation of Gr\"obner bases remains one of the most powerful methods for tackling the Polynomial System Solving (PoSSo) problem. 
+The most efficient known algorithms reduce the Gr\"obner basis computation to Gaussian
+eliminations on several matrices. However, several degrees of freedom are available to generate these matrices. It is well known that the particular strategies used can drastically affect the efficiency of the computations. 
+In this work we investigate a recently-proposed strategy, the so-called {\it ``Mutant strategy"}, on which a new family of algorithms is based (MXL, MXL$_2$ and MXL$_3$).  By studying and describing the algorithms based on Gr\"obner basis concepts,
+we demonstrate that the Mutant strategy can be understood to be equivalent to the classical Normal Selection strategy currently used in Gr\"obner basis algorithms.  Furthermore, we show that the ``partial enlargement'' technique can be understood as a strategy for restricting the number of S-polynomials considered in an iteration of the $F_4$ Gr\"obner basis algorithm,
+while the new termination criterion used in MXL$_3$ does not lead to termination at a lower degree than the classical 
+Gebauer-M\"oller installation of Buchberger's criteria.
+We claim that our results map all novel concepts from the MXL family of algorithms to their well-known Gr\"obner basis equivalents. 
+Using previous results that had shown the relation between the original XL algorithm and $F_4$, we conclude that  the MXL family of algorithms can be fundamentally reduced to redundant variants of $F_4$.
+\end{abstract}
+
+\begin{keyword}
+Gr\"obner bases, polynomial system solving, mutants.
+\end{keyword}
+\maketitle 
+
+\section{Introduction} \label{sec:intro}
+\input{intro.tex}
+
+\section{The XL Algorithm} \label{sec:xl}
+\input{xl.tex}
+
+\section{Gr\"obner Bases Basics} \label{sec:gb}
+\input{generality.tex}
+
+\section{Mutants and MXL algorithms} \label{sec:mutants}    
+\input{algo.tex}
+
+\section{Relationship between the MXL Algorithms and $F_4$} \label{sec:relation}
+\input{relation.tex}
+
+\section{Conclusion}
+\label{sec:conclusion}
+In this work we have studied the MXL family of algorithms, and their connections to Gr\"obner bases theory. We demonstrated that the mutant strategy as used in the MXL algorithms is in fact a 
+redundant variant of the Normal Selection Strategy. 
+Furthermore, we showed that the partial enlargement strategy proposed in \cite{mxl2} corresponds to selecting a subset of S-polynomials of minimal degree in each iteration of algorithms such as $F_4$. 
+As a result, we conclude that both the MXL and MXL$_2$ algorithms can be seen as redundant variants of the $F_4$ algorithm, although the latter may select critical pairs differently from usual $F_4$ implementations. Finally, we studied the novel termination criterion proposed in \cite{mxl3} and concluded that it does not allow the algorithm to terminate at a lower degree than $F_4$. Consequently, we conclude that MXL$_3$ too can be understood as a redundant variant of the $F_4$ algorithm. However, here too we emphasise that it might selects S-polynomials differently from standard $F_4$ implementations due to the partial enlargement strategy.
+
+We conclude with a brief discussion on what we view as the limitations of using running times as the basis for comparison between Gr\"obner basis {\it algorithms}. Linear algebra-based Gr\"obner bases algorithms allow several degrees of freedom to the designer and implementer of the algorithm to generate the matrices, and selection of strategies can drastically affect the efficiency of the computations. Furthermore, the specific implementation details and sub-algorithms used in the implementation (e.g., the package used for performing the Gaussian reductions, the internal representation of sparse matrices, etc.) will also have great effect on running times and memory requirements (cf., \ref{app:timings} for an example).
+
+In fact, we claim that three almost-independent aspects will affect running times of such algorithms: the mathematical details of the algorithm itself, the strategies and heuristics used in the implementation, and the
+low-level implementation details. The first aspect was the main focus of interest in this paper, but it should be clear that 
+our results do not preclude that particular {\it implementations} of MutantXL algorithms can outperform particular {\it implementations} of $F_4/F_5$ in some situations. On the other hand, we are aware that it is difficult to compare the complexity of Gr\"obner basis algorithms and strategies and that designers often have little choice but to resort to experimental data to demonstrate the viability of their approach.
+
+\section{Acknowledgements}
+The work described in this paper has been supported by the Royal Society grant JP090728 and by the Commission of the European
+Communities through the ICT program under contract ICT-2007-216676 (ECRYPT-II). Martin R. Albrecht,
+Jean-Charles Faugere, and Ludovic Perret are also supported by the French ANR under the Computer Algebra
+and Cryptography (CAC) project (ANR-09-JCJCJ-0064-01) and the EXACTA project (ANR-09-BLAN-0371-01).
+We would like to thank Stanislav Bulygin, Jintai Ding and Mohamed Saied Emam Mohamed for helpful comments and discusssions on earlier drafts of this work.
+
+\clearpage
+
+\bibliographystyle{elsart-harv}
+\bibliography{mutant}
+
+\clearpage
+\appendix
+
+\section{Effect of Linear Algebra Implementations on Gr{\"o}bner Basis Computations}
+\label{app:timings}
+To show the effect of the linear algebra implementation, we compare two implementations of the $F_4$ algorithm. The only difference is the linear algebra package used to perform the Gaussian elimination step. We compare the original FGb implementation with the new linear algebra package described in~\cite{FL10b}. However, to make the comparison fair we only use a sequential version of the package described in~\cite{FL10b}. To compare, we consider the  reduction  of the $7$th matrix occurring in the computation of a Gr\"obner basis of the standard benchmark Katsura $12$ over $\F_{65521}$, as well as the full Gr\"obner basis computation.  Typically, it takes 326.1 sec and 250 Mbytes to reduce the $7$th matrix with FGb and $83.7$ seconds and $682$ Mbytes using FGb with the library from \cite{FL10b}.
+\begin{table}[ht]
+\begin{center}
+\begin{scriptsize}
+\caption{Algorithm: F4 -- Katsura $14$ over $\F_{65521}$.}
+  \begin{tabular}{lcc}
+    \hline
+                        &       Matrix 7 ($21,915 \times 23,127$)       &  Full Gr\"obner basis \\
+FGb/CPU         &               83 s.           &       326 s. \\
+FGb/Memory              &               250 Mbytes              &       262 Mbytes\\
+FGb/Pasco/CPU  \cite{FL10b} (1 core) &          32 s.   &               151 s.\\
+FGb/Pasco/Memory \cite{FL10b}                     &     682 Mbytes        &              682 Mbytes\\
+    \hline
+\end{tabular}
+\end{scriptsize}
+\end{center}
+\end{table}
+
+
+\end{document}

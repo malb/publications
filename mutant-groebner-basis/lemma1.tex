@@ -1,0 +1,41 @@
+\begin{lemma} \label{lemma:cancel}
+Let $f_0,\ldots,f_{t-1}$ be nonzero polynomials in $R$. 
+Given a monomial $x^{\delta}$ such that $\LM{f_i} \mid x^{\delta}$ for all $i=0,\ldots,t-1$, let $x^{\alpha(0)}$, $\ldots$,  $x^{\alpha(t-1)}$ be monomials in $R$ such that \(x^{\alpha(i)}\,\LM{f_{i}}=x^{\delta}\) for all \(i\).
+We consider the sum \(f = \Sigma^{t-1}_{i=0} c_ix^{\alpha(i)}f_i\), where \(c_{0},\ldots,c_{t-1}\in \mathbb{F}\backslash\{0\}\). If \(\LM{f}<x^{\delta}\), then there exist constants $b_{j} \in \F$ such that
+\begin{eqnarray} \label{wegheben} 
+f=\sum^{t-1}_{i=0} c_ix^{\alpha(i)}f_i\ &=&\ \sum^{t-2}_{j=0}  b_{j}x^{\delta-\tau_{j}}\, S(f_{j},f_{j+1}),
+\end{eqnarray}
+where \(x^{\tau_{j}} = \LCM{\LM{f_{j}},\LM{f_{j+1}}}\). Furthermore
+$$
+x^{\delta-\tau_{j}}S(f_{j},f_{j+1}) < x^\delta, \mbox{ for all } j=0,\ldots,t-2.
+$$
+\end{lemma}
+\begin{proof}
+Let $d_i = \LC{f_i}$. It follows that $c_id_i$ is the leading coefficient of $c_ix^{\alpha(i)}f_i$.  Furthermore, let $p_i = \frac{x^{\alpha(i)}f_i}{d_i}$ and thus $\LC{p_i} = 1$. Consider the ``telescope sum'':
+\begin{eqnarray*}
+f &=&\sum^{t-1}_{i=0} \ c_ix^{\alpha(i)}f_i=\sum^{t-1}_{i=0}\ c_i d_i\dfrac{x^{\alpha(i)}f_i}{d_i}=\sum^{t-1}_{i=0}\ c_id_ip_i\\
+&=&\sum^{t-1}_{i=0}\left( \sum_{j=0}^{i}c_{j}d_{j} - \sum_{j=0}^{i-1}c_{j}d_{j} \right)\, p_{i}\\
+&=&\sum^{t-1}_{i=0} \sum_{j=0}^{i}c_{j}d_{j}p_{i} -\sum^{t-2}_{i=-1} \sum_{j=0}^{i}c_{j}d_{j} \, p_{i+1}\\
+&=&\sum_{j=0}^{t-1}c_{j}d_{j}p_{t-1}+\sum^{t-2}_{i=0} \sum_{j=0}^{i}c_{j}d_{j}(p_{i} - p_{i+1}).\\
+\end{eqnarray*}
+All $c_ix^{\alpha(i)}f_i$ have $x^\delta$ as leading monomial. Since their sum has smaller leading monomial, we have that 
+$\Sigma^{t-1}_{i=0}c_id_i = 0$, leading to:
+\begin{eqnarray} \label{teleskop}
+f = \sum^{t-2}_{i=0} \sum_{j=0}^{i}c_{j}d_{j}(p_{i} - p_{i+1}).
+\end{eqnarray}
+By assumption  \(x^{\alpha(i)}\,\LM{f_{i}}=x^{\delta}\) for all \(i=0,\ldots,t-1\), and we have:
+\begin{eqnarray*}
+x^{\delta - \tau_{j}}S(f_j,f_{j+1}) &=& x^{\delta - \tau_{j}} \left(\dfrac{x^{\tau_{j}}}{\LT{f_j}}f_j - \dfrac{x^{\tau_{j}}}{\LT{f_{j+1}}}f_{j+1}\right)\\
+&=& \dfrac{x^{\alpha(j)}}{d_j}f_j - \dfrac{x^{\alpha(j+1)}}{d_{j+1}}f_{j+1}\\
+&=& p_j - p_{j+1}.
+\end{eqnarray*}
+This is now plugged into the telescope sum \eqref{teleskop} leading to:
+\[
+f = \sum^{t-2}_{i=0} \sum_{j=0}^{i}c_{j}d_{j}x^{\delta - \tau_{i}}S(f_i,f_{i+1})
+ = \sum^{t-2}_{i=0} b_{i}  x^{\delta - \tau_{i}}  S(f_{i},f_{i+1}),
+\]
+with \(b_{i}=\sum_{j=0}^{i}c_{j}d_{j}\).
+Since the polynomials $p_j$ and $p_{j+1}$ have leading monomial $x^\delta$ and leading coefficient $1$, the difference $p_j\ -\ p_{j+1}$ has a smaller leading monomial. Since we have that $p_j\ -\ p_{j+1}\ =\  x^{\delta - \tau_{j}}S(f_j, f_{j+1})$, this claim also holds true for $x^{\delta - \tau_{j}}S(f_j,f_{j+1})$. Thus the Lemma holds. \qed
+\end{proof}
+
+

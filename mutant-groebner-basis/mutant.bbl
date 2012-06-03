@@ -1,0 +1,222 @@
+\begin{thebibliography}{37}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+
+\bibitem[{Albrecht and Cid(2009)}]{DBLP:conf/fse/AlbrechtC09}
+Albrecht, M., Cid, C., 2009. Algebraic techniques in differential
+  cryptanalysis. In: Dunkelman, O. (Ed.), FSE. Vol. 5665 of Lecture Notes in
+  Computer Science. Springer Verlag, Berlin, Heidelberg, New York, pp.
+  193--208.
+
+\bibitem[{Albrecht et~al.(2010)Albrecht, Cid, Dullien, Faug\`ere, and
+  Perret}]{ACTFP10}
+Albrecht, M., Cid, C., Dullien, T., Faug\`ere, J.-C., Perret, L., October 2010.
+  {Algebraic Precomputations in Differential Cryptanalysis}. In: Yung, M., Lai,
+  X. (Eds.), Information Security and Cryptology: 6th International Conference,
+  Inscrypt 2010, Revised Selected Papers. Springer Verlag, Berlin, Heidelberg,
+  New York, pp. 1--18.
+
+\bibitem[{Ars et~al.(2004)Ars, Faug{\`e}re, Imai, Kawazoe, and
+  Sugita}]{DBLP:conf/asiacrypt/ArsFIKS04}
+Ars, G., Faug{\`e}re, J.-C., Imai, H., Kawazoe, M., Sugita, M., 2004.
+  Comparison between {XL} and {Gr{\"o}bner} basis algorithms. In: Advances in
+  Cryptology --- {ASIACRYPT} 2004. Springer Verlag, Berlin, Heidelberg, New
+  York, pp. 338--353.
+
+\bibitem[{Becker and Weispfenning(1991)}]{Becker1991}
+Becker, T., Weispfenning, V., 1991. Gr\"{o}bner Bases - A Computational
+  Approach to Commutative Algebra. Springer Verlag, Berlin, Heidelberg, New
+  York.
+
+\bibitem[{Bosma et~al.(1997)Bosma, Cannon, and Playoust}]{magma}
+Bosma, W., Cannon, J., Playoust, C., 1997. The {MAGMA} {A}lgebra {S}ystem {I}:
+  {T}he {U}ser {L}anguage. In: Journal of Symbolic Computation 24. Academic
+  Press, pp. 235--265.
+
+\bibitem[{Bouillaguet et~al.(2011)Bouillaguet, Faug{\`e}re, Fouque, and
+  Perret}]{DBLP:conf/pkc/BouillaguetFFP11}
+Bouillaguet, C., Faug{\`e}re, J.-C., Fouque, P.-A., Perret, L., 2011. Practical
+  cryptanalysis of the identification scheme based on the {I}somorphism of
+  {P}olynomial with one secret problem. In: Catalano, D., Fazio, N., Gennaro,
+  R., Nicolosi, A. (Eds.), Public Key Cryptography 2011. Vol. 6571 of Lecture
+  Notes in Computer Science. Springer Verlag, Berlin, Heidelberg, New York.
+
+\bibitem[{Brickenstein and Dreyer(2009)}]{polybori}
+Brickenstein, M., Dreyer, A., September 2009. {PolyBoRi: A framework for
+  Gr\"{o}bner-basis computations with Boolean polynomials}. Journal of Symbolic
+  Computation 44~(9), 1326--1345.
+
+\bibitem[{Buchberger(1965)}]{Buchberger65}
+Buchberger, B., 1965. Ein {A}lgorithmus zum {A}uffinden der {B}asiselemente des
+  {R}estklassenrings nach einem nulldimensionalen {P}olynomideal. Ph.D. thesis,
+  Universität Innsbruck.
+
+\bibitem[{Buchberger(2006)}]{DBLP:journals/jsc/Buchberger06a}
+Buchberger, B., 2006. Bruno {Buchberger's PhD} thesis 1965: An algorithm for
+  finding the basis elements of the residue class ring of a zero dimensional
+  polynomial ideal. Journal of Symbolic Computation 41~(3-4), 475--511.
+
+\bibitem[{Buchmann et~al.(2010)Buchmann, Cabarcas, Ding, and Mohamed}]{mxl4}
+Buchmann, J., Cabarcas, D., Ding, J., Mohamed, M., 2010. Flexible partial
+  enlargement to accelerate gr\"oner basis computation over {F2}. In:
+  Bernstein, D., Lange, T. (Eds.), Progress in Cryptology -- AFRICACRYPT 2010.
+  Vol. 6055 of Lecture Notes in Computer Science. Springer Verlag, Berlin,
+  Heidelberg, New York, pp. 69--81.
+
+\bibitem[{Buchmann et~al.(2009)Buchmann, Ding, Mohamed, and Mohamed}]{mxl}
+Buchmann, J.~A., Ding, J., Mohamed, M. S.~E., Mohamed, W. S. A.~E., 2009.
+  {MutantXL}: Solving multivariate polynomial equations for cryptanalysis. In:
+  Handschuh, H., Lucks, S., Preneel, B., Rogaway, P. (Eds.), Symmetric
+  Cryptography. No. 09031 in Dagstuhl Seminar Proceedings. Schloss Dagstuhl --
+  Leibniz-Zentrum fuer Informatik, Germany, Dagstuhl, Germany.
+
+\bibitem[{Cid and Leurent(2005)}]{Cid2005a}
+Cid, C., Leurent, G., 2005. {A}n {A}nalysis of the {XSL} {A}lgorithm. In:
+  Advances in Cryptology --- {ASIACRYPT} 2005. Vol. 3788 of Lecture Notes in
+  Computer Science. Springer Verlag, Berlin, Heidelberg, New York, pp.
+  333--352.
+
+\bibitem[{Courtois and Meier(2003)}]{courtois-meier-euro03}
+Courtois, N., Meier, W., 2003. {Algebraic Attacks on Stream Ciphers with Linear
+  Feedback}. In: Biham, E. (Ed.), {Advances in Cryptology -- EUROCRYPT 2003}.
+  Vol. 2656 of Lecture Notes in Computer Science. Springer Verlag, pp.
+  345--359.
+
+\bibitem[{Courtois(2004)}]{Courtois2004}
+Courtois, N.~T., 2004. {Algebraic Attacks over GF(2**k), Application to HFE
+  Challenge 2 and Sflash-v2}. In: Public Key Cryptography -- PKC 2004. Springer
+  Verlag, Berlin, Heidelberg, New York, pp. 201--217.
+
+\bibitem[{Courtois et~al.(2000)Courtois, Klimov, Patarin, and
+  Shamir}]{courtois-klimov-patarin-shamir:eurocrypt2000}
+Courtois, N.~T., Klimov, A., Patarin, J., Shamir, A., 2000. Efficient
+  algorithms for solving overdefined systems of multivariate polynomial
+  equations. In: Advances in Cryptology --- {EUROCRYPT} 2000. Vol. 1807 of
+  Lecture Notes in Computer Science. Springer Verlag, Berlin, Heidelberg, New
+  York, pp. 392--407.
+
+\bibitem[{Courtois and Patarin(2003)}]{courtois-patarin:ct-rsa03}
+Courtois, N.~T., Patarin, J., 2003. About the {XL} algorithm over {GF(2)}. In:
+  Joye, M. (Ed.), Topics in Cryptology - CT-RSA 2003: The Cryptographers' Track
+  at the RSA Conference 2003; Proceedings. Vol. 2612 of Lecture Notes in
+  Computer Science. Springer Verlag, Berlin, Heidelberg, New York, pp.
+  141--157.
+
+\bibitem[{Courtois and Pieprzyk(2002)}]{courtois-pieprzyk:asiacrypt02}
+Courtois, N.~T., Pieprzyk, J., 2002. Cryptanalysis of block ciphers with
+  overdefined systems of equations. In: Zheng, Y. (Ed.), Advances in Cryptology
+  --- {ASIACRYPT} 2002. Vol. 2501 of Lecture Notes in Computer Science.
+  Springer Verlag, Berlin, Heidelberg, New York, pp. 267--287.
+
+\bibitem[{Cox et~al.(1992)Cox, Little, and O'Shea}]{Cox1992}
+Cox, D., Little, J., O'Shea, D., 1992. {I}deals, {V}arieties, and {A}lgorithms,
+  1st Edition. Springer Verlag, Berlin, Heidelberg, New York.
+
+\bibitem[{Diem(2004)}]{diem-asia04}
+Diem, C., 2004. The {XL}-algorithm and a conjecture from commutative algebra.
+  In: Lee, P. (Ed.), Advances in Cryptology -- ASIACRYPT 2004. Vol. 3329 of
+  Lecture Notes in Computer Science. Springer Verlag, Berlin, Heidelberg, New
+  York, pp. 323--337.
+
+\bibitem[{Faug{\`e}re(1999)}]{F4}
+Faug{\`e}re, J.-C., 1999. A new efficient algorithm for computing {G}r{\"o}bner
+  basis ({F4}). Journal of Pure and Applied Algebra 139~(1-3), 61--88.
+
+\bibitem[{Faug{\`e}re et~al.(2008)Faug{\`e}re, dit Vehel, and
+  Perret}]{DBLP:conf/crypto/FaugereLP08}
+Faug{\`e}re, J.-C., dit Vehel, F.~L., Perret, L., 2008. Cryptanalysis of
+  {MinRank}. In: Wagner, D. (Ed.), CRYPTO. Vol. 5157 of Lecture Notes in
+  Computer Science. Springer Verlag, Berlin, Heidelberg, New York, pp.
+  280--296.
+
+\bibitem[{Faug{\`e}re et~al.(1993)Faug{\`e}re, Gianni, Lazard, and Mora}]{FGLM}
+Faug{\`e}re, J.-C., Gianni, P.~M., Lazard, D., Mora, T., 1993. Efficient
+  computation of {Z}ero-{D}imensional {G}r{\"o}bner bases by change of
+  ordering. In: Journal of Symbolic Computation 16. Academic Press, pp.
+  329--344.
+
+\bibitem[{Faug\`ere and Joux(2003)}]{faugere-joux-crypto03}
+Faug\`ere, J.-C., Joux, A., 2003. {Algebraic Cryptanalysis of Hidden Field
+  Equation (HFE) Cryptosystems using Gr{\"o}bner Bases}. In: Boneh, D. (Ed.),
+  Advances in Cryptology -- CRYPTO 2003. Vol. 2729 of Lecture Notes in Computer
+  Science. Springer Verlag, Berlin, Heidelberg, New York, pp. 44--60.
+
+\bibitem[{Faug\`ere and Lachartre(2010)}]{FL10b}
+Faug\`ere, J.-C., Lachartre, S., July 2010. {Parallel Gaussian Elimination for
+  Gr\"obner bases computations in finite fields}. In: Moreno-Maza, M., Roch, J.
+  (Eds.), Proceedings of the 4th International Workshop on Parallel and
+  Symbolic Computation. PASCO '10. ACM, New York, NY, USA, pp. 89--97.
+
+\bibitem[{Faug{\`e}re and Perret(2006)}]{DBLP:conf/crypto/FaugereP06}
+Faug{\`e}re, J.-C., Perret, L., 2006. Cryptanalysis of {2R}$^{\mbox{-}}$
+  schemes. In: Dwork, C. (Ed.), CRYPTO. Vol. 4117 of Lecture Notes in Computer
+  Science. Springer Verlag, Berlin, Heidelberg, New York, pp. 357--372.
+
+\bibitem[{Faug{\`e}re and Perret(2009)}]{DBLP:conf/cisc/FaugereP09}
+Faug{\`e}re, J.-C., Perret, L., 2009. Algebraic cryptanalysis of {C}urry and
+  {F}lurry using correlated messages. In: Bao, F., Yung, M., Lin, D., Jing, J.
+  (Eds.), Inscrypt. Vol. 6151 of Lecture Notes in Computer Science. Springer
+  Verlag, Berlin, Heidelberg, New York, pp. 266--277.
+
+\bibitem[{Lazard(1983)}]{lazard-eurocal83}
+Lazard, D., 1983. {Gr\"obner Bases, Gaussian Elimination and Resolution of
+  Systems of Algebraic Equations}. In: van Hulzen, J. (Ed.), {Proceedings of
+  the European Computer Algebra Conference on Computer Algebra}. Vol. 162 of
+  Lecture Notes in Computer Science. Springer Verlag, Berlin, Heidelberg, New
+  York, pp. 146--156.
+
+\bibitem[{Lim and Khoo(2007)}]{DBLP:conf/fse/LimK07}
+Lim, C.-W., Khoo, K., 2007. An analysis of {XSL} applied to {BES}. In:
+  Biryukov, A. (Ed.), FSE. Vol. 4593 of Lecture Notes in Computer Science.
+  Springer Verlag, Berlin, Heidelberg, New York, pp. 242--253.
+
+\bibitem[{Mandache(1994)}]{Mandache1994}
+Mandache, A.~M., 1994. The {G}r\"obner basis algorithm and subresultant theory.
+  In: Proceedings of the international symposium on Symbolic and algebraic
+  computation. ISSAC '94. ACM, New York, NY, USA, pp. 123--128.
+
+\bibitem[{Mandache(1995)}]{Mandache-phd}
+Mandache, A.~M., 1995. {G}r\"obner bases computation and {G}aussian
+  elimination. Ph.D. thesis, RISC, Johannes Kepler University Linz.
+
+\bibitem[{Mandache(1996)}]{Mandache-tc}
+Mandache, A.~M., 1996. On the relationship between {I}nvolutive basis and
+  {G}r\"obner basis algorithms. RISC-Report 96-24.
+
+\bibitem[{Mohamed(2011)}]{mxl3-implementation}
+Mohamed, M. S.~E., January 2011. private communication.
+
+\bibitem[{Mohamed et~al.(2009{\natexlab{a}})Mohamed, Cabarcas, Ding, Buchmann,
+  and Bulygin}]{mxl3}
+Mohamed, M. S.~E., Cabarcas, D., Ding, J., Buchmann, J., Bulygin, S.,
+  2009{\natexlab{a}}. {MXL3}: An efficient algorithm for computing {G}r\"obner
+  bases of zero-dimensional ideals. In: 12th International Conference on
+  Information Security and Cryptology (ICISC).
+
+\bibitem[{Mohamed et~al.(2008)Mohamed, Mohamed, Ding, and Buchmann}]{mxl2}
+Mohamed, M. S.~E., Mohamed, W. S. A.~E., Ding, J., Buchmann, J., 2008. {MXL2}:
+  Solving polynomial equations over {GF(2)} using an improved mutant strategy.
+  In: PQCrypto. pp. 203--215.
+
+\bibitem[{Mohamed et~al.(2009{\natexlab{b}})Mohamed, Werner, Ding, and
+  Buchmann}]{mohamed-werner-ding-buchmann:cans09}
+Mohamed, M. S.~E., Werner, F., Ding, J., Buchmann, J., 2009{\natexlab{b}}.
+  Algebraic attack on the {MQQ} public key cryptosystem. In: Garay, J.~A.,
+  Miyaji, A., Otsuka, A. (Eds.), 8th International Conference on Cryptology and
+  Network Security (CANS). Vol. 5888 of Lecture Notes in Computer Science.
+  Springer Verlag, Berlin, Heidelberg, New York, pp. 392--401.
+
+\bibitem[{Patarin(1996)}]{patarin-euro96}
+Patarin, J., 1996. {H}idden {F}ields {E}quations {(HFE)} and {I}somorphisms of
+  {P}olynomials {(IP)}: Two new families of asymmetric algorithms. In: Maurer,
+  U. (Ed.), {Advances in Cryptology -- EUROCRYPT '96}. Vol. 1070 of Lecture
+  Notes in Computer Science. Springer Verlag, Berlin, Heidelberg, New York, pp.
+  33--48.
+
+\bibitem[{Thomae and Wolf(2010)}]{thomae-wolf:eprint2010}
+Thomae, E., Wolf, C., 2010. Unravel {XL} and its variants. Cryptology ePrint
+  Archive, Report 2010/596, \url{http://eprint.iacr.org/}.
+
+\end{thebibliography}
