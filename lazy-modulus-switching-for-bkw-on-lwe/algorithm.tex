@@ -1,0 +1,466 @@
+\section{A Modified BKW Algorithm: Lazy Modulus Switching} \label{sec:bkw-algorithm}
+Following \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}, we consider BKW -- applied to Decision-LWE -- as consisting of two stages: {\it sample reduction}  and {\it hypothesis testing}. In this work,  we only modify the first stage.
+
+\subsection{The Basic Idea} 
+We briefly recall the principle of classical BKW. Assume we are given samples of the form $(\vec{a}, c)$ following either $\Ldis$ or $\U{\Zq^n} \times \U{\Zq}$. Our goal is to distinguish between the two cases.  BKW proceeds by producing samples $(\vec{a}^*,c^*)$ with
+$\vec{a}^*$ being all zero such that statistical tests can be applied to $c^*$ to decide whether they follow $\U{\Zq}$ or some distribution related to $\Ldis$. This is achieved by grouping the $n$ components of all vectors into $a$ groups of $b$ components each (assuming $a$ and $b$ divide $n$ for simplicity). If two vectors collide on all $b$ entries in one group, the first is subtracted from the second, producing a vector with at least $b$ all zero entries. These vectors are then again combined to produce more all zero entries and so forth until all $a$ groups are eliminated to zero. However, as we add up vectors the noise increases. Overall, after $\ell$ addition levels the noise has standard deviation $\sqrt{2^\ell}\alpha q$. 
+Our algorithm, too, will be parametrized by a positive integer $b\leq n$ (the window width), and  $a:= \abn$ (the addition depth).
+
+Recall that the complexity of BKW algorithm is essentially $q^b$. However,  $b$ only depends on the ratio 
+$\alpha q/\sqrt{2\pi}q= \alpha\sqrt{2\pi}$ and thus not on $q$. Hence, it is clear that applying modulus reduction before running 
+the BKW algorithm may greatly improve its running time: $b$ is preserved whilst $q$ is reduced to $p$. However, instead of applying modulus 
+reduction in `one shot' prior to executing BKW, we propose switching  to a lower precision only when needed. For this, we actually never 
+switch the modulus but simply consider elements in $\Zq$ `through the perspective' of $\Zp$. We then essentially only consider the 
+top-most $\log_2 p$ bits of $\Zq$.
+
+Under this perspective, given samples of the form $(\vec{a}, c)$ we aim to produce 
+$\big(\shortvec{a},\tilde c=\dotp{\shortvec{a}}{\vec{s}}+\tilde e\big)$,  where $\shortvec{a}$ is short enough, i.e. 
+\begin{equation} \label{init:cond}
+\abs{\dotp{\shortvec{a}}{\vec{s}}} \approx \sqrt{2^{a}}\alpha q.
+\end{equation}
+Although other choices are possible, this choice means balancing the noise $\tilde e$ after $a$ levels of addition and the contribution of 
+$\abs{\dotp{\shortvec{a}}{\vec{s}}}$ such that neither dominates.
+We call the term $\dotp{\shortvec{a}}{\vec{s}}$ the {\it rounding error}. So, condition \eqref{init:cond} is such that  
+after $a$ levels of additions performed by the BKW algorithm the escalated initial noise and the noise coming 
+from rounding errors have the same size.
+
+\subsection{Sample Reduction for Short Secrets}
+Let $(\vec{a}_0, c_0), \ldots, (\vec{a}_{m-1}, c_{m-1}) $ be samples which follow $\Ldis$ or $\U{\Zq^n} \times \U{\Zq}$. We now explain how to produce samples $(\shortvec{a}_i, \tilde c_i)_{i \geq 0}$ that satisfy condition \eqref{init:cond}.  For simplicity,  we assume from now on that $p = 2^\kappa$. \footnote{While we do not have to restrict our attention to $p$ of the form $2^\kappa$, we choose it for ease of exposition and implementation.}
+
+The main idea of the algorithm is to search for collisions among the first $b$ components of samples $(\vec{a}_i,c_i)$ by only considering their top $\log_2 p$ bits. If such a collision is found, we proceed as in the normal BKW algorithm, i.e.\ we subtract the colliding samples to clear the first $b$ components. In our case, we clear the top-most $\log_2 p$ bits of the first $b$ components. Hence, instead of managing elimination tables for every bit of all components, we only manage elimination tables for the most significant $\kappa$ bits. Put differently, all arithmetic is performed in $\Zq$ but collisions are searched for in $\Zp$ after rescaling or modulus switching.
+
+As in \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}, we realise the first stage of the BKW algorithm as a (recursively constructed) series of oracles $\Bdis{\ell}$. In our case, we have $0 \leq \ell < a$, where $\Bdis{a-1}$ produces the final output and $\Bdis{-1}$ calls the LWE oracle. 
+We will make use of a set of tables $T^{\ell}$ (maintained across oracle calls) to store (randomly-chosen) vectors that will be used to reduce samples arising from our oracles. However, compared to \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013} our oracles $\Bdis{\ell}$ take an additional parameter $p$  which specifies the precision which we consider. Hence, if $p = q$ then we recover the algorithm from \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013} where we perform no modulus reduction at all. In particular, $\Bdis{\ell}$ proceeds as follows:
+
+\begin{enumerate}
+\item For $\ell = -1$, we can obtain samples from ${\Bdis{-1}}$ by simply calling the LWE oracle $\Ldis$ and returning the output.
+\item For $\ell = 0$, we repeatedly query the oracle ${\Bdis{0}}$ to obtain (at most) $(p^b-1)/2$ samples $(\vec{a},c)$ with distinct non-zero vectors $\round{p/q \cdot \vec{a}_{(0,b)}}$. We use these samples to populate the table $T^0$, indexed by $\round{p/q \cdot \vec{a}_{(0,b)}}$. We store $(\vec{a}, c)$ in the table. During this course of this population, whenever we obtain a sample $(\vec{a}',c')$ from ${\Bdis{-1}}$, if $\round{p/q \cdot \vec{a}'_{(0,b)}}$ (resp.\ the negation) match $\round{p/q \cdot \vec{a}_{(0,b)}}$ such that the pair $(\vec{a},c)$ is already in $T^1$, we return $(\vec{a}'\pm \vec{a},c'\pm c)$, as a sample from $\Bdis{0}$. Note that, if  $\round{p/q \cdot \vec{a}_{(0,b)}}$ is zero, we return $(\vec{a}',c')$ as a sample from ${\Bdis{0}}$. Further calls to the oracle ${\Bdis{0}}$ proceed in a similar manner, but using (and potentially adding entries to) the same table $T^0$.
+\item For $0 < \ell < a$, we proceed as above: we make use of the table $T^{\ell}$ (constructed by calling ${\Bdis{\ell - 1}}$ up to $(p^b-1)/2$ times) to reduce any output sample from ${\Bdis{\ell - 1}}$ with $\round{p/q \cdot \vec{a}_{(b \cdot \ell,b \cdot \ell+b)}}$ by an element with a matching such vector, to generate a sample returned by ${\Bdis{\ell}}$.
+\end{enumerate}
+
+\submission{Pseudo-code for the modified oracle ${\Bdis{\ell}}$, for $0 \leq \ell < a$, is given in the full version of this work.}{
+Pseudo-code for the modified oracle ${\Bdis{\ell}}$, for $0 \leq \ell < a$, is given in Algorithm~\ref{alg:bdis}.
+
+\begin{algorithm}
+\label{alg:bdis}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\SetKw{KwBreak}{break}
+\KwIn{$b$ -- an integer $0 < b \leq n$}
+\KwIn{$\ell$ -- an integer $0 \leq \ell < a$}
+\KwIn{$p$ -- an integer $0 < p \leq q$}
+\Begin{
+$T^{\ell} \gets$ table with $p^b$ rows maintained across all runs of ${\Bdis{\ell}}$\;
+
+\Repeat{the world ends}{
+  query ${\Bdis{\ell-1}}$ to obtain $(\vec{a},c)$\;
+  $\vec{z} \gets \round{\frac{p\, \cdot\, \vec{a}_{(b\cdot\ell,b\cdot(\ell+1))}}{q}}$\;
+  \If{$\vec{z}$ is all zero}{\Return $(\vec{a},c)$;}
+  \ElseIf{$T_\vec{z} \neq \varnothing$}{\KwBreak;}
+  $T_{\vec{z}} \gets (\vec{a},c)$\;
+  $\overline{\vec{z}} \gets \round{\frac{-p\, \cdot\, \vec{a}_{(b\cdot\ell,b\cdot(\ell+1))}}{q}}$\;
+  $T_{\overline{\vec{z}}} \gets (-\vec{a},-c)$\;
+}
+
+$(\vec{a}',c') \gets T_{\vec{z}}$\label{alg:bdist:choice}\;
+\Return $(\vec{a} - \vec{a}',c - c')$;
+}
+\caption{${\Bdis{\ell}}$ for $0 \leq \ell < a$.}
+\end{algorithm}}
+
+\subsection{Picking $p$}\label{pickp}
+Yet, we still have to establish the size of $p$ to satisfy Condition~\ref{init:cond}. We note that in our approach we do not actually multiply by $p/q$. Let $\sigma_r$ be the standard deviation of uniformly random elements in $\Z_{\round{q/p}}$. Performing one-shot modulus switching in this setting would mean splitting $\vec{a}$ 
+into two vectors, $\vec{a}'$ with the `high order' bits and $\vec{a}''$ with `low order' bits. The components of the latter would contribute to the final noise as the rounding error, the components of the former would be eliminated by BKW. The standard deviation of the components of $\vec{a}''$ is $\sigma_r$. For each component of $\vec{a}_{(i)}$ one-shot modulus switching would add a noise with standard deviation $\sigma_r\sigma_s$. Hence, after applying BKW to these pre-processed samples, the standard deviation of the noise contributed by modulus-switching in the final output would be
+\begin{equation}
+\label{eq:noise-one-shot}
+\sqrt{n \cdot 2^a \cdot \sigma_r^2\sigma_s^2} = \sqrt{a\,b \cdot 2^{a} \cdot \sigma_r^2 \sigma_s^2}. 
+\end{equation}
+However, as the following lemma establishes, we may consider smaller $p$ because the final noise contributed by modulus switching \submission{in our algorithm}{under Algorithm~\ref{alg:bdis}} is smaller than in \eqref{eq:noise-one-shot}. This is because if $(\shortvec{a}_i,\tilde c_i)$ are final output samples then the entries $\shortvec{a}_{i,(b\cdot a-1)}$ will be significantly smaller than $\shortvec{a}_{i,(0)}$.
+
+Yet, to formalise this, we need to make a (standard) simplifying assumption, namely that the outputs of the BKW algorithm (at every stage) are independent. That is, we make the assumption that, during the course of the algorithm described, all components of each sample from $\Bdis{\ell}$ are independent from every other sample.
+We emphasize that similar assumptions are standard in treatments of combinatorial algorithms for LPN/LWE (cf.\ \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013,FL06}).
+\begin{assumption}\label{ass:independence}
+We assume that all outputs of $\Bdis{\ell}$ are independent.
+\end{assumption}
+\submission{}{
+\begin{remark} 
+Calculations show that if we consider any two of the outputs of our algorithm, the expected proportion of shared elements is very small (a more detailed investigation of such effects is currently in preparation as part of an independent work). In the event of two final samples sharing one or a small number of error elements, the combined noise of these two samples remains weakly dependent. Indeed, in \cite{FL06}, the authors presented and implemented a heuristic algorithm related to BKW in which all attempts at preserving independence between samples were abandoned, yet they report that the results were indistinguishable from the independent or weakly-dependent BKW samples. In the course of extensive experimentation, no deviation from the behaviour expected from the presumed independence of samples was observed.
+\end{remark}
+}
+Assumption \ref{ass:independence} allows to establish the following lemma:
+\begin{lemma}
+\label{lem:regrowth}
+Let $n\ge 1$ be the dimension of the \LWE{} secret vector, $q$ be a modulus, $b \in \Z$ with $1 \leq b \le n$.   
+Let also $\sigma_r$ be the standard deviation of uniformly random elements in $\Z_{\round{q/p}}$. 
+Under Assumption~\ref{ass:independence}, the components of $\shortvec{a} = \vec{a}- \vec{a}'$ returned by $\Bdis{\ell}$ satisfy:
+$$
+\Var(\shortvec{a}_{(i)}) = 2^{\ell - \lfloor i/b\rfloor} \sigma_r^2, \textnormal{ for } 0 \leq  \lfloor i/b \rfloor \leq \ell$$ and $\Var\big(\U{\Z_q}\big)$ for $\lfloor i/b\rfloor > \ell$.
+\end{lemma}
+
+\submission{
+\begin{proof}
+The proof is omitted here but available in the full version of this work.
+\end{proof}
+}{\begin{proof}
+We assume $b=1$ without loss of generality and proceed by induction on $\ell$. 
+
+{\bf Initialization}. If $\ell = 0$, then $i=0$.  The output of $\Bdis{0}$ is the sum of two random vectors in $\Zq^n$ which collide in component zero when considered in $\Zp$. The variance of the result is hence that of a random element in $\Z_{\round{q/p}}$, i.e.\ $\sigma_r^2$, in component zero, all other components follow the uniform distribution in $\Zq$.
+
+If $\ell = 1$, then $i=0$ and $1$. Also, we have two elimination tables $T^0$ and $T^1$. Outputs of $\Bdis{1}$ are the sum of two outputs of $\Bdis{0}$. Under Assumption~\ref{ass:independence} these are independent and the sum of their variances is the variance of their sum. The variance of $\shortvec{a}_{(0)}$ is hence $2\sigma_r^2$ and $\shortvec{a}_{(1)}$ has variance $\sigma^2_r$ similarly to case $\ell=0$. All other components are uniformly random in $\Zq$.
+
+{\bf Induction.} More generally, for $\ell > 0$ the output of $\Bdis{\ell}$ is the sum of two outputs of $\Bdis{\ell-1}$. Hence, its components satisfy $\Var(\shortvec{a}_{(i)}) = 2\cdot 2^{\ell-1 - i} \sigma_r^2$ for $0 <i<\ell$ and $\sigma_r^2$ for $\vec{a}_{(\ell)}$.\qed
+\end{proof}}
+
+Using Lemma~\ref{lem:regrowth} we may adapt our choice of $p$, because the noise contributed by modulus switching for a given $p$ is smaller:
+\begin{corollary}
+\label{lem:roundingerror}
+Let $n\ge 1$ be the dimension of the \LWE{} secret vector, $q$ be a modulus, $b \in \Z$ with $1 \leq b \le n$. 
+Let $\sigma_r$ be the standard deviation of uniformly random elements in $\Z{\round{q/p}}$ and $\sigma_s$ be the standard deviation of 
+the distribution from which the secret $\vec{s}$ is sampled.  
+Let $(\tilde{a},\tilde{c})$ be an output of $\Bdis{a-1}$. 
+Under Assumption~\ref{ass:independence}, the noise added by 
+lazy modulus switching in the final output of $\Bdis{a-1}$, that 
+is $\abs{\dotp{\shortvec{a}}{\vec{s}}}$, has standard deviation
+$$
+\sqrt{b\cdot \left(\sum_{i=0}^{a-1}2^{a-i-1}\right) \cdot \sigma_r^2 \sigma_s^2} = \sqrt{b \cdot \left(2^{a}-1\right) \cdot \sigma_r^2 \sigma_s^2}.
+$$
+\end{corollary}
+
+\submission{
+\begin{proof}
+The proof is omitted here but available in the full version of this work.
+\end{proof}
+}{
+\begin{proof}
+From Lemma \ref{lem:regrowth}, we are adding $n$ (assumed to be) independent random variables, each of which takes the form $\shortvec{a}_{i}\cdot\vec{s}_{i}$ where $\shortvec{a}_{i}$ is distributed according to the interval of $b$ elements in which $i$ lies. The corollary then follows by adding the variances of $b$ such random variables from each interval.\qed
+\end{proof}}
+
+Now, compare Corollary~\ref{lem:roundingerror} with the standard deviation in \eqref{eq:noise-one-shot}. We see that the standard deviation obtained using our lazy modulus 
+switching is divided by a factor $\sqrt{a}$ w.r.t.\ to a naive use of modulus-switching, i.e.\ as in \eqref{eq:noise-one-shot}. As a consequence,  we may reduce $p$ by a factor $\sqrt{a}$.
+\section{Improved Algorithm: Stunting Growth by Unnatural Selection} \label{sec:control-growth}
+
+Based on the strategy in the previous section, we now introduce a pre-processing step which allows us to further reduce the magnitude of the noise present in the outputs of $\Bdis{a-1}$ by reducing rounding errors further. For this, it will be useful to establish notation to refer to various components of $\vec{a}_i$ in relation to $\Bdis{\ell}$.
+\begin{description}
+ \item[Children:] are all those components with index $j < b \cdot \ell$, i.e.\ those components that were reduced by some $\Bdis{k}$ with $k<\ell$: \emph{they grow up so quickly}.
+ \item[Parents:] are those components of $\vec{a}_i$ with index $b\cdot \ell \leq j < b\cdot \ell + b$, i.e.\ those components among which collisions are searched for in $\Bdis{\ell}$: \emph{collisions among parents produce children}.
+ \item[Strangers:] with respect to $\Bdis{\ell}$ are all other components $j\geq b\cdot \ell + b$: \emph{they are indifferent towards each other}.
+\end{description}
+
+\submission{}{
+So, for example, if $n=10$ and $b=2$ and we are considering $\ell=2$ then $\vec{a}_{(0-3)}$ are child components, $\vec{a}_{(4-5)}$ are parents and $\vec{a}_{(6-9)}$ are strangers (cf.\ Figure~\ref{fig:intuition}).
+
+\begin{figure}
+\hspace*{\fill}
+\begin{tikzpicture}[
+  font=,
+  to/.style={-,shorten >=1pt,semithick,font=\footnotesize}
+	]
+
+
+\node (box1) at (7, 0) {$\Box$};
+\node (box2) at (7.3, 0) {$\Box$};
+\node (line1) at (7.5, 0) {$\mid$};
+\node (box3) at (7.7, 0) {$\Box$};
+\node (box4) at (8.0, 0) {$\Box$};
+\node (line2) at (8.2, 0) {$\mid$};
+\node (box5) at (8.4, 0) {$\blacksquare$};
+\node (box6) at (8.7, 0) {$\blacksquare$};
+\node (line3) at (8.9, 0) {$\mid$};
+\node (box7) at (9.1, 0) {$\blacksquare$};
+\node (box8) at (9.4, 0) {$\blacksquare$};
+\node (line4) at (9.6, 0) {$\mid$};
+\node (box9) at (9.8, 0) {$\blacksquare$};
+\node (box10) at (10.1, 0) {$\blacksquare$};
+
+\node (rb1) at (7.1, 0.1) {};
+\node (rb2) at (7.4, 0.1) {};
+
+\node (rb3) at (7.8, 0.1) {};
+\node (rb4) at (8.1, 0.1) {};
+
+\node (rb5) at (8.3, 0.05) {};
+\node (rb6) at (8.6, 0.05) {};
+
+\node (ind1) at (7.05, -0.3) {$\vec{a}_{(0)}$};
+\node (ind2) at (10.2, -0.3) {$\vec{a}_{(9)}$};
+
+\node (label1) at (3.8, 1.2) {Child entries, parents live in $T^0$};
+\node (label2) at (5.5, 2.1) {Child entries, parents live in $T^1$};
+\node (label3) at (9, 1.6) {Parent entries (w.r.t.\ $T^2$)};
+\node (label4) at (13, 2) {Strangers};
+
+\draw[to] (label1) -- (rb1);
+\draw[to] (label1) -- (rb2);
+
+\draw[to] (label2) -- (rb3);
+\draw[to] (label2) -- (rb4);
+
+\draw[to] (label3) -- (rb5);
+\draw[to] (label3) -- (rb6);
+
+\draw[to] (label4) -- (box6);
+\draw[to] (label4) -- (box7);
+\draw[to] (label4) -- (box8);
+\draw[to] (label4) -- (box9);
+
+\node (dummy) at (15, 0) {};
+
+\end{tikzpicture}
+\hspace{\fill}
+\caption{Children, parents and strangers.}
+\label{fig:intuition}
+\end{figure}}
+
+\subsection{The Basic Idea}
+For the general idea and intuition, assume $b=1$ and that $\shortvec{a}_{i}$ are outputs of $\Bdis{0}$ and we hence have $\Var(\shortvec{a}_{i,(0)}) = \sigma_r^2$. Now, some of these $\shortvec{a}_i$ will be stored in Table $T^1$ by $\Bdis{1}$ based on the value in the parent component $\shortvec{a}_{i,(1)}$. All future outputs of $\Bdis{1}$ which collide with $\shortvec{a}_{i}$ in the parent component at index 1 will have  $\shortvec{a}_i$ added/subtracted to it, we are hence adding a value with $\Var(\shortvec{a}_{i,(0)}) = \sigma_r^2$ in index 0.
+
+Now, however, if the $\shortvec{a}_{i,(0)}$ happened to be unusually short, all $\Bdis{\ell}$ for $\ell > 0$ would output vectors with a shorter $\shortvec{a}_{i,(0)}$ added/subtracted in, i.e.\ would also have unusually small child components (although to a lesser degree). That is, improving the outputs of $\Bdis{1}$ -- i.e.\ decreasing the magnitude of the $\shortvec{a}_{i,(0)}$ stored in $T^1$ -- has a knock-on effect on all later outputs. More generally, improving the outputs of $\Bdis{\ell}$ will improve the outputs of $\Bdis{k}$ for $k>\ell$.
+
+On the other hand, improving the outputs of $\Bdis{\ell}$ where $\ell$ is small, is easier than for larger values of $\ell$. In the algorithm as described so far, when we obtain a collision between a member of $T^\ell$ and an output $(\vec{a}_i, c_i)$ of $\Bdis{\ell-1}$, we reduce $(\vec{a}_i, c_i)$ using the colliding member of $T^\ell$, retaining this member in the table. Alternatively we can reduce $(\vec{a}_i, c_i)$ using the \emph{in-situ} table entry, replace the table entry with (the now reduced) $(\vec{a}_i, c_i)$ and return the former table entry as the output of $\Bdis{\ell}$. If we selectively employ this alternative strategy using the relative magnitudes of the child components of $(\vec{a}_i, c_i)$  and the table entry as a criterion, we can improve the `quality' of our tables as part of a pre-processing phase.
+
+That is, in $\Bdis{\ell}$ for each collision in a parent component we may inspect the child components for their size and keep that in $T^\ell$ where the child components are smallest. Phrased in the language of `children' and `parents': we do not let `nature', i.e.\ randomness, run its course but intervene and select children based on their size. As the number of child components is $b \cdot \ell$ it becomes more difficult as $\ell$ increases to find vectors where all child components are short.
+
+\subsection{Algorithms}
+This leads to a modified algorithm $\Bdissm{\ell}$ given in Algorithm~\ref{alg:bdissmall}\submission{  which acts as a pre-processing phase.}{. Using Algorithms~\ref{alg:bdis} and \ref{alg:bdissmall} we may then present our revised version of the BKW algorithm in Algorithm~\ref{alg:bkw} where we first use Algorithm~\ref{alg:bdissmall} to produce `good' tables and then use Algorithm~\ref{alg:bdis} to sample $(\shortvec{a}_i,\tilde c_i)$ as before.}
+
+\begin{algorithm}[H]
+\label{alg:bdissmall}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\SetKw{KwBreak}{break}
+\submission{}{
+\KwIn{$b$ -- an integer $0 < b \leq n$}
+\KwIn{$\ell$ -- an integer $0 \leq \ell < a$}
+\KwIn{$p$ -- an integer $0 < p \leq q$}
+}
+\Begin{
+$T^{\ell} \gets$ table with $p^b$ rows maintained across all runs of ${\Bdissm{\ell}}$\;
+Find $(\vec{a}',c') \gets T_{\vec{z}}^{\ell}$ that collides with a fresh sample $(\vec{a},c)$ from $\Bdis{\ell-1}$\submission{}{ as in Algorithm~\ref{alg:bdis}}\;
+
+\If{$\sum_{i=0}^{b\cdot \ell -1} \abs{\vec{a}'_{(i)}} > \sum_{i=0}^{b\cdot \ell -1} \abs{\vec{a}_{(i)}}$}{
+  $T^{\ell}_{\vec{z}} \gets (\vec{a},c)$\;
+}
+\Return $(\vec{a} - \vec{a}',c - c')$;
+}
+\caption{${\Bdissm{\ell}}$ for $0 \leq \ell < a$.}
+\end{algorithm}
+
+\submission{}{
+\begin{algorithm}
+\label{alg:bkw}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\SetKw{KwBreak}{break}
+ \KwIn{$b$ -- an integer $0 < b \leq n$}
+ \KwIn{$a$ -- an integer such that $ab=n$}
+ \KwIn{$p$ -- an integer $0 < p < q$}
+ \KwIn{$o$ -- an integer $0 \leq o$}
+\KwIn{$m$ -- an integer $0 \leq m$}
+\
+\Begin{
+$o_t \gets o/(a+1)$\;
+\tcp{populate elimination tables with random entries}
+\For{$0 \leq i < o_t$} {
+  $(\shortvec{a},c) \gets \Bdis{a-1}$; \tcp{$(\shortvec{a},c)$ is discarded}
+}
+
+\tcp{sample small entries}
+\For{$0 \leq i < a$} {
+  \For{$0 \leq j < o_t$} {
+    $(\shortvec{a},c) \gets \Bdissm{i}$; \tcp{$(\shortvec{a},c)$ is discarded}
+  }
+}
+\For{$0 \leq i < m$} {
+  $(\shortvec{a}_i,c_i) \gets \Bdis{a-1}$\;
+}
+Run distinguisher on $c_i$ and return output\;
+}
+\caption{BKW with lazy modulus switching.}
+\end{algorithm}}
+
+\subsection{Picking $p$}
+It remains to be established what the effect of such a strategy is, i.e.\ how fast children grow up or how fast rounding errors accumulate. 
+In particular, given $n$ vectors $\vec{x}_i$ sampled from some distribution $\mathcal{D}$ where each component has standard deviation 
+$\sigma$, i.e.\ $\Var(\vec{x}_{i,(j)}) = \sigma^2$ we are interested in the standard deviation $\sigma_{n}$ of each component for 
+$\vec{x}^* = \min_{abs}\left(\vec{x}_0,\dots,\vec{x}_{n-1}\right)$ where $\min_{abs}$ picks that vector where 
+$\sum_{j=0}^{b\cdot\ell-1} \abs{\vec{x}_{(j)}}$ is minimal. At this point we know no closed algebraic expression for $\sigma_n$. However, we found \submission{(as detailed in the full version of this work)}{ -- as detailed below -- }that $\sigma_n$ can be estimated as follows:
+\begin{assumption}
+\label{ass:minvar}
+Let the vectors $\vec{x}_0,\ldots,\vec{x}_{n-1} \in \Z_q^{\tau}$ be sampled from some distribution $\mathcal{D}$ such that $\sigma^2 = \Var(\vec{x}_{i,(j)})$ where $\mathcal{D}$ is any distribution on (sub-)vectors observable in \submission{our algorithm}{Algorithm~\ref{alg:bkw}}. Let $\vec{x}^*=\min_{abs}\left(\vec{x}_0,\dots,\vec{x}_{n-1}\right)$ where $\min_{abs}$ picks that vector $\vec{x}^*$ with 
+$\sum_{j=0}^{b\cdot\ell-1} \abs{\vec{x}^*_{(j)}}$ minimal. The stddev $\sigma_{n} = \sqrt{\Var(\vec{x}^*_{(0)})} =\cdots=\sqrt{\Var(\vec{x}^*_{(\tau-1)})}$ of components in $\vec{x}^*$ satisfies
+$$\sigma/\sigma_n \geq c_\tau\, \sqrt[\tau]{n} + (1 - c_\tau)$$ with $c_\tau$ as in Table~\ref{tab:ctau} for $\tau \leq 10$ and 
+$$c_\tau = 0.20151418166952917\,\sqrt{\tau}  + 0.32362108131969386\approx \frac{1}{5}\sqrt{\tau} + \frac{1}{3}$$
+otherwise. 
+\end{assumption}
+
+\begin{table}
+\centering\begin{footnotesize}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+$\tau$    &         1  &         2  &         3  &         4  &         5\\
+$c_\tau$  & 0.405799353869 & 0.692447899282 & 0.789885269135 & 0.844195936036 & 0.854967912468\\
+\hline
+$\tau$    &         6  &         7  &         8  &         9  &        10 \\
+$c_\tau$  & 0.895446987232 & 0.91570933651 & 0.956763578012 & 0.943424544282 & 0.998715322134\\
+\hline
+\end{tabular}
+\end{footnotesize}
+\caption{$c_\tau$ for small values of $\tau$}
+\label{tab:ctau}
+\end{table}
+
+\submission{}{\input{appendix_assum2.tex}}
+
+With Assumption~\ref{ass:minvar} we can now estimate the size of the entries of the variance matrix associated with our elimination tables. That is, a matrix $\vec{M}$ where the entry $\vec{M}_{(i,j)}$ holds the variance of entries $(b\cdot j,\dots,b\cdot j + b -1)$ in $T^i$. 
+\submission{We give an algorithm for constructing $\vec{M}$ in Algorithm~\ref{alg:variance} which repeatedly applies Assumptions~\ref{ass:independence} and \ref{ass:minvar}.
+We discuss this algorithm in detail and back up the expectation that it gives a reasonable approximation of the variances in $T^\ell$ with empirical evidence the full version of this work.
+}{
+
+\input{algorithm-variances.tex} 
+
+An algorithm for constructing $\vec{M}$ is given in Algorithm~\ref{alg:variance} which we expect this algorithm to give a reasonable approximation of the variances of components of entries in $T^\ell$ and back up this expectation with empirical evidence in Section~\ref{sec:implementation}.
+}
+
+\begin{algorithm}
+\label{alg:variance}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\SetKw{KwBreak}{break} 
+\Begin{
+  $T \gets 2\cdot p^b/2$; \tcp{fudge factor: 2}
+  $n \gets \frac{m^\ast}{(a+1)\cdot T} + 1$\;
+  $\Var_{red} = \Var(\U{\Z_{\round{q/p}}}) = \sigma_r^2$; \tcp{the var.\ of fresh red.\ elements}
+
+  $\vec{M}$ is an $a \times a$ matrix\;
+  \For{$ 0 \leq r < a$}{
+    \For{$ 0 \leq c < a$}{
+       $\vec{M}_{(r,c)} \gets \Var(\U{\Z_{q}})$; \tcp{el.\ on and above main diag. not red.}
+     }
+  }
+  \For{$1 \leq t < a$}{
+     \tcp{row $t$ = sum of prev.\ rows + 1 fresh el.\ for each index}
+     \For{$0 \leq i < t$} {
+        $\vec{M}_{(t,i)} \gets \Var_{red} + \sum_{j=i+1}^{t-1} \vec{M}_{(j,i)}$\;
+      }     
+     $\tau \gets b \cdot \ell$\;
+     \For{$0 \leq i < t$} {
+        $\vec{M}_{(t,i)} \gets \frac{\vec{M}_{(t,i)}}{\left(c_\tau \sqrt[\tau]{n} + 1 - c_\tau\right)^2}$\;
+     }
+  }
+}
+\caption{Constructing $\vec{M}$.}
+\end{algorithm}
+
+Using the matrix $\vec{M}$ computed by Algorithm~\ref{alg:variance}, we can estimate the variances of components of $\shortvec{a}_i$ as 
+output by $\Bdis{a-1}$. This result follows immediately from Assumption~\ref{ass:minvar}. 
+\begin{lemma}
+\label{lem:distv}
+Let $n\ge 1, q$ be a modulus, $b \in \Z$ with $1 \leq b \le n$ and $\sigma_r$ be the standard deviation of $\U{\Z_{\round{q/p}}}$. 
+Define $a := \abn$ and pick some $p < q$ and let $\vec{M}$ be the output of Algorithm~\ref{alg:variance} under these parameters.  
+Let $(\shortvec{a}_i,c_i)$ be samples returned by $\Bdis{a-1}$. Finally, define $\vec{v}$ as the $a-$vector of variances of the 
+components of $\shortvec{a}$ where $\vec{v}_{(k)}$ holds the variance of the components 
+$\shortvec{a}_{(b\cdot k)}$ to $\shortvec{a}_{(b\cdot k +b-1)}$. Under Assumption~\ref{ass:minvar}, 
+the components of $\vec{v}$ satisfy:
+\[
+ \vec{v}_{(i)} = \sigma_r^2 + \sum_{j=i+1}^{a} \vec{M}_{(j,i)}.
+\]
+\end{lemma}
+This now allows us to given an expression for the noise distribution output by $\Bdis{a-1}$.
+\begin{lemma}
+\label{lem:noisedist}
+Let $n\ge 1$ be the dimension of the \textnormal{LWE} secret vector, $q$ be a modulus, $b \in \Z$ with $1 \leq b \le n$. Define $a := \abn$ and pick some $p < q$ and let $\vec{v}$ be as in Lemma~\ref{lem:distv}. Let $(\shortvec{a}_i,\tilde c_i)$ be outputs of $\Bdis{a-1}$.  
+We assume that Assumptions~\ref{ass:independence} and \ref{ass:minvar} hold. Then as $a$ increases the distribution of $\tilde c_i$ 
+approaches a discrete Gaussian distribution modulo $q$ with standard deviation
+$$\sigma_{total} := \sqrt{2^a\sigma + b\, \sigma_r^2 \sigma_s^2\, \sum_{i=0}^{a-1} \vec{v}_{(i)}} \leq \sqrt{2^a\sigma + (2^{a}-1) \cdot b \cdot \sigma_r^2 \sigma_s^2}.$$
+\end{lemma}
+\begin{proof}
+The standard deviation follows from Assumption~\ref{ass:independence} and Lemma~\ref{lem:distv}. Since the distribution is formed by adding up $2^a$ vectors it approaches a discrete Gaussian distribution when considered over $\Z$ as $a$ increases by the Central Limit Theorem.\qed
+\end{proof}
+\begin{assumption}\label{last:assume}
+We assume that Lemma~\ref{lem:noisedist} holds for $128 \leq n$, i.e.\ the values of $n$ considered in this work. 
+\end{assumption}
+
+\section{Complexity} \label{sec:complexity}
+
+Finally, we analyse the complexity of the presented algorithms. To do so, we assume that Assumptions~\ref{ass:independence}, 
+\ref{ass:minvar}, and \ref{last:assume} hold. Lemma~\ref{lem:noisedist} allows us to estimate the numbers of samples needed to distinguish the outputs of $\Bdis{a-1}$ if $\Bdis{-1}$ returns \LWE samples from uniform. For this, we rely on standard estimates \cite{LindnerP10} for the number of samples required to distinguish. 
+This estimate provides a good approximation for the advantage obtainable in distinguishing between $\U{\Zq}$ and a discrete Gaussian 
+reduced mod $q$ with standard deviation $\sigma_{total}$. In particular, we compute the advantage as
+$$\textnormal{Adv}  = \exp\left(-\pi \left(\frac{\sigma_{total} \cdot \sqrt{2\pi}}{q}\right)^2\right).$$
+We can now state the overall complexity of running the algorithm in Theorem~\ref{thm:firststep}.
+Remark that the proof of next two results are  omitted; they  
+follow by an easy adaptation of the proof of Lemma 2 in \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}.
+
+\def\naddssteponeT{\frac{p_{{\rm small}}^b}{2}\cdot \left(  \frac{a(a-1)}{2}\cdot (n+1) \right)}
+\def\naddssteponeM{\left(m + m^\ast\right)\, n \, a}
+
+\def\ncallsT{a\cdot \left(\frac{p_{{\rm small}}^b}{2}\right)}
+
+\begin{theorem}
+\label{thm:firststep}
+Let $n\ge 1$ be the dimension of the \LWE{} secret vector, $q$ be a modulus, $b \in \Z$ with $1 \leq b \le n$ and $\sigma_s$ 
+the standard deviation of the secret vector components. Let also $\sigma_r$ be the variance of random elements in $\Z_{\round{q/p_{{\rm small}}}}$.
+Define $a := \abn$ and pick a pair $(p_{{\rm small}},m^\ast)$ 
+such that $b\, \sigma_r^2 \sigma_s^2\, \sum_{i=0}^{a-1} \vec{v}_{(i)} 
+\leq 2^a\sigma$,  where $\vec{v}_{(i)}$ is defined as in Lemma~\ref{lem:noisedist}. Then $\Bdis{a-1}$ will return  
+$(\shortvec{a}_0,\tilde c_0),\ldots,(\shortvec{a}_{m-1},\tilde c_{m-1})$  where  $\tilde c_i$ has standard deviation 
+$\leq \sqrt{2^{a+1}}\cdot \sigma$. Furthermore, this costs
+\begin{eqnarray*}
+\naddssteponeT + \naddssteponeM
+\end{eqnarray*}
+additions in $\Zq$ and $\ncallsT + m + m^\ast \mbox{ calls to } \Ldis$.
+\end{theorem}
+The memory requirement for storing each table is established in Corollary~\ref{lem:firststepmemory} below.
+\begin{corollary}
+\label{lem:firststepmemory}
+The memory required to store the table $T^i$ is upper-bounded by 
+\begin{equation*}
+\frac{p_{{\rm small}}^b}{2} \cdot a\cdot \left(n+1\right)
+\end{equation*}
+elements in $\Zq$, each of which requires $\lceil\log_2(q)\rceil$ bits of storage.
+\end{corollary}
+To clarify the impact of Theorem~\ref{thm:firststep}, we consider $m^\ast=0$ -- i.e.\ the case discussed in Section~\ref{sec:bkw-algorithm} --
+on classical parameters of \LWE{}.
+\def\memcomplexity{\bigO{2^{n\big(c+\frac{\log_2 d-\frac 1 2 \log_2 \log_2 n}{\log_2 n}\big)}\cdot n \, \log_2 n}}
+\begin{corollary}
+Let $q \approx n^c$, for some constant $c>0$, and $\alpha = n^{1/2 - c}$ such that $\sigma \approx \alpha q \approx \sqrt{n}$.
+Furthermore, let $a=\log_2 n$ and $b = n/\log_2 n$ be the usual choices of parameters for BKW. 
+Assume $\sigma_s$ does not depend on $n$. Then, solving Decision-\LWE costs at most
+\[
+\complexity 
+\]
+operations in $\Zq$. We also need to store $\memcomplexity$ elements in $\Zq$. 
+\end{corollary}
+\submission{
+\begin{proof}
+The proof is omitted here but available in the full version of this work. 
+\end{proof}
+}{
+\begin{proof}
+First, we recall that the time complexity of the BKW algorithm, under these parameters and as analysed in
+\cite[Corollary~3]{albrecht-cid-faugere-fitzpatrick-perret:dcc2013},
+is $\approx a^2\, n\, q^b$. Note that the memory needed is also $\approx a\, n\, q^b$. With the parameters considered, this yields a time complexity dominated by $\bigO{n^{cn/\log_2 n}\cdot \polyfactor} = \bigO{2^{c\, n}\cdot \polyfactor}$.
+
+This can be improved by first performing a one-shot modulus switching, as explained in Section \ref{pickp}, and then using BKW on this 
+pre-processed instances. A good choice is to take $p_{{\rm small}} \approx \min\{q,\ \frac{\sigma_s}{\sigma} \sqrt{\frac{n}{12}}\cdot q\}$,  
+which simplifies to $\min\{q,\ \frac{\sigma_s}{\sqrt{12}} \cdot q\}$ or $d \cdot q$, with $0 < d \leq 1$, under these parameter choices.
+This allows to reduces the complexity to
+$$\bigO{(dn^c)^{n/\log_2 n} \cdot \polyfactor} = \bigO{d^{n/\log_2 n}\cdot  2^{cn} \cdot \polyfactor} =
+\bigO{2^{n\left(c+\frac{\log_2 d}{\log_2 n}\right)} \cdot \polyfactor}.$$
+Since $\log_2 d < 0$, this indeed improves the complexity of the plain BKW.
+
+Applying lazy modulus switching, once can reduce $p_{{\rm small}}$ by an additional factor of $\sqrt{a} = \sqrt{\log_2 n}$ 
+(Corrolary \ref{lem:roundingerror}). This gives:
+$$
+\bigO{\left(\frac{dn^c}{\sqrt{\log_2 n}}\right)^{n/\log_2 n} \cdot \polyfactor} =  
+\bigO{2^{n\big(c+\frac{\log_2 d'}{\log_2 n}\big)} \cdot \polyfactor},
+\mbox{ with } d'=\left(\frac{d}{\sqrt{\log_2 n}}\right).
+$$
+Finally $\log_2 d'=\log_2 d -\frac 1 2 \log_2 \log_2 n,$ and then:
+$$
+\bigO{\left(\frac{dn^c}{\sqrt{\log_2 n}}\right)^{n/\log_2 n}  \cdot \polyfactor}=
+\complexity.
+$$ 
+The very same argument yields the memory complexity announced. \qed
+\end{proof}}
+

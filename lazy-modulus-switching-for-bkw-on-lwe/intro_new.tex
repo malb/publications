@@ -1,0 +1,88 @@
+\section{Introduction} \label{sec:intro}
+Learning With Errors (\LWE) \cite{regev:acm09} has received  widespread attention from the cryptographic community since its introduction. \LWE-based cryptography is mainly motivated by its great flexibility for instantiating cryptographic solution as well as a deep worst-case/average-case connections \cite{regev:acm09}: solving \LWE{} on the average is not easier than solving worst-case instances of several famous lattice approximation problems.
+
+The motivation behind this work comes from the observation that some recent constructions based on \LWE do not sample the secret uniformly at random but rather from some distribution which produces small entries (e.g.\ \cite{applebaum-cash-peikert-sahai:crypto2009,DBLP:conf/tcc/AkaviaGV09,DBLP:conf/innovations/GoldwasserKPV10,gentry-halevi-smart:crypto2012,DBLP:conf/tcc/Pietrzak12}). From a theoretical point of view, this is motivated by the observation that every \LWE instance can be transformed into an instance where the secret follows the same distribution as the noise \cite{applebaum-cash-peikert-sahai:crypto2009}.\footnote{also in \cite{kirchner:eprint2011} for the LPN case.} However, many constructions use secrets which are considerably smaller.
+For example, binary-\LWE samples the secret from $\{0,1\}^*$ \cite{brakerski-langlois-peikert-regev-stehle:stoc13} or $\{-1,0,1\}^*$ \cite{gentry-halevi-smart:crypto2012}. The presence of such small secrets provokes the question of what implications such choices have on the security of \LWE. Is solving \LWE with, say, binary secrets easier than standard \LWE? From a theoretical point of view, \cite{brakerski-langlois-peikert-regev-stehle:stoc13} proves that their binary-\LWE is as secure as \LWE{}. In this paper, we try to address the question from an algorithmic point of view; i.e. what is the actual impact of small secrets on concrete parameters.    
+
+\subsection{Algorithms for Solving \LWE}
+Three families of algorithms for solving \LWE are known in the literature. The most prominent approach is to reduce \LWE to a problem that can be solved via lattice reduction, for example, by reducing it to the Short Integer Solution (SIS) problem. Indeed, most parameter choices in the literature are based on the hardness of lattice reduction such as \cite{LindnerP10,chen-nguyen:asiacrypt2011,liu-nguyen:ctrsa2013}. These estimates for a given set of parameters $n$ (number of components of the secret), $q$ (size of the modulus) and  $\sigma$ (standard deviation of the noise) are usually produced by extrapolating running times from small instances.
+
+A second approach is due to Arora and Ge who reduce \LWE to solving a  system of non-linear equations \cite{arora-ge:icalp2011}. This algorithm allow us to solve \LWE in sub-exponential time as soon as the Gaussian distribution  is sufficiently narrow, i.e.\ $\alpha \cdot q <\sqrt{n}$. Recall that  the security reduction \cite{regev:acm09} for \LWE requires to consider discrete Gaussian  with standard deviation $\alpha \cdot q$ strictly bigger than $\sqrt{n}$.
+However, from a practical point of view, the constants involved in this algorithm are so large that it is much more costly than other approaches for the parameters typically considered in cryptographic applications \cite{SCC12_AG}. 
+
+The third family of algorithms are combinatorial algorithms which can all be seen as variants of the BKW algorithm. The BKW algorithm was proposed by Blum, Kalai and Wasserman~\cite{blum-kalai-wasserman:acm2003} as a method for solving the Learning Parity with Noise problem, with sub-exponential complexity, requiring $2^{\bigO{n / \log n}}$ samples, space and time. The algorithm can be adapted for tackling \LWE with complexity $2^{\bigO{n}}$ when the modulus is taken to be polynomial in $n$ \cite{regev:acm09}. BKW proceeds by splitting the $n$ components of LWE samples into $a$ groups of $b$ components each. For each of the $a$ groups of components the algorithm then searches for collisions in these $b$ components to eliminate them. The overall complexity of the algorithm is  $\approx \left(a^2n\right) \cdot \frac{q^b}{2}$ operations, and $a\cdot \frac{q^b}{2}$ memory, where $a$ and $b$ depend on the $n, q$ and $\alpha$.
+
+The behaviour of the algorithm is relatively well understood and it was shown to outperform lattice reduction estimates when reducing LWE to SIS (when $q$ is small), thus it provides a solid basis for analysing the concrete hardness of LWE instances \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}.
+
+\subsection{Organisation of the Paper and Main Results}
+While none of the algorithms above take advantage of the presence of small secrets, we may combine them with  {\it modulus switching}. Recall that modulus switching was initially introduced to improve the performance of homomorphic encryption schemes \cite{brakerski-vaikuntanathan:focs2011} and was recently used to reduce the hardness of \LWE with polynomially sized moduli to GAPSVP \cite{brakerski-langlois-peikert-regev-stehle:stoc13}. Modulus switching is essentially the same as computing with a lower precision similar to performing floating point computations with a low fixed precision. Namely, let $\big(\vec{a},
+c=\dotp{\vec{a}}{\vec{s}} + e\big) \in \Zq^n \times \Zq$ be \LWE sample 
+where $\vec{s} \in \Zq^n$ is the secret vector, and $e \in \Zq$ is an error. Let also some $p < q $ and consider $\big(\round{{p}/{q} \cdot \vec{a}}, \round{{p}/{q} \cdot c}\big)$ with
+\begin{small}
+\begin{align}
+\label{eq:roundingerror}
+\round{\frac{p}{q} \cdot c} =& \round{\frac{p}{q} \big( \dotp{\vec{a}}{\vec{s}}+q \cdot u +e \big)}, \mbox{ for some $u \in \Z$}\nonumber\\
+\round{\frac{p}{q} \cdot c} =& \round{ \dotp{ \frac{p}{q} \cdot \vec{a} }{\vec{s} }_{p} + \frac{p}{q} \cdot e} =  \round{ \dotp{ \round{ \frac{p}{q} \cdot \vec{a} }}{\vec{s} }_{p} + \dotp{\frac{p}{q} \cdot \vec{a} - \round{ \frac{p}{q} \cdot \vec{a} }}{\vec{s}}_{p} + \frac{p}{q} \cdot e}\nonumber\\
+  =& \dotp{ \round{ \frac{p}{q} \cdot \vec{a} }}{\vec{s} }_{p} + \dotp{\frac{p}{q} \cdot \vec{a} - \round{ \frac{p}{q} \cdot \vec{a} }}{\vec{s}}_{p} + \frac{p}{q} \cdot e + e' \textnormal{, where } e' \in [-0.5,0.5] \nonumber\\
+  =& \dotp{ \round{ \frac{p}{q} \cdot \vec{a} }}{\vec{s} }_{p} + e'' + \frac{p}{q}\cdot e + e'.
+\end{align}
+\end{small}
+where $\dotp{\vec{x}}{\vec{y}}_{p}$ denotes the modulo $p$ inner product of $\vec{x}$ and $\vec{y}$.
+
+Since ${p}/{q} \cdot \vec{a} - \round{ {p}/{q} \cdot \vec{a} }$ takes values $\in [-0.5,0.5]$ we have that $e''$ is small if $\vec{s}$ is small. We may hence compute with the smaller `precision' $p$ 
+at the cost of a slight increase of the noise rate by  a `{\it rounding error}' $e''$. 
+ 
+Modulus switching allows to map a \LWE{} instance $\bmod \, q$ to a scaled instance of \LWE{} $\bmod \, p$.
+Thus, modulus switching can be used in the solving of small secret instances of \LWE, a folklore approach which has not been explicitly studied in the literature. Namely, if we pick $p$ such that $e''$ is not much larger than $p/q \cdot e$ then, for example, the running time of the BKW 
+algorithm improves from $(a^2n)\cdot \frac{q^b}{2}$ to $(a^2n)\cdot \frac{p^b}{2}$. Since typically $b \approx n/\log n$ 
+this may translate to substantial improvements. Indeed, we can pick $p$ such that $\abs{\dotp{{p}/{q} \cdot \vec{a} - 
+\round{ {p}/{q} \cdot \vec{a} }}{\vec{s}}} \approx p/q \cdot \abs{e}$.
+This implies ${\sigma_s}\cdot \sqrt{\frac{n}{12}} \approx p/q \cdot \sigma$, or
+$
+p \approx \min\left\{q, \frac{\sigma_s}{\sigma}\cdot \sqrt{\frac{n}{12}} \cdot q \right\}$, where $\sigma_s$ is the standard deviation of elements in the secret $\vec{s}$.
+
+In this paper, we refine this approach and present a variant of the BKW algorithm which fuses modulus switching and BKW-style reduction. In particular, this work has two main contributions. Firstly, in Section~\ref{sec:bkw-algorithm} we present a modulus switching strategy for the BKW algorithm in which switching is delayed until necessary.  In a nutshell, recall that the BKW algorithm performs additions of elements which collide in certain components. Our variant will search for such collisions in `low precision' $\Zp$ but will perform arithmetic in `high precision' $\Zq$.  We call {\it rounding error} the inner product of the sub-vector of `low bits' of $\vec{a}$ with the secret $\vec{s}$. Our strategy permits to decrease rounding errors and allows to reduce $p$ by a factor of $\sqrt{a}$.
+
+Secondly, this perspective enables us to choose reductors in the BKW algorithm which minimise the rounding errors further (Section \ref{sec:control-growth}). Namely, we favour components $a$ with small distance $\abs{\round{ {p}/{q} \cdot a} - {p}/{q} \cdot a}$ in already reduced components, called `child components' in this work. Our strategy ensures that the probability of finding such elements is highest for those components which are considered first by the BKW algorithm, i.e.\ those components which contribute most to the noise. We note that the first contribution relies on standard independence assumptions only, while the second contribution relies on stronger assumptions, which however seem to hold  in practice.
+
+\def\polyfactor{n\, \log_2^2 n}
+We then discuss the complexity of our variants in Section~\ref{sec:complexity}. For typical choices of parameters --  i.e.\ $q \approx n^c$ for some small constant $c\geq 1$, $a = \log_2 n$ and $b = n/\log_2 n$ --  the complexity of BKW  as analysed in \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013} 
+is $\bigO{2^{cn}\cdot \polyfactor}$. For small secrets, a naive modulus switching technique allows reducing this complexity to  
+$\bigO{2^{n\big(c+\frac{\log_2 d}{\log_2 n}\big)} \cdot \polyfactor}$ where $0<d\leq 1$ is a small constant. 
+\begin{comment}
+sage: n,c,d = var('n,c,d')
+sage: assume(c>0)
+sage: assume(c, 'integer')
+sage: assume(n>0)
+sage: assume(d<=1)
+sage: assume(d>0)
+sage: q = n^c
+sage: b = n/log(n)
+sage: a = log(n)
+sage: sigma = sqrt(n)
+sage: p = d*q/sqrt(a)
+sage: f = e^(n*log(d)/log(n)) # d^(n/log(n)), base e
+sage: g = e^(c*n) # n^(c*n/log(n)) 
+sage: h = (1/sqrt(log(n)))^(n/log(n))
+sage: assert( bool(f*g*h == p^b) == True ) 
+sage: simple = e^(n*(c+ (log(d)-1/2*log(log(n)))/log(n)))
+sage: assert( bool(simple == p^b) == True ) 
+\end{comment}
+If the secret distribution does not depend on $n$ and if an unbounded number of \LWE samples is available our improved version of BKW allows to get a complexity of:
+\def\complexity{\bigO{2^{n\big(c+\frac{\log_2 d-\frac 1 2 \log_2 \log_2 n}{\log_2 n}\big)}\cdot \polyfactor}}
+$$ 
+\complexity.
+$$
+We then study the behaviour of this algorithm by applying it to various instances of LWE with binary secrets. \submission{}{In Section~\ref{sec:implementation} we report on experiments conducted with a proof-of-concept implementation of our algorithm.} In Section~\ref{sec:parameters},
+we compare the results with plain BKW and BKZ under modulus switching and a simple meet-in-the-middle approach or generalised birthday attack. We show that our lazy-modulus-switching variant of the BKW algorithm provides better results than applying plain BKW after modulus reduction. We also demonstrate that under the parameters considered here this algorithm also -- as $n$ increases -- outperforms the most optimistic estimates for BKZ when we apply BKZ to the same task as that to which we apply BKW: finding short vectors in the (scaled-)dual lattice -- we obtain this perspective by viewing the rounding error as an increase in the noise rate while still finding short vectors in the \mbox{(scaled)-}dual $p$-ary lattice determined by our modulus-reduced LWE samples. Indeed, our results indicate that our algorithm outperforms BKZ 2.0 when both are used to find a short vector in the \mbox{(scaled)-}dual lattice in dimension as low as $\approx 256$ when considering \LWE{} parameters from \cite{regev:acm09} with binary secret. However, we stress again that we always assume an unbounded number of samples to be available for solving.
+
+\subsection{Notations}
+To fix the notations, we reproduce below the definition of \LWE{}.
+\begin{definition}[LWE \cite{regev:acm09}]\label{def:lwe} Let $n,\, q$ be positive integers, $\chi$ be a probability distribution on $\Zq$ and $\vec{s}$ be a secret vector in $\Zq^n$. We denote by $\Ldis$ the probability distribution on $\Zq^n \times \Zq$ obtained by choosing $\vec{a}\in \Zq^n$ uniformly at random, choosing $e \in \Zq$ according to $\chi$, and returning  $(\vec{a},c)=(\vec{a},\dotp{\vec{a}}{\vec{s}}+ e) \in \Zq^n \times \Zq.$ We define 
+\textnormal{Decision-LWE} as the problem of deciding whether pairs $(\vec{a},c)\in \Zq^n \times \Zq$ are sampled according to $\Ldis$ or the uniform distribution on $\Zq^n \times \Zq$. \textnormal{Search-LWE} is the problem of recovering $\vec{s}$ from $(\vec{a},c)=(\vec{a},\dotp{\vec{a}}{\vec{s}}+ e) \in \Zq^n \times \Zq$ sampled according to $\Ldis$.  
+\end{definition}
+The noise follows some distribution $\chi$ which is classically chosen to be a discrete Gaussian distribution over $\Z$ with mean $0$ and standard deviation $\sigma = s/\sqrt{2 \pi} = \alpha q /\sqrt{2\pi}$, reduced modulo $q$.
+In the following, we always start counting at zero.  We denote vectors as well as  matrices in bold, vectors in lower case, and matrices in upper case. Given a vector $\vec{a}$, we denote by $\vec{a}_{(i)}$ the $i$-th entry in $\vec{a}$, i.e.\ a scalar, and by $\mat{A}_{(i,j)}$ the entry at index $i,j$. For vectors $\vec{a}$ we denote by $\vec{a}_{(a,b)}$ the vector $(\vec{a}_{(a)},\dots,\vec{a}_{(b-1}))$. 
+When given a list of vectors, we index its elements by subscript, e.g.\ $\vec{a}_0,\vec{a}_1, \vec{a}_2$, to denote the first 
+three vectors of the list. This means that $\vec{a}_{i,(j)}$ is the $j$-th component of the vector $\vec{a}_i$.  When we write $(\vec{a}_i,c_i)$ we always mean the output of an oracle which should be clear from the context. In particular, $(\vec{a}_i,c_i)$ does not necessarily refer to samples following the initial distribution. We write $\shortvec{a}$ instead of $\vec{a}$ to indicate $\vec{a}$ has some short elements. 
+We represent elements in $\Zq$ as integers in $[-\frac{q}{2},\ldots,\frac{q}{2}]$, similarly for $\Zp$. We write $\chig$ for the distribution obtained by considering a discrete Gaussian distribution over $\Z$ with standard deviation $\alpha q /\sqrt{2\pi}$, mean $0$, considered modulo $q$.

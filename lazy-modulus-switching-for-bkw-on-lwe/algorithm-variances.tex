@@ -1,0 +1,24 @@
+It is clear that $\vec{M}_{(i,j)} = \Var(\U{\Z_q})$ for $0 \leq i < a$ and $i \leq j$ as no reductions take place for entries on and above `the main diagonal'. Now, in Algorithm~\ref{alg:bkw} the child components in $T^1$ are reduced by calling Algorithm~\ref{alg:bdissmall} $o/(a+1)$ times. Each table $T^\ell$ has $p^b/2$ rows and we can hence apply Assumption~\ref{ass:minvar} on $T^1$ with $\tau = b$ and $n = \frac{2o}{(a+1)p^b} + 1$ uniform samples (i.e.\ $\mathcal{D}$ is the uniform distribution) with standard deviation $\sigma_r$. Note that this assumes (idealistically) that each table entry is `hit' exactly $n$ times during this process. While the expected value of `hits' each table entry receives is $n$, ideally we wish to ensure that the majority of table entries are `hit' at least a certain number of times. Clearly, the number of `hits' for a given table entry is governed by a binomial distribution - if we consider the problem from a `balls and bins' perspective, we have the random and independent placing of $o/(a+1)$ balls into $p^b/2$ bins. Then we can approximate the expected number of bins containing $j$ balls by a Poisson random variable with parameter $o/((a+1)\cdot p^b/2)$, implying we can approximate the number of such bins by
+$$
+\frac{(o/((a+1)\cdot p^b/2))^j}{j!}\cdot e^{-\frac{2o}{(a+1)\cdot p^b}}
+$$
+Thus we can approximate the number of bins containing less than $M$ balls by
+$$
+p^b/2\cdot e^{-\frac{o}{(a+1)\cdot p^b/2}}\cdot\sum_{k=0}^{M-1}{\frac{((o/((a+1)\cdot p^b/2)))^k}{k!}}
+$$
+Now, it is well known that when the parameter is large enough, the Poisson distribution itself may be approximated closely by a Gaussian distribution. The parameter for the Poisson distribution is $\frac{o}{(a+1)\cdot p^b/2}$ hence, by a standard result, we can approximate this Poisson distribution by a Gaussian of mean $\frac{o}{(a+1)\cdot p^b/2}$ and of variance also $\frac{o}{(a+1)\cdot p^b/2}$.
+\\\\
+Thus, under the assumption that these approximations hold, we can approximate the probability that a given bin contains less than $x$ balls by the standard CDF for Gaussians:
+$$
+\frac{1}{2}\left(1+\mathrm{erf}\left(\frac{x-\frac{o}{(a+1)\cdot p^b/2}}{\sqrt{\frac{2\cdot o}{(a+1)\cdot p^b/2}}}\right)\right).
+$$
+However, in Algorithm~\ref{alg:variance} below we use the mean and take the distribution of balls in bins into account by reducing the number of observed samples by a fudge factor of $2$ in our calculations.
+
+By Assumption~\ref{ass:minvar} we hence get 
+$$\vec{M}_{(1,0)} = \frac{\sigma_r^2}{\left(c_b\sqrt[b]{n} + 1 - c_b\right)^2}$$
+Moving on to $\vec{M}_{(2,0)}$ we have $\tau = 2b$. Hence, using the same reasoning as in Lemma~\ref{lem:regrowth} we expect
+
+\begin{eqnarray*}
+\vec{M}_{(2,0)} &=& \frac{\sigma_r^2  + \vec{M}_{(1,0)}}{\left(c_{2b}\sqrt[2b]{n} + 1-c_{2b}\right)^2} = \frac{\sigma_r^2 + \frac{\sigma_r^2}{\left(c_b\sqrt[b]{n} + 1 - c_b\right)^2}}{\left(c_{2b}\sqrt[2b]{n} + 1 - c_{2b}\right)^2}
+\end{eqnarray*}
+and so on for $\vec{M}_{(3,0)}, \vec{M}_{(4,0)}, \dots$.

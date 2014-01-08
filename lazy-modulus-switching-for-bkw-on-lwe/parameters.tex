@@ -1,0 +1,224 @@
+\section{Parameters} \label{sec:parameters}
+To understand the behaviour of our more careful modulus switching technique for concrete parameters, we compare it with one-shot modulus switching. Specifically, we consider the ``plain'' BKW algorithm \cite{blum-kalai-wasserman:acm2003} as analysed in \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}. Furthmore, to make this work somewhat self-contained we also compare with the BKZ (2.0) algorithm when applied to SIS instances derived from LWE samples and with a simple meet-in-the-middle (MITM) approach or generalised birthday attack.
+
+\heading{Instances} We choose $n \in [128,256,512,1024,2048]$ and -- using \cite{albrecht-fitzpatrick-cabracas-goepfert-schneider:bitbucket2013} -- pick $q \approx n^2$ and $\sigma = \frac{q}{\sqrt{2\pi n} \log_2^2 n}$ as in Regev's original encryption scheme \cite{regev:acm09}. 
+\submission{We then consider binary-LWE as defined in \cite{gentry-halevi-smart:crypto2012}: $\vec{s} \sample \U{\{-1,0,1\}^n}$ (we consider the case  $\vec{s} \sample \U{\Z_2^n}$ as in \cite{brakerski-langlois-peikert-regev-stehle:stoc13} in the full version of this work).}{We then consider both variants of what is known as binary-LWE in the literature: we first assume $\vec{s} \sample \U{\Z_2^n}$ as in \cite{brakerski-langlois-peikert-regev-stehle:stoc13} and then $\vec{s} \sample \U{\{-1,0,1\}^n}$ as in \cite{gentry-halevi-smart:crypto2012}.
+}
+However, we assume an unbounded number of samples being available to the attacker to establish the performance of the algorithms discussed here under optimal conditions.
+
+\heading{BKW}
+For complexity estimates of the plain BKW algorithm we rely on \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}. There the BKW algorithm takes a parameter $t$ which controls the addition depth $a := t \log_2 n$. Here we first pick $t = 2(\log_2 q - \log_2 \sigma)/\log_2 n$ which ensures that the standard deviation of the noise after $a$ levels of additions grows only as large as the modulus. We then slowly increase $t$ in steps of $0.1$ until the performance of the algorithm is not estimated to improve any further because too many samples are needed to perform the distinguishing step. Following \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}, we translate operations in $\Zq$ into ``bit operations'' by multiplying by $\log_2 q$.
+
+\heading{BKZ}
+To estimate the cost of the BKZ ($2.0$) algorithm we follow \cite{micciancio-regev:pqc2009,LindnerP10}. In \cite{micciancio-regev:pqc2009}, the authors briefly examine an approach for solving LWE by distinguishing between valid matrix-LWE samples of the form $(\mathbf{A},\mathbf{c})=(\mathbf{A},\mathbf{A}\vec{s}+\mathbf{e})$ and samples drawn from the uniform distribution over $\Zq^n\times\Zq$. Given a matrix of samples $\mathbf{A}$, one way of constructing such a distinguisher is to find a short vector $\mathbf{u}$ such that $\mathbf{u}\mathbf{A}=\mathbf{0}\bmod q$. If $\mathbf{c}$ belongs to the uniform distribution over $\Zq^n$, then $\langle\mathbf{u},\mathbf{c}\rangle$ belongs to the uniform distribution on $\Zq$. On the other hand, if $\mathbf{c}=\mathbf{A}\vec{s}+\mathbf{e}$, then $\langle\mathbf{u},\mathbf{c}\rangle=\langle\mathbf{u},\mathbf{A}\vec{s}+\mathbf{e}\rangle=\langle\mathbf{u},\mathbf{e}\rangle$, where samples of the form $\langle\mathbf{u},\mathbf{e}_i\rangle$ are governed by another discrete, wrapped Gaussian distribution. Following the work of Micciancio and Regev \cite{micciancio-regev:pqc2009}, the authors of \cite{LindnerP10} give estimates for the complexity of distinguishing between LWE samples and uniform samples by estimating the cost of the BKZ algorithm in finding a short enough vector. In particular, given $n, q, \sigma$ and a target distinguishing advantage $\epsilon$ we set $s = \sigma \cdot \sqrt{2\pi}$ and compute $\beta = q/s \cdot \sqrt{\log(1/\epsilon)/\pi}$. From this $\beta$ we then compute the required root Hermite factor $\delta_0 = 2^{ \log_2^2(\beta) / (4n\log_2 q ) }$. 
+
+Given $\delta_0$ we then approximate the running time of BKZ 2.0 in seconds using two different strategies. Both strategies treat $\delta_0$ as the dominant influence in determining the running time.  The first strategy denoted ``BKZ'' follows \cite{LindnerP10} and defines $\log_2 T_{sec} = 1.8/\log_2 \delta_0 - 110$. The second strategy denoted ``BKZ2'' follows \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013} who interpolated data points from \cite{liu-nguyen:ctrsa2013} as $\log_2 T_{sec} = 0.009/\log^2_2 \delta_0 - 27$.
+
+We translate the running time in seconds figure into bit operations by assuming $2.3 \cdot 10^9$ bit operations per second on a 2.3~GHz CPU, which is pessimistic. Furthermore, for BKZ choosing advantage $\epsilon \ll 1$ and running the algorithms about $1/\epsilon$ times is usually more efficient than choosing $\epsilon \approx 1$ directly, i.e.\ we generate a new lattice of optimal sub-dimension each time using fresh LWE samples.
+
+\heading{MITM} One can also solve small secret \LWE{} with a meet-in-the-middle attack that requires $\approx \mathfrak{c}^{n/2}$ time and space where $\mathfrak{c}$ is the cardinality of the set from which each component of the secret is sampled (so $\mathfrak{c}=2$ or $\mathfrak{c}=3$ for binary-LWE depending on the 
+definition used): compute and store a sorted list of all $\vec{A}\vec{s'}$ where $\vec{s'} = (\vec{s}_{(0)},\dots, \vec{s}_{(n/2)-1}, 0, 0, \ldots, 0)$ 
+for all possible $\mathfrak{c}^{n/2}$ choices for $\vec{s'}$. Then compute $\vec{c} - \vec{A}\vec{s''}$ where we have $\vec{s''} = (0, 0, \ldots, 0,\vec{s}_{(n/2)},\ldots, \vec{s}_{n-1})$ and check for a vector that is close to this value in the list.
+
+\submission{}{
+\heading{Results for $\vec{s} \sample \U{\Z_2^n}$}
+In Table~\ref{tab:nomodred} we give the number of bit operations (``$\log \Z_2$''), calls to the LWE oracle (``$\log \Ldis$'') and memory requirement (``$\log \textnormal{mem}$'') for BKW without any modulus reduction to establish the baseline. All costs are given for the high advantage case, i.e.\ if $\epsilon\ll 1$ we multiply the cost by $1/\epsilon$.
+\begin{table}
+\centering\ifthenelse{\equal{\isshort}{1}}{\scriptsize}{}
+\begin{tabular}{|r||r|r||r|r|r||r|r|r||r|r|r|r|}
+\hline
+   & \multicolumn{2}{|c||}{MITM}& \multicolumn{3}{|c||}{BKZ \cite{LindnerP10}} & \multicolumn{3}{|c||}{BKZ $2.0$ \cite{liu-nguyen:ctrsa2013}} & \multicolumn{4}{|c|}{BKW \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}}\\
+\hline
+$n$ & $\log \Z_2$ & $\log \textnormal{mem}$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $t$ &  $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$\\
+\hline
+%  32 &   16 &   16 &     -8 &     14.4 &    -30.5 &     -3 &      9.5 &     13.8 &  3.39 &     28.5 &     40.0 &     26.2 \\
+%  64 &   32 &   32 &    -12 &     19.4 &      3.4 &     -6 &     13.5 &     27.4 &  3.17 &     43.7 &     55.9 &     48.8 \\
+ 128 &   67.8 &   64 &    -18 &     26.5 &     65.4 &    -14 &     22.5 &     65.7 &  3.18 &     83.9 &     97.6 &     90.0 \\
+ 256 &  132.0 &  128 &    -29 &     38.5 &    179.5 &    -35 &     44.5 &    178.5 &  3.13 &    167.2 &    182.1 &    174.2 \\
+ 512 &  260.2 &  256 &    -48 &     58.5 &    390.9 &    -94 &    104.5 &    522.8 &  3.00 &    344.7 &    361.0 &    352.8 \\
+1024 &  516.3 &  512 &    -82 &     93.5 &    785.0 &   -265 &    276.5 &   1606.2 &  2.99 &    688.0 &    705.5 &    697.0 \\
+2048 & 1028.5 & 1024 &   -141 &    153.6 &   1523.6 &   -773 &    785.4 &   5100.0 &  3.00 &   1369.8 &   1388.7 &   1379.9 \\
+\hline
+\end{tabular}
+\caption{Cost for solving Decision-\LWE with advantage $\approx 1$ for BKW, BKZ and MITM where $q,\sigma$ are chosen as in \cite{regev:acm09} and $\vec{s} \sample \U{\Z_2^n}$. We run BKZ $1/\epsilon$ times, ``$\log \Z_2$'' gives the number of ``bit operations'', ``$\log \Ldis$'' the number of \LWE oracle calls 
+and ``$\log \textnormal{mem}$'' the memory requirement of $\Zq$ elements. All logarithms are base $2$.}
+\label{tab:nomodred}
+\end{table}
+Table~\ref{tab:modred} gives the running times after modulus reduction with $p = q\sqrt{n/12}\sigma_s/\sigma$. In particular, Table~\ref{tab:modred} lists the expected running time (number of oracle calls and where applicable memory requirements) of running BKW and BKZ after applying modulus reduction.
+
+\begin{table}
+\centering\ifthenelse{\equal{\isshort}{1}}{\scriptsize}{}
+\begin{tabular}{|r||r|r|r||r|r|r||r|r|r|r|}
+\hline
+    & \multicolumn{3}{|c||}{BKZ \cite{LindnerP10}} & \multicolumn{3}{|c||}{BKZ $2.0$ \cite{liu-nguyen:ctrsa2013}} & \multicolumn{4}{|c|}{BKW \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}}\\
+\hline
+$n$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $t$ &  $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$\\
+\hline
+%  32 &    -11 &     17.4 &    -21.6 &     -5 &     11.5 &     17.8 &  2.82 &     28.5 &     39.4 &     25.5 \\
+%  64 &    -14 &     21.3 &     10.6 &     -8 &     15.4 &     31.7 &  2.73 &     40.9 &     52.5 &     46.0 \\
+ 128 &    -20 &     28.3 &     68.5 &    -16 &     24.3 &     68.6 &  2.84 &     76.1 &     89.6 &     81.2 \\
+ 256 &    -31 &     40.3 &    172.5 &    -36 &     45.3 &    169.5 &  2.74 &    149.6 &    164.0 &    156.7 \\
+ 512 &    -49 &     59.3 &    360.2 &    -89 &     99.2 &    457.8 &  2.76 &    289.8 &    305.6 &    297.9 \\
+1024 &    -80 &     91.3 &    701.6 &   -232 &    243.2 &   1312.8 &  2.78 &    563.1 &    580.2 &    572.2 \\
+2048 &   -133 &    145.3 &   1327.6 &   -636 &    648.1 &   3929.5 &  2.71 &   1135.3 &   1153.6 &   1145.3 \\
+\hline
+\end{tabular}
+\caption{Cost for solving Decision-LWE with advantage $\approx 1$ for BKW and BKZ variants where $q,\sigma$ are chosen as in \cite{regev:acm09} and $\vec{s} \sample \U{\Z_2^n}$ after one-shot modulus reduction with $p = q\sqrt{n/12}\sigma_s/\sigma$.}
+\label{tab:modred}
+\end{table}
+
+Finally, Table~\ref{tab:thiswork} gives the expected costs for solving these \LWE{} instances using the techniques described in this work. We list two variants: one with and one without ``unnatural selection'' . This is because these techniques rely on more assumptions than the rest of this work which means we have greater confidence in the predictions avoiding such assumptions. Yet, as discussed in Section~\ref{sec:implementation}, these assumptions seem to hold reasonably well in practice.
+
+\begin{table}
+\centering\ifthenelse{\equal{\isshort}{1}}{\scriptsize}{}
+\begin{tabular}{|r||r|r|r|r|r|r||r|r|r|r|r|r|r|r|}
+\hline
+   & \multicolumn{6}{|c||}{this work (w/o unnatural selection)} & \multicolumn{6}{|c|}{this work}\\
+\hline
+$n$ & $t$ & $\log p$ & $\log m^\ast$ & $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$ & $t$ & $\log p$ & $\log m^\ast$ & $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$\\
+\hline
+%  32 &  3.39 & 10 &    0 &     28.5 &     40.0 &     26.1  & 3.39 & 10 &    0 &     28.5 &     40.0 &     26.1\\ %     28.5
+%  64 &  3.17 & 10 &    0 &     37.0 &     49.2 &     42.1  & 3.17 &  7 &   34 &     34.8 &     47.6 &     32.0\\ %     33.5
+ 128 &  2.98 & 10 &    0 &     64.7 &     78.2 &     70.8  & 2.98 &  6 &   60 &     60.0 &     74.2 &     46.3\\ %     39.7
+ 256 &  2.83 & 11 &    0 &    127.8 &    142.7 &    134.9  & 2.83 &  5 &  117 &    117.0 &    132.5 &     67.1\\ %     41.2
+ 512 &  2.70 & 11 &    0 &    235.1 &    251.2 &    243.1  & 2.70 &  8 &  225 &    225.0 &    241.8 &    180.0\\ %     31.8
+1024 &  2.59 & 12 &    0 &    477.4 &    494.8 &    486.5  & 2.59 & 10 &  467 &    467.0 &    485.0 &    407.5\\ %     29.9
+2048 &  2.50 & 12 &    0 &    897.8 &    916.4 &    907.9  & 2.50 & 10 &  834 &    834.0 &    853.2 &    758.9\\ %     36.4
+\hline
+\end{tabular}
+\caption{Cost for solving Decision-\LWE{} with advantage $\approx 1$ with the algorithms discussed in this work when $\vec{s} \sample \U{\Z_2^n}$.}
+\label{tab:thiswork}
+\end{table}
+}
+
+\submission{In Table~\ref{tab:nomodred2} we give the number of bit operations (``$\log \Z_2$''), calls to the LWE oracle (``$\log \Ldis$'') and memory requirement (``$\log \textnormal{mem}$'') for BKW without any modulus reduction to establish the baseline. All costs are given for the high advantage case, i.e.\ if $\epsilon\ll 1$ we multiply the cost by $1/\epsilon$.
+}{\heading{Results for $\vec{s} \sample \U{\{-1,0,1\}^n}$} Tables~\ref{tab:nomodred2}, \ref{tab:modred2} and \ref{tab:thiswork2} correspond to Tables~\ref{tab:nomodred}, \ref{tab:modred} and \ref{tab:thiswork} and adopt the same notation.}
+
+\begin{table}
+\centering\ifthenelse{\equal{\isshort}{1}}{\scriptsize}{}
+{
+\begin{tabular}{|r||r|r||r|r|r||r|r|r||r|r|r|r|}
+\hline
+   & \multicolumn{2}{|c||}{MITM}& \multicolumn{3}{|c||}{BKZ \cite{LindnerP10}} & \multicolumn{3}{|c||}{BKZ $2.0$ \cite{liu-nguyen:ctrsa2013}} & \multicolumn{4}{|c|}{BKW \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}}\\
+\hline
+$n$ & $\log \Z_2$ & $\log \textnormal{mem}$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $t$ &  $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$\\
+\hline
+%  32 &   25.4 &   25.4 &     -8 &     14.4 &    -30.5 &     -3 &      9.5 &     13.8 &  3.39 &     28.5 &     40.0 &     26.2 \\
+%  64 &   50.7 &   50.7 &    -12 &     19.4 &      3.4 &     -6 &     13.5 &     27.4 &  3.17 &     43.7 &     55.9 &     48.8 \\
+  128 &  105.2 &  101.4 &    -18 &     26.5 &     65.4 &    -14 &     22.5 &     65.7 &  3.18 &     83.9 &     97.6 &     90.0 \\
+  256 &  206.9 &  202.9 &    -29 &     38.5 &    179.5 &    -35 &     44.5 &    178.5 &  3.13 &    167.2 &    182.1 &    174.2 \\
+  512 &  409.9 &  405.8 &    -48 &     58.5 &    390.9 &    -94 &    104.5 &    522.8 &  3.00 &    344.7 &    361.0 &    352.8 \\
+ 1024 &  815.8 &  811.5 &    -82 &     93.5 &    785.0 &   -265 &    276.5 &   1606.2 &  2.99 &    688.0 &    705.5 &    697.0 \\
+ 2048 & 1627.5 & 1623.0 &   -141 &    153.6 &   1523.6 &   -773 &    785.4 &   5100.0 &  3.00 &   1369.8 &   1388.7 &   1379.9 \\
+\hline
+\end{tabular}
+}
+\caption{Cost for solving Decision-LWE with advantage $\approx 1$ for BKW, BKZ and MITM where $q$ and $\sigma$ are chosen as in \cite{regev:acm09} and 
+$\vec{s} \sample \U{\{-1,0,1\}^{n}}$.}
+\label{tab:nomodred2}
+\end{table}
+
+\submission{Table~\ref{tab:modred2} gives the running times after modulus reduction with $p = q\sqrt{n/12}\sigma_s/\sigma$. In particular, Table~\ref{tab:modred2} lists the expected running time (number of oracle calls and where applicable memory requirements) of running BKW and BKZ after applying modulus reduction.}
+
+\begin{table}
+\centering\ifthenelse{\equal{\isshort}{1}}{\scriptsize}{}
+\begin{tabular}{|r||r|r|r||r|r|r||r|r|r|r|}
+\hline
+    & \multicolumn{3}{|c||}{BKZ \cite{LindnerP10}} & \multicolumn{3}{|c||}{BKZ $2.0$ \cite{liu-nguyen:ctrsa2013}} & \multicolumn{4}{|c|}{BKW \cite{albrecht-cid-faugere-fitzpatrick-perret:dcc2013}}\\
+\hline
+$n$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $\log \epsilon$ & $\log \Ldis$ & $\log \Z_2$ & $t$ &  $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$\\
+\hline
+%  32 &    -11 &     17.4 &    -21.3 &     -5 &     11.5 &     17.9 &  2.85 &     28.5 &     39.5 &     25.8 \\
+%  64 &    -14 &     21.4 &     11.6 &     -8 &     15.4 &     32.2 &  2.74 &     41.5 &     53.2 &     46.6 \\
+  128 &    -21 &     29.3 &     70.2 &    -16 &     24.4 &     69.8 &  2.85 &     76.8 &     90.2 &     82.4 \\
+  256 &    -31 &     40.3 &    175.3 &    -37 &     46.3 &    172.8 &  2.85 &    150.4 &    165.6 &    153.7 \\
+  512 &    -50 &     60.3 &    365.0 &    -90 &    100.2 &    467.0 &  2.76 &    293.8 &    309.6 &    301.9 \\
+ 1024 &    -81 &     92.3 &    710.1 &   -236 &    247.2 &   1339.1 &  2.78 &    570.3 &    587.4 &    579.4 \\
+ 2048 &   -134 &    146.3 &   1342.3 &   -647 &    659.2 &   4006.5 &  2.71 &   1149.0 &   1167.3 &   1159.1 \\
+\hline
+\end{tabular}
+\caption{Cost for solving Decision-LWE with advantage $\approx 1$ for BKW and BKZ variants where $q,\sigma$ are chosen as in \cite{regev:acm09} and 
+$\vec{s} \sample \U{\{-1,0,1\}^n}$ after one-shot modulus reduction with $p = q\sqrt{n/12}\sigma_s/\sigma$.}
+\label{tab:modred2}
+\end{table}
+
+\submission{Finally, Table~\ref{tab:thiswork2} gives the expected costs for solving these \LWE instances using the techniques described in this work. We list two variants: one with and one without ``unnatural selection''. This is because these techniques rely on more assumptions than the rest of this work which means we have greater confidence in the predictions avoiding such assumptions.}{}
+
+\begin{table}
+\centering\ifthenelse{\equal{\isshort}{1}}{\scriptsize}{}
+\begin{tabular}{|r||r|r|r|r|r|r||r|r|r|r|r|r|r|r|}
+\hline
+   & \multicolumn{6}{|c||}{this work (w/o unnatural selection)} & \multicolumn{6}{|c|}{this work}\\
+\hline
+$n$ & $t$ & $\log p$ & $\log m^\ast$ & $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$ & $t$ & $\log p$ & $\log m^\ast$ & $\log \Ldis$ & $\log \Z_2$ & $\log \textnormal{mem}$ \\
+\hline
+%  32 &  3.39 & 10 &    0 &     28.5 &     40.0 &     26.1 & 3.39 & 10 &    0 &     28.5 &     40.0 &     26.1\\ %     28.5 
+%  64 &  3.17 & 10 &    0 &     37.0 &     49.2 &     42.1 & 3.17 &  7 &   35 &     35.3 &     48.2 &     32.0\\ %     33.0 
+  128 &  2.98 & 10 &    0 &     64.7 &     78.2 &     70.8 & 2.98 &  6 &   61 &     61.0 &     75.2 &     46.3\\ %     40.9 
+  256 &  2.83 & 11 &    0 &    127.8 &    142.7 &    134.9 & 2.83 &  5 &  118 &    118.0 &    133.5 &     67.1 \\ %     44.3 
+  512 &  2.70 & 11 &    0 &    235.1 &    251.2 &    243.1 & 2.70 &  8 &  225 &    225.0 &    241.8 &    180.0 \\ %     32.9 
+ 1024 &  2.59 & 12 &    0 &    477.4 &    494.8 &    486.5 & 2.59 & 10 &  467 &    467.0 &    485.0 &    407.5 \\ %     30.4 
+ 2048 &  2.50 & 12 &    0 &    971.4 &    990.7 &    907.9 & 2.50 & 12 &  961 &    961.0 &    980.2 &    907.9 \\ %     30.9 
+\hline
+\end{tabular}
+\caption{Cost for solving Decision-LWE with advantage $\approx 1$ with the algorithms discussed in this work when $\vec{s} \sample \U{\{-1,0,1\}^n}$.}
+\label{tab:thiswork2}
+\end{table}
+
+\heading{Discussion}
+The results in this section\submission{}{ (summarised in Figure~\ref{fig:plot-c2})} indicate that the variants of the BKW algorithms discussed in this work compare favourably for the paramters considered. \submission{}{In particular, in the case $\vec{s} \sample \U{\{0,1\}^n}$ these BKW variants are the only algorithms which beat the simple MITM approach. For $\vec{s} \sample \U{\{-1,0,1\}^n}$ that advantage naturally increases.} The results in this table also indicate that the unnatural selection strategy has little impact on the overall time complexity. However, it allows to reduce the data complexity, in some cases, considerably. In particular, e.g.\ considering line 1 of Table~\ref{tab:thiswork2}, we note that applying this technique can make the difference between a feasible ($\approx 80 \cdot 1024^4$ bytes) and infeasible ($\approx 1260 \cdot 1024^6$ bytes) attack for a well-equipped attacker \cite{utah-data-centre}. Finally, we note that our results indicate that lattice reduction benefits from modulus reduction. However, this seems somewhat implausible judging from the used algorithms. This might indicate that the lattice reduction estimates from the literature  above might need to be revised.
+
+\submission{}{
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\begin{tikzpicture}
+\ifthenelse{\equal{\isshort}{1}}
+{\pgfplotsset{width=.95\textwidth, height=0.3\textwidth}}
+{\pgfplotsset{width=.95\textwidth, height=0.4\textwidth}}
+\begin{axis}[xlabel={$\log_2 n$},ylabel={$\log_2 \Z_2$},ymin=0,legend pos=north west,title={$\log_2 \Z_2$ for $\vec{s} \sample \U{\{0,1\}}^n$}]
+\addplot[black] coordinates {( 5,   16) ( 6,   32) ( 7,  64) ( 8,  128) ( 9,  256) (10,  512) (11, 1024) };
+\addlegendentry{MITM};
+
+\addplot[black,thick,mark=triangle] coordinates { (5, -21.60)  (6, 10.60)  (7, 68.50)  (8, 172.50)  (9, 360.20)  (10, 701.60)  (11, 1327.60) };
+\addlegendentry{BKZ};
+
+\addplot[gray,thick] coordinates { (5, 17.80)  (6, 31.70)  (7, 68.60)  (8, 169.50)  (9, 457.80)  (10, 1312.80) };
+\addlegendentry{BKZ 2};
+
+\addplot[black,thick,mark=circle] coordinates { (5, 40.00)  (6, 49.20)  (7, 78.20)  (8, 142.70)  (9, 251.20)  (10, 494.80)  (11, 916.40) };
+\addlegendentry{this work w/o unnatural selection};
+
+\addplot[gray,thick,mark=*] coordinates { (5, 40.00)  (6, 47.60)  (7, 74.20)  (8, 132.50)  (9, 241.80)  (10, 485.00)  (11, 853.20)};
+\addlegendentry{this work w/ unnatural selection};
+\end{axis}\end{tikzpicture}
+\\
+\begin{tikzpicture}
+\ifthenelse{\equal{\isshort}{1}}
+{\pgfplotsset{width=.95\textwidth, height=0.3\textwidth}}
+{\pgfplotsset{width=.95\textwidth, height=0.4\textwidth}}
+\begin{axis}[xlabel={$\log_2 n$},ylabel={$\log_2 \Z_2$},ymin=0,legend pos=north west,title={$\log_2 \Z_2$ for $\vec{s} \sample \U{\{-1,0,1\}}^n$}]
+\addplot[black] coordinates { (5, 25.00)  (6, 50.00)  (7, 101.00)  (8, 202.00)  (9, 405.00)  (10, 811.00)  (11, 1623.00) };
+\addlegendentry{MITM};
+
+\addplot[black,thick,mark=triangle] coordinates { (5, -21.30)  (6, 11.60)  (7, 70.20)  (8, 175.30)  (9, 365.00)  (10, 710.10)  (11, 1342.30)  };
+\addlegendentry{BKZ};
+
+\addplot[gray,thick] coordinates { (5, 17.90)  (6, 32.20)  (7, 69.80)  (8, 172.80)  (9, 467.00)  (10, 1339.10)  };
+\addlegendentry{BKZ 2};
+
+\addplot[black,thick,mark=circle] coordinates { (5, 40.00)  (6, 49.20)  (7, 78.20)  (8, 142.70)  (9, 251.20)  (10, 494.80)  (11, 990.70)  };
+\addlegendentry{this work w/o unnatural selection};
+
+\addplot[gray,thick,mark=*] coordinates { (5, 40.00)  (6, 48.20)  (7, 75.20)  (8, 133.50)  (9, 241.80)  (10, 485.00)  (11, 980.20) };
+\addlegendentry{this work w/ unnatural selection};
+\end{axis}
+\end{tikzpicture}
+\end{tabular}
+\label{fig:plot-c2}
+\caption{Cost of solving Decision-\LWE{} using various algorithms discussed in this work.}
+\end{figure}
+}
+
+\submission{}{
+\heading{Reproducibility} Since the results of this section rely on estimates which involve numerical approximations we make the source code (written for Sage~\cite{sagemath}) we used to compute these figures available as an attachment to this document. \embedfile{bkw-small-secret.py}}
