@@ -1,0 +1,149 @@
+\begin{thebibliography}{10}
+
+\bibitem{matmulgf2}
+M.~Albrecht, G.~V. Bard, and W.~Hart.
+\newblock Algorithm 898: Efficient multiplication of dense matrices over
+  {GF(2)}.
+\newblock {\em {ACM} Transactions on Mathematical Software}, 37(1):14 pages,
+  January 2010.
+\newblock pre-print available as {\tt arxiv:0811.1714 [cs.MS]}.
+
+\bibitem{m4ri}
+M.~R. Albrecht and G.~V. Bard.
+\newblock {\em The {M4RI} Library -- Version 20111004}.
+\newblock The M4RI~Team, 2011.
+\newblock \url{http://m4ri.sagemath.org}.
+
+\bibitem{m4ri-ple}
+M.~R. Albrecht, G.~V. Bard, and C.~Pernet.
+\newblock Efficient dense {G}aussian elimination over the field with two
+  elements.
+\newblock {\em {\tt arXiv:1111.6549 [cs.MS]}}, 2011.
+
+\bibitem{linbox-extensions-implementation}
+M.~R. Albrecht and J.-G. Dumas.
+\newblock e-mail conversation on [linbox-use] mailing list, November 2011.
+\newblock \url{https://groups.google.com/group/linbox-use/t/2f64a0ae683a2c}.
+
+\bibitem{ADKF70}
+V.~Arlazarov, E.~Dinic, M.~Kronrod, and I.~Faradzev.
+\newblock On economical construction of the transitive closure of a directed
+  graph.
+\newblock {\em Dokl. Akad. Nauk.}, 194(11), 1970.
+\newblock (in Russian), English Translation in Soviet Math Dokl.
+
+\bibitem{barbulescu-detrey-estibals-zimmermann:2012}
+R.~Barbulescu, J.~Detrey, N.~Estibals, and P.~Zimmermann.
+\newblock Finding optimal formulae for bilinear maps.
+\newblock Cryptology ePrint Archive, Report 2012/110, 2012.
+\newblock \url{http://eprint.iacr.org/}.
+
+\bibitem{BB09}
+T.~J. Boothby and R.~Bradshaw.
+\newblock Bitslicing and the {Method of Four Russians} over larger finite
+  fields.
+\newblock {\em {\tt arxiv:0901.1413}}, 2009.
+
+\bibitem{magma}
+W.~Bosma, J.~Cannon, and C.~Playoust.
+\newblock The {MAGMA} {A}lgebra {S}ystem {I}: {T}he {U}ser {L}anguage.
+\newblock In {\em Journal of Symbolic Computation 24}, pages 235--265. Academic
+  Press, 1997.
+
+\bibitem{Brent:2008:FMG:1789715.1789728}
+R.~P. Brent, P.~Gaudry, E.~Thom\'{e}, and P.~Zimmermann.
+\newblock Faster multiplication in {GF(2)[x]}.
+\newblock In {\em Proceedings of the 8th International Conference on
+  Algorithmic Number Theory}, ANTS-VIII'08, pages 153--166, Berlin, Heidelberg,
+  2008. Springer-Verlag.
+
+\bibitem{Daemen2002}
+J.~Daemen and V.~Rijmen.
+\newblock {\em The Design of {Rijndael}: {AES} - the {Advanced Encryption
+  Standard}}.
+\newblock Springer Verlag, Berlin, Heidelberg, New York, 2002.
+
+\bibitem{linbox-extensions}
+J.-G. Dumas, L.~Fousse, and B.~Salvy.
+\newblock Simultaneous modular reduction and kronecker substitution for small
+  finite fields.
+\newblock {\em J. Symb. Comput.}, 46:823--840, July 2011.
+
+\bibitem{FFPACK}
+J.-G. Dumas, P.~Giorgi, and C.~Pernet.
+\newblock {FFPACK}: finite field linear algebra package.
+\newblock In {\em ISSAC '04: Proceedings of the 2004 International Symposium on
+  Symbolic and Algebraic Computation}, ISSAC '04, pages 119--126, New York, NY,
+  USA, 2004. ACM.
+
+\bibitem{faugere-lachatre:pasco2010}
+J.-C. Faug\`ere and S.~Lachartre.
+\newblock {P}arallel {G}aussian {E}limination for {G}röbner bases computations
+  in finite fields.
+\newblock In {\em Proceedings of the 4th International Workshop on Parallel and
+  Symbolic Computation}, pages 89--97, 2010.
+
+\bibitem{GAP4}
+The GAP~Group.
+\newblock {\em {GAP -- Groups, Algorithms, and Programming, Version 4.4.12}},
+  2007.
+
+\bibitem{Giorgi03onthe}
+P.~Giorgi, C.-P. Jeannerod, and G.~Villard.
+\newblock On the complexity of polynomial matrix computations.
+\newblock In {\em ISSAC '03: Proceedings of the 2003 International Symposium on
+  Symbolic and Algebraic Computation}, pages 135--142. ACM Press, 2003.
+
+\bibitem{graycode}
+F.~Gray.
+\newblock Pulse code communication, March 1953.
+\newblock US Patent No. 2,632,058.
+
+\bibitem{jeannerod-pernet-storjohann:cup2012}
+C.-P. Jeannerod, C.~Pernet, and A.~Storjohann.
+\newblock Rank-profile revealing {G}aussian elimination and the {CUP} matrix
+  decomposition.
+\newblock {\em {\tt arXiv:1112.5717}}, page 35 pages, 2012.
+
+\bibitem{grease}
+R.~Kleiser, J.~Travolta, O.~Newton-John, J.~Jacobs, W.~Casey, B.~Woodard, and
+  A.~Carr.
+\newblock {\em Grease}.
+\newblock Paramount Pictures, 1978.
+
+\bibitem{lazard:eurocal83}
+D.~Lazard.
+\newblock Gr\"obner-bases, {G}aussian elimination and resolution of systems of
+  algebraic equations.
+\newblock In {\em Proceedings of the European Computer Algebra Conference on
+  Computer Algebra}, volume 162 of {\em Lecture Notes in Computer Science},
+  Berlin, Heidelberg, New York, 1983. Springer Verlag.
+
+\bibitem{M05}
+P.~L. Montgomery.
+\newblock Five, six, and seven-term {K}aratsuba-like formulae.
+\newblock {\em IEEE Trans. on Computers}, 53(3):362--369, 2005.
+
+\bibitem{NTL}
+V.~Shoup.
+\newblock {NTL}.
+\newblock \url{http://www.shoup.net/ntl/}, 2009.
+\newblock version 5.4.2.
+
+\bibitem{steel:gf2k}
+A.~Steel.
+\newblock Private communication.
+\newblock 29. November, 2011.
+
+\bibitem{sage}
+W.~Stein et~al.
+\newblock {\em {S}age {M}athematics {S}oftware ({V}ersion 4.7.1)}.
+\newblock The Sage Development Team, 2011.
+\newblock {\tt http://www.sagemath.org}.
+
+\bibitem{Strassen}
+V.~Strassen.
+\newblock Gaussian elimination is not optimal.
+\newblock {\em Nummerische Mathematik}, 13:354--256, 1969.
+
+\end{thebibliography}

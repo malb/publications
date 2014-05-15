@@ -1,0 +1,300 @@
+..
+Total running time:  0.102 seconds.
+Sample size: 2; mean: 69908508; standard deviation: 4042
+99% confidence interval: +/- 181932 (0.3%): [69726576..70090440]
+e:  2, m:  1000, n:  2000, type: 0, algo:   travolta, cpu cycles:   69908508, cc/(2mnr^0.807): 0.06613, wall time: 0.026280
+..........
+Total running time:  0.485 seconds.
+Sample size: 10; mean: 124050996; standard deviation: 1115864
+99% confidence interval: +/- 1146818 (0.9%): [122904178..125197814]
+e:  2, m:  1000, n:  2000, type: 1, algo:        ple, cpu cycles:  124050996, cc/(2mnr^0.807): 0.11735, wall time: 0.046634
+................................................................................................................................................................
+Total running time: 30.450 seconds.
+Sample size: 160; mean: 336905324; standard deviation: 16367995
+99% confidence interval: +/- 3366638 (1.0%): [333538686..340271962]
+e:  2, m:  2000, n:  3000, type: 0, algo:   travolta, cpu cycles:  336905324, cc/(2mnr^0.807): 0.06070, wall time: 0.126650
+..................
+Total running time:  3.855 seconds.
+Sample size: 18; mean: 556708634; standard deviation: 8071619
+99% confidence interval: +/- 5513442 (1.0%): [551195192..562222075]
+e:  2, m:  2000, n:  3000, type: 1, algo:        ple, cpu cycles:  556708634, cc/(2mnr^0.807): 0.10031, wall time: 0.209278
+.........................................
+Total running time: 19.901 seconds.
+Sample size: 41; mean: 949007490; standard deviation: 22433665
+99% confidence interval: +/- 9473599 (1.0%): [939533891..958481089]
+e:  2, m:  3000, n:  4000, type: 0, algo:   travolta, cpu cycles:  949007490, cc/(2mnr^0.807): 0.06163, wall time: 0.356751
+...........................................................................................
+Total running time: 57.119 seconds.
+Sample size: 91; mean: 1640536491; standard deviation: 59590277
+99% confidence interval: +/- 16377830 (1.0%): [1624158661..1656914321]
+e:  2, m:  3000, n:  4000, type: 1, algo:        ple, cpu cycles: 1640536491, cc/(2mnr^0.807): 0.10654, wall time: 0.616709
+.......
+Total running time:  7.929 seconds.
+Sample size: 7; mean: 2459395466; standard deviation: 16159409
+99% confidence interval: +/- 22641179 (0.9%): [2436754287..2482036645]
+e:  2, m:  4000, n:  5000, type: 0, algo:   travolta, cpu cycles: 2459395466, cc/(2mnr^0.807): 0.07597, wall time: 0.924533
+......
+Total running time:  4.762 seconds.
+Sample size: 6; mean: 2061342365; standard deviation: 11931254
+99% confidence interval: +/- 19639526 (1.0%): [2041702838..2080981891]
+e:  2, m:  4000, n:  5000, type: 1, algo:        ple, cpu cycles: 2061342365, cc/(2mnr^0.807): 0.06367, wall time: 0.774898
+.............................
+Total running time: 61.341 seconds.
+Sample size: 29; mean: 4796841907; standard deviation: 124180279
+99% confidence interval: +/- 63713948 (1.3%): [4733127959..4860555855]
+e:  2, m:  5000, n:  6000, type: 0, algo:   travolta, cpu cycles: 4796841907, cc/(2mnr^0.807): 0.08249, wall time: 1.803222
+....
+Total running time:  4.276 seconds.
+Sample size: 4; mean: 2774952896; standard deviation: 5169673
+99% confidence interval: +/- 15098031 (0.5%): [2759854865..2790050928]
+e:  2, m:  5000, n:  6000, type: 1, algo:        ple, cpu cycles: 2774952897, cc/(2mnr^0.807): 0.04772, wall time: 1.043157
+......
+Total running time: 19.628 seconds.
+Sample size: 6; mean: 7552715063; standard deviation: 45010388
+99% confidence interval: +/- 74089670 (1.0%): [7478625392..7626804733]
+e:  2, m:  6000, n:  7000, type: 0, algo:   travolta, cpu cycles: 7552715063, cc/(2mnr^0.807): 0.08008, wall time: 2.839204
+........
+Total running time: 13.607 seconds.
+Sample size: 8; mean: 4430582463; standard deviation: 31108909
+99% confidence interval: +/- 38484312 (0.9%): [4392098150..4469066775]
+e:  2, m:  6000, n:  7000, type: 1, algo:        ple, cpu cycles: 4430582463, cc/(2mnr^0.807): 0.04698, wall time: 1.665538
+..
+Total running time:  9.492 seconds.
+Sample size: 2; mean: 11077202038; standard deviation: 1502724
+99% confidence interval: +/- 67641070 (0.6%): [11009560968..11144843109]
+e:  2, m:  7000, n:  8000, type: 0, algo:   travolta, cpu cycles: 11077202039, cc/(2mnr^0.807): 0.07778, wall time: 4.164123
+....
+Total running time:  9.441 seconds.
+Sample size: 4; mean: 6135886874; standard deviation: 15999034
+99% confidence interval: +/- 46725180 (0.8%): [6089161693..6182612054]
+e:  2, m:  7000, n:  8000, type: 1, algo:        ple, cpu cycles: 6135886874, cc/(2mnr^0.807): 0.04308, wall time: 2.306593
+.........
+Total running time: 62.419 seconds.
+Sample size: 9; mean: 16472535754; standard deviation: 243580200
+99% confidence interval: +/- 272403858 (1.7%): [16200131895..16744939612]
+e:  2, m:  8000, n:  9000, type: 0, algo:   travolta, cpu cycles: 16472535754, cc/(2mnr^0.807): 0.08076, wall time: 6.192326
+..
+Total running time:  4.055 seconds.
+Sample size: 2; mean: 5211351067; standard deviation: 72119
+99% confidence interval: +/- 3246252 (0.1%): [5208104815..5214597319]
+e:  2, m:  8000, n:  9000, type: 1, algo:        ple, cpu cycles: 5211351067, cc/(2mnr^0.807): 0.02555, wall time: 1.959043
+...
+Total running time: 28.832 seconds.
+Sample size: 3; mean: 23071592260; standard deviation: 35765077
+99% confidence interval: +/- 204941100 (0.9%): [22866651160..23276533359]
+e:  2, m:  9000, n: 10000, type: 0, algo:   travolta, cpu cycles: 23071592260, cc/(2mnr^0.807): 0.08229, wall time: 8.673031
+...
+Total running time: 11.121 seconds.
+Sample size: 3; mean: 9641427407; standard deviation: 9055983
+99% confidence interval: +/- 51892608 (0.5%): [9589534799..9693320014]
+e:  2, m:  9000, n: 10000, type: 1, algo:        ple, cpu cycles: 9641427407, cc/(2mnr^0.807): 0.03439, wall time: 3.624389
+.....
+Total running time: 62.929 seconds.
+Sample size: 5; mean: 30423199708; standard deviation: 372520982
+99% confidence interval: +/- 767010061 (2.5%): [29656189648..31190209769]
+e:  2, m: 10000, n: 11000, type: 0, algo:   travolta, cpu cycles: 30423199708, cc/(2mnr^0.807): 0.08154, wall time: 11.436633
+.............
+Total running time: 64.204 seconds.
+Sample size: 13; mean: 12875095702; standard deviation: 691521441
+99% confidence interval: +/- 585929276 (4.6%): [12289166426..13461024978]
+e:  2, m: 10000, n: 11000, type: 1, algo:        ple, cpu cycles: 12875095702, cc/(2mnr^0.807): 0.03451, wall time: 4.839984
+.......................................................................................................
+Total running time:  7.288 seconds.
+Sample size: 103; mean: 131794405; standard deviation: 5101412
+99% confidence interval: +/- 1314892 (1.0%): [130479513..133109297]
+e:  3, m:  1000, n:  2000, type: 0, algo:   travolta, cpu cycles:  131794405, cc/(2mnr^0.807): 0.12467, wall time: 0.049544
+.........................
+Total running time:  2.160 seconds.
+Sample size: 25; mean: 222265436; standard deviation: 3972040
+99% confidence interval: +/- 2221959 (1.0%): [220043477..224487395]
+e:  3, m:  1000, n:  2000, type: 1, algo:        ple, cpu cycles:  222265436, cc/(2mnr^0.807): 0.21026, wall time: 0.083555
+...................
+Total running time:  6.110 seconds.
+Sample size: 19; mean: 688153340; standard deviation: 10394238
+99% confidence interval: +/- 6862884 (1.0%): [681290456..695016224]
+e:  3, m:  2000, n:  3000, type: 0, algo:   travolta, cpu cycles:  688153340, cc/(2mnr^0.807): 0.12399, wall time: 0.258691
+.................................................................................
+Total running time: 33.291 seconds.
+Sample size: 81; mean: 1073720095; standard deviation: 36546044
+99% confidence interval: +/- 10682950 (1.0%): [1063037145..1084403045]
+e:  3, m:  2000, n:  3000, type: 1, algo:        ple, cpu cycles: 1073720095, cc/(2mnr^0.807): 0.19347, wall time: 0.403632
+.........
+Total running time:  8.492 seconds.
+Sample size: 9; mean: 2146144032; standard deviation: 18179624
+99% confidence interval: +/- 20330880 (0.9%): [2125813152..2166474912]
+e:  3, m:  3000, n:  4000, type: 0, algo:   travolta, cpu cycles: 2146144032, cc/(2mnr^0.807): 0.13937, wall time: 0.806776
+..........
+Total running time:  9.543 seconds.
+Sample size: 10; mean: 2496149732; standard deviation: 23331128
+99% confidence interval: +/- 23978339 (1.0%): [2472171393..2520128071]
+e:  3, m:  3000, n:  4000, type: 1, algo:        ple, cpu cycles: 2496149732, cc/(2mnr^0.807): 0.16210, wall time: 0.938350
+.............................
+Total running time: 59.407 seconds.
+Sample size: 29; mean: 4871593072; standard deviation: 94840165
+99% confidence interval: +/- 48660233 (1.0%): [4822932838..4920253305]
+e:  3, m:  4000, n:  5000, type: 0, algo:   travolta, cpu cycles: 4871593072, cc/(2mnr^0.807): 0.15048, wall time: 1.831322
+....
+Total running time:  4.584 seconds.
+Sample size: 4; mean: 2977306212; standard deviation: 8905099
+99% confidence interval: +/- 26007343 (0.9%): [2951298869..3003313554]
+e:  3, m:  4000, n:  5000, type: 1, algo:        ple, cpu cycles: 2977306212, cc/(2mnr^0.807): 0.09197, wall time: 1.119225
+..
+Total running time:  7.277 seconds.
+Sample size: 2; mean: 8812070490; standard deviation: 1006874
+99% confidence interval: +/- 45321716 (0.5%): [8766748773..8857392206]
+e:  3, m:  5000, n:  6000, type: 0, algo:   travolta, cpu cycles: 8812070490, cc/(2mnr^0.807): 0.15155, wall time: 3.312619
+..........
+Total running time: 18.510 seconds.
+Sample size: 10; mean: 4823775889; standard deviation: 46123728
+99% confidence interval: +/- 47403211 (1.0%): [4776372677..4871179100]
+e:  3, m:  5000, n:  6000, type: 1, algo:        ple, cpu cycles: 4823775889, cc/(2mnr^0.807): 0.08296, wall time: 1.813347
+.....
+Total running time: 28.738 seconds.
+Sample size: 5; mean: 14139230848; standard deviation: 64279622
+99% confidence interval: +/- 132349906 (0.9%): [14006880942..14271580755]
+e:  3, m:  6000, n:  7000, type: 0, algo:   travolta, cpu cycles: 14139230848, cc/(2mnr^0.807): 0.14991, wall time: 5.315194
+.......
+Total running time: 18.140 seconds.
+Sample size: 7; mean: 6752428737; standard deviation: 43759379
+99% confidence interval: +/- 61311892 (0.9%): [6691116846..6813740629]
+e:  3, m:  6000, n:  7000, type: 1, algo:        ple, cpu cycles: 6752428737, cc/(2mnr^0.807): 0.07159, wall time: 2.538363
+...
+Total running time: 26.169 seconds.
+Sample size: 3; mean: 21617594518; standard deviation: 18946010
+99% confidence interval: +/- 108564453 (0.5%): [21509030066..21726158971]
+e:  3, m:  7000, n:  8000, type: 0, algo:   travolta, cpu cycles: 21617594518, cc/(2mnr^0.807): 0.15179, wall time: 8.126446
+......
+Total running time: 22.206 seconds.
+Sample size: 6; mean: 9643193127; standard deviation: 57437293
+99% confidence interval: +/- 94545065 (1.0%): [9548648062..9737738193]
+e:  3, m:  7000, n:  8000, type: 1, algo:        ple, cpu cycles: 9643193127, cc/(2mnr^0.807): 0.06771, wall time: 3.625053
+....
+Total running time: 52.403 seconds.
+Sample size: 4; mean: 32833255997; standard deviation: 52818683
+99% confidence interval: +/- 154256966 (0.5%): [32678999031..32987512963]
+e:  3, m:  8000, n:  9000, type: 0, algo:   travolta, cpu cycles: 32833255997, cc/(2mnr^0.807): 0.16098, wall time: 12.342617
+.....
+Total running time: 18.017 seconds.
+Sample size: 5; mean: 9330093269; standard deviation: 42539940
+99% confidence interval: +/- 87588522 (0.9%): [9242504747..9417681791]
+e:  3, m:  8000, n:  9000, type: 1, algo:        ple, cpu cycles: 9330093269, cc/(2mnr^0.807): 0.04575, wall time: 3.507353
+...
+Total running time: 55.919 seconds.
+Sample size: 3; mean: 47042711589; standard deviation: 72367819
+99% confidence interval: +/- 414682190 (0.9%): [46628029399..47457393779]
+e:  3, m:  9000, n: 10000, type: 0, algo:   travolta, cpu cycles: 47042711589, cc/(2mnr^0.807): 0.16778, wall time: 17.684208
+.....
+Total running time: 30.150 seconds.
+Sample size: 5; mean: 15722856941; standard deviation: 62683682
+99% confidence interval: +/- 129063911 (0.8%): [15593793030..15851920852]
+e:  3, m:  9000, n: 10000, type: 1, algo:        ple, cpu cycles: 15722856941, cc/(2mnr^0.807): 0.05608, wall time: 5.910509
+...
+Total running time: 69.053 seconds.
+Sample size: 3; mean: 58127065476; standard deviation: 72680491
+99% confidence interval: +/- 416473858 (0.7%): [57710591618..58543539334]
+e:  3, m: 10000, n: 11000, type: 0, algo:   travolta, cpu cycles: 58127065476, cc/(2mnr^0.807): 0.15579, wall time: 21.851018
+.......
+Total running time: 56.344 seconds.
+Sample size: 7; mean: 21034836429; standard deviation: 135482320
+99% confidence interval: +/- 189826217 (0.9%): [20845010213..21224662646]
+e:  3, m: 10000, n: 11000, type: 1, algo:        ple, cpu cycles: 21034836429, cc/(2mnr^0.807): 0.05638, wall time: 7.907378
+.................................
+Total running time:  2.457 seconds.
+Sample size: 33; mean: 141589745; standard deviation: 2925818
+99% confidence interval: +/- 1395291 (1.0%): [140194454..142985037]
+e:  4, m:  1000, n:  2000, type: 0, algo:   travolta, cpu cycles:  141589745, cc/(2mnr^0.807): 0.13394, wall time: 0.053227
+.................................................
+Total running time:  4.926 seconds.
+Sample size: 49; mean: 257934482; standard deviation: 6682447
+99% confidence interval: +/- 2557200 (1.0%): [255377282..260491683]
+e:  4, m:  1000, n:  2000, type: 1, algo:        ple, cpu cycles:  257934482, cc/(2mnr^0.807): 0.24400, wall time: 0.096963
+.......................
+Total running time:  7.774 seconds.
+Sample size: 23; mean: 729047595; standard deviation: 12129265
+99% confidence interval: +/- 7129608 (1.0%): [721917987..736177203]
+e:  4, m:  2000, n:  3000, type: 0, algo:   travolta, cpu cycles:  729047595, cc/(2mnr^0.807): 0.13136, wall time: 0.274064
+...................
+Total running time:  8.674 seconds.
+Sample size: 19; mean: 1187238198; standard deviation: 17970426
+99% confidence interval: +/- 11865127 (1.0%): [1175373071..1199103324]
+e:  4, m:  2000, n:  3000, type: 1, algo:        ple, cpu cycles: 1187238198, cc/(2mnr^0.807): 0.21392, wall time: 0.446306
+.....
+Total running time:  4.868 seconds.
+Sample size: 5; mean: 2250696994; standard deviation: 8624939
+99% confidence interval: +/- 17758504 (0.8%): [2232938490..2268455498]
+e:  4, m:  3000, n:  4000, type: 0, algo:   travolta, cpu cycles: 2250696994, cc/(2mnr^0.807): 0.14616, wall time: 0.846079
+.......
+Total running time:  8.499 seconds.
+Sample size: 7; mean: 3173752498; standard deviation: 21203174
+99% confidence interval: +/- 29708070 (0.9%): [3144044428..3203460568]
+e:  4, m:  3000, n:  4000, type: 1, algo:        ple, cpu cycles: 3173752498, cc/(2mnr^0.807): 0.20611, wall time: 1.193073
+.........
+Total running time: 19.109 seconds.
+Sample size: 9; mean: 5090346490; standard deviation: 43265073
+99% confidence interval: +/- 48384774 (1.0%): [5041961716..5138731264]
+e:  4, m:  4000, n:  5000, type: 0, algo:   travolta, cpu cycles: 5090346490, cc/(2mnr^0.807): 0.15723, wall time: 1.913555
+.......
+Total running time: 10.009 seconds.
+Sample size: 7; mean: 3710932049; standard deviation: 24974552
+99% confidence interval: +/- 34992203 (0.9%): [3675939846..3745924252]
+e:  4, m:  4000, n:  5000, type: 1, algo:        ple, cpu cycles: 3710932049, cc/(2mnr^0.807): 0.11463, wall time: 1.395009
+...
+Total running time: 11.316 seconds.
+Sample size: 3; mean: 9162027868; standard deviation: 5427855
+99% confidence interval: +/- 31102706 (0.3%): [9130925162..9193130573]
+e:  4, m:  5000, n:  6000, type: 0, algo:   travolta, cpu cycles: 9162027868, cc/(2mnr^0.807): 0.15756, wall time: 3.444174
+..........................
+Total running time: 60.048 seconds.
+Sample size: 26; mean: 6008160266; standard deviation: 111947480
+99% confidence interval: +/- 61187767 (1.0%): [5946972499..6069348033]
+e:  4, m:  5000, n:  6000, type: 1, algo:        ple, cpu cycles: 6008160266, cc/(2mnr^0.807): 0.10333, wall time: 2.259218
+.........
+Total running time: 53.834 seconds.
+Sample size: 9; mean: 14751661244; standard deviation: 126705389
+99% confidence interval: +/- 141698861 (1.0%): [14609962383..14893360106]
+e:  4, m:  6000, n:  7000, type: 0, algo:   travolta, cpu cycles: 14751661244, cc/(2mnr^0.807): 0.15641, wall time: 5.548191
+...................
+Total running time: 62.807 seconds.
+Sample size: 19; mean: 8604327384; standard deviation: 199994331
+99% confidence interval: +/- 132047955 (1.5%): [8472279430..8736375339]
+e:  4, m:  6000, n:  7000, type: 1, algo:        ple, cpu cycles: 8604327384, cc/(2mnr^0.807): 0.09123, wall time: 3.236142
+...
+Total running time: 27.329 seconds.
+Sample size: 3; mean: 22676551254; standard deviation: 12753704
+99% confidence interval: +/- 73081296 (0.3%): [22603469958..22749632551]
+e:  4, m:  7000, n:  8000, type: 0, algo:   travolta, cpu cycles: 22676551254, cc/(2mnr^0.807): 0.15922, wall time: 8.528790
+...
+Total running time: 14.322 seconds.
+Sample size: 3; mean: 12416757484; standard deviation: 14679903
+99% confidence interval: +/- 84118803 (0.7%): [12332638681..12500876288]
+e:  4, m:  7000, n:  8000, type: 1, algo:        ple, cpu cycles: 12416757484, cc/(2mnr^0.807): 0.08718, wall time: 4.670020
+.....
+Total running time: 68.471 seconds.
+Sample size: 5; mean: 34393102891; standard deviation: 278663924
+99% confidence interval: +/- 573761059 (1.7%): [33819341833..34966863950]
+e:  4, m:  8000, n:  9000, type: 0, algo:   travolta, cpu cycles: 34393102891, cc/(2mnr^0.807): 0.16863, wall time: 12.935456
+.............
+Total running time: 62.568 seconds.
+Sample size: 13; mean: 12437957342; standard deviation: 216226118
+99% confidence interval: +/- 183209378 (1.5%): [12254747964..12621166719]
+e:  4, m:  8000, n:  9000, type: 1, algo:        ple, cpu cycles: 12437957342, cc/(2mnr^0.807): 0.06098, wall time: 4.677993
+....
+Total running time: 76.679 seconds.
+Sample size: 4; mean: 48365112855; standard deviation: 355375565
+99% confidence interval: +/- 1037874353 (2.1%): [47327238502..49402987208]
+e:  4, m:  9000, n: 10000, type: 0, algo:   travolta, cpu cycles: 48365112855, cc/(2mnr^0.807): 0.17250, wall time: 18.190414
+........
+Total running time: 66.824 seconds.
+Sample size: 8; mean: 21787970275; standard deviation: 190013077
+99% confidence interval: +/- 235062012 (1.1%): [21552908263..22023032288]
+e:  4, m:  9000, n: 10000, type: 1, algo:        ple, cpu cycles: 21787970275, cc/(2mnr^0.807): 0.07771, wall time: 8.194590
+...
+Total running time: 71.546 seconds.
+Sample size: 3; mean: 60245852938; standard deviation: 418989974
+99% confidence interval: +/- 2400896990 (4.0%): [57844955948..62646749928]
+e:  4, m: 10000, n: 11000, type: 0, algo:   travolta, cpu cycles: 60245852938, cc/(2mnr^0.807): 0.16147, wall time: 22.658832
+......
+Total running time: 68.785 seconds.
+Sample size: 6; mean: 29980614675; standard deviation: 238465081
+99% confidence interval: +/- 392527148 (1.3%): [29588087527..30373141823]
+e:  4, m: 10000, n: 11000, type: 1, algo:        ple, cpu cycles: 29980614675, cc/(2mnr^0.807): 0.08035, wall time: 11.275893
