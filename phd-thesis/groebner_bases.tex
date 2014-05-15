@@ -1,0 +1,2471 @@
+\chapter{\texorpdfstring{Gröbner}{Groebner} Bases}
+\label{chapter:groebner}
+In this chapter the basic concepts of ideals in commutative multivariate polynomial rings and their Gröbner bases are discussed. The main purpose of this chapter is to motivate and present Buchberger's original algorithm for computing Gröbner bases.
+
+The end of this chapter is a brief discussion how Gröbner bases are useful for solving systems of polynomial equations because it is the main application in this work.
+
+This chapter is an extended and revised version of a chapter in the author's Diplomarbeit~\cite{Albrecht2007} later published as \cite{albrecht:cryptologia08}. 
+
+For a more thorough introduction to the matters discussed in this chapter we point the reader to
+\begin{itemize}
+\item ``Ideals, Varieties, and Algorithms'' by Cox, Little, and O'Shea~\cite{Cox2005},
+\item ``Gröbner Bases -- A Computational Approach to Commutative Algebra'' by Becker and Weispfenning~\cite{Becker1991} and 
+\item ``Computational Commutative Algebra`` by Kreuzer and Robbiano~\cite{Kreuzer2000}.
+\end{itemize}
+
+
+\section{Notation}
+The following notation and conventions are used throughout this text:
+\begin{itemize}
+\item We start counting at zero by default.
+\item $\F$ is a field, not necessarily algebraically closed. $\overline{\F}$ represents the algebraic closure of $\F$. In source code listings we usually use {\tt K} to denote the field to avoid confusion with $F$ defined below.
+\item $\F_{p}$ is the finite field of order $p$ with $p$ prime; $\F_{p^n}$ the finite extension field of degree $n$ over $\F_{p}$.
+\item $\Z$ is the ring of integers; $\Z_{\geq 0}$ are the integers $\geq 0$.
+\item $P$ is a polynomial ring $\F[x_0,\ \dots\ ,x_{n-1}]$ in the variables $x_0,\dots,x_{n-1}$.
+\item $F = (f_0, \dots, f_{m-1})$ is an ordered list of polynomials in $P$; we denote by $\{f_0,\dots,f_{m-1}\}$ a set of unordered polynomials $f_0,\dots,f_{m-1}$.
+ \item We call $m= x_0^{\alpha_0} x_1^{\alpha_1} \dots x_{n-1}^{\alpha_{n-1}}$ with $\alpha_i \in \Z_{\geq 0}$ a monomial and $t = c \cdot m$ with $c
+\in \F$ a term. Note that some authors such as \cite{Becker1991} switch the definition of terms and monomials used here.
+
+\item If $m = x_0^{\alpha_0} x_1^{\alpha_1} \dots x_{n-1}^{\alpha_{n-1}}$ is a monomial, we call $\alpha_0, \alpha_1, \dots \alpha_{n-1}$ its \emph{exponent vector}: $$\expvec(m) = \alpha_0, \alpha_1, \dots \alpha_{n-1}.$$
+
+\item $M(f)$ is the set of monomials that appear in the polynomial $f$ and $T(f)$ the set of terms that appear in the same polynomial $f$. We extend this
+definition to sets of polynomials $F = f_0, \dots, f_{m-1}$: $M(F) = \bigcup_{i=0}^{m-1} M(f_i)$ and $T(F) = \bigcup_{i=0}^{m-1} T(f_i)$
+
+\item $\deg(m)$ is the degree of the monomial $m = x_0^{\alpha_0} x_1^{\alpha_1} \dots x_{n-1}^{\alpha_{n-1}}$ defined as $\sum_{i=0}^{n-1} \alpha_i$. We extend this definition to polynomials such that $\deg(f)$ for $f = \sum c_i m_i$ is defined as $\max\{\deg(m_i)\}$. We define $\deg(\alpha)$ as $\deg(m)$ for $\alpha = \expvec(m)$.
+\item $A[i,j]$ represents the element in row $i$ and column $j$ in the matrix
+$A$.
+\item $f \mod g$ denotes the result of the modulo operation $f$ modulo $g$.
+\end{itemize}
+
+Whenever suitable, examples are provided to illustrate theorems, algorithms and propositions. Also, if possible, source code snippets are provided to reproduce examples in the mathematical software \Sage~\cite{sage}. \Sage is an open-source mathematics software that aims to provide a ``viable alternative to Magma, Maple, Mathematica and Matlab.''
+
+For example, consider the following set of polynomials in $\F_{127}[x,y,z]$.
+\begin{align*}
+f_0 &= 81 z^{2} + 51 x + 125 z + 38\\
+f_1 &= 76 x y + 80 y^{2} + 49 x z + 62 y z + 45 z^{2}\\
+f_2 &= 122 x^{2} + 106 y z + 78 z^{2} + 48 x + 112 y
+\end{align*}
+This example can be constructed in \Sage as follows:
+\begin{lstlisting}
+sage: K = GF(127)
+sage: P.<x,y,z> = PolynomialRing(K)
+sage: f0 = -46*z^2 + 51*x - 2*z + 38
+sage: f1 = -51*x*y - 47*y^2 + 49*x*z + 62*y*z + 45*z^2
+sage: f2 = -5*x^2 - 21*y*z - 49*z^2 + 48*x - 15*y
+\end{lstlisting}
+
+\section{Monomial Orderings}
+When we consider univariate polynomials it is straight-forward to determine which monomial is the largest and which is the smallest. Once we consider multivariate polynomials, things are not as straight-forward anymore. Thus, we attach a monomial ordering or term ordering to a ring which encodes how we compare monomials.
+
+\begin{definition}[Monomial Ordering \cite{Cox2005}]
+A monomial ordering on $\F[x_0,\dots,x_{n-1}]$ is any relation $>$ on $\Z_{\geq 0}^n$, or equivalently, any relation on the set of monomials $x^\alpha$,$\alpha \in \Z_{\geq 0}^n$, satisfying:
+\begin{enumerate}
+ \item $>$ is a total (or linear) ordering on $\Z_{\geq 0}^n$.
+ \item If $\alpha > \beta$ and $\gamma$ $\in \Z_{\geq 0}^n$ then $\alpha + \gamma > \beta + \gamma$.
+ \item $>$ is a well-ordering on $\Z_{\geq 0}^n$. This means that every non-empty subset of $\Z_{\geq 0}^n$ has a smallest element under $>$.
+\end{enumerate}
+
+\end{definition}
+
+Two of the most used monomial orderings are the ``lexicographical'' and the ``degree reverse lexicographical'' ordering.
+
+\begin{definition}[Lexicographic ordering \emph{lex}]
+\label{def:lex}
+Let the exponent vector $\alpha = (\alpha_0, \dots, \alpha_{n-1})$ and $\beta = (\beta_0, \dots, \beta_{n-1})$ $\in \field{Z}_{\geq 0}^n$. We say
+$\alpha \underset{lex}{>} \beta$ if, in the vector difference $\alpha - \beta \in \field{Z}^n$, the left-most non-zero entry is positive.
+We will write $x^\alpha \underset{lex}{>} x^\beta$ if $\alpha \underset{lex}{>} \beta$. 
+\end{definition}
+
+We will show later in this chapter that \emph{lex} is an order which allows to ``read'' the solution to a multivariate polynomial equation system from the Gröbner basis. This is, because \emph{lex} is an \emph{elimination ordering}. But in practice computing a lexicographical Gröbner basis is usually less efficient than computing a \emph{degree reverse lexicographic} Gröbner basis:
+
+\begin{definition}[Degree reverse lexicographic ordering \emph{degrevlex}] 
+\label{def:degrevlex}
+Let the exponent vector $\alpha = (\alpha_0, \dots, \alpha_{n-1})$ and $\beta = (\beta_0, \dots, \beta_{n-1})$ $\in \field{Z}_{\geq 0}^n$.
+We say $\alpha \underset{degrevlex}{>} \beta$ if either
+\begin{itemize}
+ \item $\deg( \alpha ) > \deg(\beta )$  or
+ \item $\deg(\alpha) = \deg(\beta)$ and the rightmost non-zero entry in the vector difference $\alpha - \beta \in \Z^n$ is negative.
+\end{itemize}
+We will write $x^\alpha \underset{degrevlex}{>} x^\beta$ if $\alpha \underset{degrevlex}{>} \beta$.
+\end{definition}
+
+We will also need block orderings later in this work which are elimination orderings potentially ``mixed'' with other monomial orderings.
+
+\begin{definition}[Block or product ordering] 
+\label{def:blockorder}
+Let $x = (x_0, \ldots, x_{n-1})$ and  $y = (y_0, \ldots, y_{m-1})$ be two ordered sets of variables, $<_1$ a monomial ordering on $\F[x_0,\dots,x_{n-1}]$ and $<_2$ a monomial ordering on $\F[y_0,\dots,y_{m-1}]$. We say that $x^a y^b < x^A y^B$ with respect to the the block ordering (or product ordering) $(<_1,<_2)$ on $\F[x_0,\dots,x_{n-1},y_0,\dots,y_{m-1}]$ if either
+
+\begin{itemize}
+ \item $x^a <_1 x^A$  or 
+ \item $x^a = x^A$ and $y^b <_2 y^B$.
+\end{itemize}
+
+Inductively one defines the product ordering of more than two monomial orderings.
+\end{definition}
+
+We will simply write $x > y$ if it is clear from the context which ordering we are referring to. We can extend monomial orderings to polynomials by comparing the largest monomials first and compare smaller monomials only if these are equal.
+
+For example consider the polynomial 
+\[f = 1 + y_{0} + x_{2} + x_{1} + x_{0} + x_{0}x_{1} \in \F[y_0,x_0,x_1,x_2].\]
+With respect to the lexicographical monomial ordering and $y_{i} > x_{i}$ we have that the leading monomial of $f$ is $y_{0}$ but with respect to the degree reverse lexicographical ordering the leading monomial is $x_{0}x_{1}$ because it has degree two. If we consider the block ordering with the two blocks $y_0$ and $x_0,x_1,x_2$ and choose \emph{degrevlex} in both blocks we have that $y_0$ is the leading monomial.
+
+Monomial orderings are assigned to multivariate polynomial rings in \Sage by using the \verb|order| keyword:
+
+\begin{lstlisting}
+sage: P.<y0,x0,x1,x2> = PolynomialRing(QQ, order='lex')
+sage: f =  1 + y0 + x2 + x1 + x0 + x0*x1
+sage: f.lm()
+y0
+
+sage: P.<y0,x0,x1,x2> = PolynomialRing(QQ, order='degrevlex')
+sage: f =  1 + y0 + x2 + x1 + x0 + x0*x1
+sage: f.lm()
+x0*x1
+
+sage: T = TermOrder('degrevlex',1) + TermOrder('degrevlex',3)
+sage: P.<y0,x0,x1,x2> = PolynomialRing(QQ, order=T)
+sage: f =  1 + y0 + x2 + x1 + x0 + x0*x1
+sage: f.lm()
+y0
+\end{lstlisting}
+
+We denote the largest monomial in a polynomial $f$ as the leading monomial $\LM(f)$, its coefficient as the leading coefficient $\LC(f)$ and their product as the leading term $\LT(f) = \LC(f)\cdot \LM(f)$.
+
+\section{\texorpdfstring{Gröbner}{Groeber} Bases}
+
+We are interested in ideals of multivariate polynomial rings and their bases.
+
+\begin{definition}[Ideal]
+\label{def:ideal}
+A subset $I \subset P$ is an ideal if it satisfies:
+\begin{enumerate}
+\item $0 \in I$;
+\item If $f$, $g \in I$, then $f + g \in I$;
+\item If $f \in I$ and $h \in P$, then $h \cdot f \in I$.
+\end{enumerate}
+\end{definition}
+
+
+
+\begin{definition}
+Let $f_0 ,\dots , f_{m-1}$ be polynomials in $P$ . Define the set
+\[
+\langle f_0 , \dots , f_{m-1}\rangle = \left\{ \sum_{i=0}^{m-1} h_i f_i : h_0 ,\dots , h_{m-1} \in P \right\}.
+\]
+This set $I$ is an ideal called the ideal generated by $f_0, \dots, f_{m-1}$.
+\end{definition}
+
+\begin{definition}[Leading Monomial Ideal]
+Let $I$ be an ideal $\subset P$ and define the set
+\[
+ \left\{ \LM(f_i) \mid f_i \in I\right\}.
+\]
+We call the ideal spanned by this set the leading monomial ideal of $I$ and denote it as $\langle \LM(I) \rangle \subset P$.
+\end{definition}
+
+If there exists a finite set of polynomials in $P$ that generates a given ideal, this set is called a basis. The Hilbert basis theorem states that every ideal in $P$ is finitely generated:
+
+\begin{theorem}[Hilbert's Basis Theorem]
+\label{theorem:hilbbase}
+Every ideal $I \subset P$ has a finite generating set. That is, $I = \langle
+f_0, \dots, f_{m-1} \rangle$ for some $f_0,
+\dots, f_{m-1} \in I$.
+\end{theorem}
+
+\begin{citeproof} 
+See \cite[p. 74]{Cox2005}.
+\end{citeproof}
+
+Note that most ideals have many different bases.
+
+Hilbert's Basis Theorem has important consequences for Gröbner basis calculations. One is that a nested
+increasing sequence of ideals $I_0 \subset I_1 \subset \dots$ in $P$ stabilizes at a certain point in time. Explicitly:
+
+\begin{theorem}[Ascending Chain Condition] 
+\label{theorem:acc}
+Let 
+\[
+I_0 \subset I_1 \subset I_2 \subset \dots
+\]
+be an ascending chain of ideals in $P$. Then there exists an $N \geq 1$ such that 
+\[
+I_{N} = I_{N+1} = I_{N+2} = \dots\ .
+\]
+\end{theorem}
+
+\begin{citeproof}
+See \cite[p.76]{Cox2005}.
+\end{citeproof}
+
+\begin{definition}[Noetherian Ring]
+A ring for which the Ascending Chain Condition for ideals holds is called a \emph{noetherian} ring.
+\end{definition}
+
+
+Gröbner bases are defined as:
+\begin{definition}[Gröbner Basis]
+Let $I$ be an ideal of $\F[x_0,\dots,x_{n-1}]$ and fix a monomial ordering. A finite subset $$G = \{g_0 ,\dots , g_{m-1} \} \subset I$$  is said to be a \emph{Gröbner basis} or standard basis of $I$ if
+\[
+\langle \LM(g_0 ), \dots , \LM(g_{m-1})\rangle = \langle \LM(I) \rangle.
+\]
+\end{definition}
+
+Thus for every $f_i \in I$ we have that $\LM(f_i)$ is divisible by some $\LM(g_i) \in G$.
+
+\begin{example}
+For instance a Gröbner basis with respect to the \emph{degrevlex} monomial ordering and $x > y > z$ for the example presented earlier
+\begin{align*}
+f_0 &= 81 z^{2} + 51 x + 125 z + 38\\
+f_1 &= 76 x y + 80 y^{2} + 49 x z + 62 y z + 45 z^{2}\\
+f_2 &= 122 x^{2} + 106 y z + 78 z^{2} + 48 x + 112 y
+\end{align*}
+is:
+\begin{align*}
+g_0 &= y^{3} + 66 y^{2} z + 72 y^{2} + 98 x z + 64 y z + 56 x + 16 y + 38 z + 53,\\
+g_1 &= x^{2} + 55 y z + 99 x + 3 y + 57 z + 60,\\
+g_2 &=x y + 108 y^{2} + 9 x z + 71 y z + 57 x + 65 z + 35,\\
+g_3 &=z^{2} + 90 x + 116 z + 82.
+\end{align*}
+\end{example}
+
+This Gröbner basis was obtained by the following sequence of commands in \Sage:
+
+\begin{lstlisting}
+sage: P.<x,y,z> = PolynomialRing(GF(127),order='degrevlex')
+sage: f = -46*z^2 + 51*x - 2*z + 38
+sage: g = -51*x*y - 47*y^2 + 49*x*z + 62*y*z + 45*z^2
+sage: h= -5*x^2 - 21*y*z - 49*z^2 + 48*x - 15*y
+sage: I = Ideal(f,g,h)
+sage: I.groebner_basis()
+[y^3 - 61*y^2*z - 55*y^2 - 29*x*z - 63*y*z + 56*x + 16*y + ..., 
+ x^2 + 55*y*z - 28*x + 3*y + 57*z + 60, 
+ x*y - 19*y^2 + 9*x*z - 56*y*z + 57*x - 62*z + 35, 
+ z^2 - 37*x - 11*z - 45]
+\end{lstlisting}
+
+\begin{definition}[\cite{Cox2005}]
+Fix a monomial order $>$ on $\Z_{\geq 0}^n$ and let $F = (f_0, \dots,f_{s-1})$ be an ordered $s$-tuple of polynomials in $\F[x_0,\dots,x_{n-1}]$. Then every $f \in \F[x_0,\dots,x_{n-1}]$ can be written as \[ f = a_0f_0 + \cdots + a_{s-1}f_{s-1} + r,\] where $a_i,r \in \F[x_0,\dots,x_{n-1}]$ and either $r=0$ or $r$ is a linear combination, with coefficients in $\F$, of monomials, none of which is divisible by any of $\LM(f_0),\dots,\LM(f_{s-1})$. We call $r$ a \emph{remainder} of $f$ on division by $F$. Furthermore, if $a_if_i \neq 0$, then we have \[\expvec(\LM(f)) \geq \expvec(\LM(a_if_i)).\] We write
+\[\overline{f}^F = r.\]
+\end{definition}
+
+\begin{citeproof}
+See \cite[p.62ff]{Cox2005}. 
+\end{citeproof}
+
+An algorithm to compute $a_0,\dots,a_{s-1}$ is given in Algorithm~\ref{alg:long_division}.
+
+\begin{algorithm}[ht]
+\KwIn{$(f_0,\dots,f_{s-1},f)$ -- a $s+1$-tuple of polynomials $\in P$.}
+\KwResult{$a_0,\dots,a_{s-1},r$ -- a $s+1$-tuple of polynomial $\in P$.}
+\SetKw{KwAnd}{and}
+
+\Begin{
+$a_i \longleftarrow 0$; $r \longleftarrow 0$; $p \longleftarrow f$\;
+\While{$p = 0$}{
+  $i \longleftarrow 0$\;
+  $divisionoccured \longleftarrow False$\;
+  \While{$i < s$ \KwAnd $divisionoccured = False$}{
+    \If{$\LT(f_i) \mid \LT(p)$}{
+       $a_i \longleftarrow a_i + \LT(p)/\LT(f_i)$\;
+       $p \longleftarrow p - \LT(p)/\LT(f_i)f_i$\;
+    }
+    \Else{
+       $i \longleftarrow i + 1$\;
+    }
+  }
+  \If{$divisionoccured = False$}{
+      $r \longleftarrow r + \LT(p)$\;
+      $p \longleftarrow p - \LT(p)$\;
+  }
+}
+\Return{$a_0,\dots,a_{s-1},r$}\;
+}
+\caption{\textsc{Long Division}} 
+\label{alg:long_division}
+\end{algorithm} 
+
+
+
+
+Gröbner bases have several interesting properties: the remainder $r$ of the division of any $f \in P$ by $G$ is
+unique and \emph{reduced} Gröbner bases are a unique representation of an ideal with respect to a monomial ordering.
+
+\begin{definition}[Reduced Gröbner Basis]
+A \emph{reduced Gröbner basis} for a polynomial ideal $I$ is a
+Gröbner basis $G$ such that:
+\begin{enumerate}
+\item $\LC(f) = 1$ for all $f \in G$;
+\item $\forall f \in G, \not\exists\ m \in M(f)$\ such that $m \in \langle \LM(G
+\setminus \{f\})\rangle$ .
+\end{enumerate}
+\end{definition}
+
+By default, \Sage will always computes the reduced Gröbner basis when computing a Gröbner basis. If a Gröbner basis was obtained by other means, the function 
+\begin{lstlisting}
+MPolynomialIdeal.interreduced_basis()
+\end{lstlisting}
+can be used to compute the reduced Gröbner basis.
+\begin{lstlisting}
+sage: rgb = Ideal(gb).interreduced_basis()
+\end{lstlisting}
+
+Note that \Sage\ -- unlike other systems like \Singular~\cite{singular} -- does differentiate between tuples of polynomials and ideals. Ideals are first order objects in \Sage.
+
+\section{Buchberger's Algorithm}
+In 1965 Bruno Buchberger introduced the notion of a Gröbner basis and also a criterion to test whether a set of polynomials is a Gröbner basis. This criterion naturally leads to Buchberger's algorithm for computing a Gröbner basis from a given ideal basis. The main concepts of his criterion are
+presented below.
+
+Consider a set of polynomials $G = \{f_0,\dots,f_{m-1}\} \subset \F[x_0,\dots,x_{n-1}]$. If there exists any $m \in \langle \LM(I) \rangle$ with $$m \not\in \langle \LM(f_0),\ \dots\ ,\LM(f_{m-1})\rangle,$$ then $G$ is not a Gröbner basis for $\ideal{G}$; this follows from the definition of Gröbner bases. 
+
+In order obtain a candidate for such $m$, we may choose two elements $f_i$ and $f_j$ of $G$ and compute \[s = ax^\alpha f_i - bx^\beta f_j.\]
+We know that $\LM(ax^\alpha f_i\ -\ bx^\beta f_j) \in \langle\LM(I)\rangle$ because $ax^\alpha f_i\ -\ bx^\beta f_j\ \in\ I$. Now assume that in $s$ the terms $ax^\alpha\LT(f_i)$ and $bx^\beta\LT(f_j)$ ($a,b \in \F$) cancel each other out. If as a result $\LM(ax^\alpha f_i\ -\ bx^\beta f_j)$ is not in the ideal $\langle\LM(f_0), \dots ,\LM(f_{t-1})\rangle$ we know that $G$ cannot be a Gröbner basis. 
+
+
+S-polynomials are a (in fact: \emph{the}) way to construct the required cancellations of leading terms:
+
+\begin{definition}[S-Polynomial]
+\hfill\par
+\label{def:spolynomials}
+Let $f,g\ \in\ \F[x_0,\dots,x_{n-1}]$ be non-zero polynomials.
+\begin{enumerate}
+\item If $\alpha =\expvec(\LM(f))$ and $\beta = \expvec(\LM(g))$ then let $\gamma\ =\ (\gamma_0,\ \dots\ ,\gamma_{n-1})$ where 
+$\gamma_i = \max(\alpha_i,\beta_i) \textnormal{ for every } i\ < n.$ We then have that $x^\gamma$ is the least common multiple of
+$\LM(f)$ and $\LM(g)$, written as $$x^\gamma\ =\ \LCM(\LM(f),\LM(g)).$$  
+\item The S-polynomial of $f$ and $g$ is defined as
+\begin{align*}
+S(f,g)\ =\ \frac{x^\gamma}{\textsc{LT}(f)}\cdot f\ -\
+\frac{x^\gamma}{\textsc{LT}(g)}\cdot g.
+\end{align*}
+\end{enumerate}
+We call $f$ and $g$ the \emph{generators} of $S(f,g)$ and $\frac{x^\gamma}{\textsc{LT}(f)}\cdot f$  and $\frac{x^\gamma}{\textsc{LT}(g)}\cdot g$ the \emph{components} of $S(f,g)$. Sometimes, it is beneficial to consider the products in the components unevaluated, namely as the tuples
+$(\frac{x^\gamma}{\textsc{LT}(f)}, f)$ and $(\frac{x^\gamma}{\textsc{LT}(g)}, g)$. We call the tuple $(f,g)$ a \emph{critical pair}.
+\end{definition}
+
+The following example illustrates that $S(f_i,f_j)$ is constructed in a way to allow cancellation of leading terms.
+
+\begin{example}
+Let $f_0\ =\ x^3\ -\ 2xy$ and $f_1\ =\ x^2y\ -\ 2y^2\ +\ x$. The leading monomials with respect to \emph{degrevlex} and $x > y$ are
+$\LM(f_0)\ =\ x^3$ and $\LM(f_1)\ =\ x^2y$ and thus $x^\gamma\ =\ x^3y$. The S-polynomial is:
+\begin{eqnarray*}
+S(f_0,f_1)\ &=&\ \dfrac{x^\gamma}{\LT(f_1)}\ \cdot\ f_1\ -\
+\dfrac{x^\gamma}{\LT(f_2)}\ \cdot\ f_2\\
+S(f_0,f_1)\ &=&\ \dfrac{x^3y}{x^3}\ \cdot\ (x^3\ -\ 2xy)\ -\
+\dfrac{x^3y}{x^2y}\ \cdot\ (x^2y\ -\ 2y^2\ +\ x)\\
+S(f_0,f_1)\ &=&\ y\ \cdot (x^3\ -\ 2xy)\ -\ \ x\ \cdot (x^2y\ -\ 2y^2\ +\ x)\\
+S(f_0,f_1)\ &=&\ x^3y\ -\ 2xy^2\ -\ \ x^3y\ +\ 2xy^2\ -\ x^2\\
+S(f_0,f_1)\ &=&\ -x^2
+\end{eqnarray*}
+\end{example}
+
+The same example in Sage:
+
+\begin{lstlisting}
+sage: P.<x,y> = PolynomialRing(QQ,order='degrevlex')
+sage: f0 = x^3 - 2*x*y
+sage: f1 = x^2*y -2*y^2 + x
+sage: (x^3*y)//x^3 * f0 - (x^3*y)//(x^2*y) * f1
+-x^2
+\end{lstlisting}
+
+The educational \verb|sage.rings.polynomial.toy_buchberger| module also offers a function \verb|spol|:
+
+\begin{lstlisting}
+sage: from sage.rings.polynomial.toy_buchberger import spol
+sage: spol(f0,f1)
+-x^2
+\end{lstlisting}
+
+
+The following lemma states that whenever combinations of terms cancel each other out in a polynomial this cancellation may be accounted to S-polynomials.
+
+\begin{lemma}
+\label{lemma:cancel}
+Let the leading term of every summand of \[s = \sum^{t-1}_{i=0} c_ix^{\alpha_i}g_i \in \F[x_0,\dots,x_{n-1}]\] with $c_i \in \F$, have the exponent vector 
+\[\delta = \alpha_i\ +\ \expvec(\LM(g_i)) \in \mathbb{Z}^n_{\geq 0} \textnormal{ if } c_i\ \neq\ 0.\] If $\expvec(\LM(s))$ is smaller than $\delta$, then $s$ is a linear combination  of the S-polynomials $S(f_j,f_k)$ for $0 \leq j,k < t$ with coefficients $c_i$ in $\F$. Furthermore, each leading monomial of $S(f_j,f_k)$ has exponent vector $< \delta.$
+\end{lemma}
+
+\begin{citeproof}
+See \cite[p.81ff]{Cox2005}.
+\end{citeproof}
+
+The key idea of Buchberger's constructive criterion for Gröbner bases is to use these S-polynom\-ials to construct new elements $S(f,g)$ in the ideal with smaller leading term than those of the components of $S(f,g)$. If such elements  can be found whose leading terms are not multiples of leading terms of
+other elements already in the basis then the basis is not a Gröbner basis.
+
+\begin{theorem}[Buchberger's Criterion]
+\label{theorem:buchberger}
+Let $I$ be an ideal. $G\ =\ \left\lbrace g_0,\ \dots\ ,g_{s-1}\right\rbrace$ is
+a Gröbner basis for $I$, if and only if for all pairs $i \neq j$, the remainder $r$ of the division of $S(g_i,g_j)$
+by $G$ (listed in some order) is zero, that is we have that $\overline{f}^{G} = 0$.
+\end{theorem}
+
+\begin{citeproof}
+See \cite[p.82ff]{Cox2005}
+\end{citeproof}
+
+\begin{example}
+Let $f_0\ =\ x^3\ -\ 2xy$ and $f_1\ =\ x^2y\ -\ 2y^2\ +\ x$. The S-polynomial is $-x^2$ which is not reducible by either
+$LM(f_0) = x^3$ or $LM(f_1) = x^2y$. Thus, $(f_0,f_1)$ is not a Gröbner basis.
+\end{example}
+
+There is another -- related -- criterion which can be checked to verify if a given set of polynomials forms a Gröbner
+basis or not. For that criterion the expression $f$ \emph{reduces to zero modulo} $G$ is needed.
+
+\begin{definition}
+\cite[p.100]{Cox2005} Fix a monomial order and let $G = \{g_0 ,\dots , g_{s-1} \} \subset P$ be an \emph{unordered} set of polynomials. Given a polynomial $f \in P$, we say that $f$ reduces to zero modulo G, written \[f  \underset{G}{\longrightarrow} 0,\] if $f$ can be written in the form \[f = a_0 g_0 + \dots + a_{s-1} g_{s-1} ,\] with $a_i \in P$ such that whenever $a_i g_i \not= 0$, we have \[\LM(f) \geq \LM(a_i g_i).\]
+\end{definition}
+
+Alternatively, we may express this concept using the notion of $t$-representations:
+
+\begin{definition}[$t$-Representation]
+Fix a monomial order and let $G = \{g_0 ,\dots , g_{s-1} \} \subset P$ be an \emph{unordered} set of polynomials and let $t$ be a monomial. Given a polynomial $f \in P$, we say that $f$ has a \emph{$t$-representation}  if $f$ can be written in the form \[f = a_0 g_0 + \dots + a_{s-1} g_{s-1} ,\] such that whenever $a_i g_i \not= 0$, we have  $a_i g_i \leq t.$ Furthermore, we have that $f  \underset{G}{\longrightarrow} 0$ if and only if $f$ has an $\LM(f)$-representation with respect to $G$.
+\end{definition}
+
+Please note, that $\overline{f}^G = 0$ implies $f \underset{G}{\longrightarrow} 0$ but the converse does not hold in general \cite[100ff]{Cox2005}. 
+
+\begin{example}
+Consider some $\field{F}[x,y]$ with the \emph{degree reverse lexicographical} monomial ordering and $f = xy^2 - x$ and $G= (xy + 1, y^2 - 1)$. The division
+algorithm (cf. Algorithm~\ref{alg:long_division}) gives $f = xy^2 - x = y \cdot (xy + 1) + 0 \cdot (y^2 -1) + (-x - y)$ which implies $\overline{f}^G \neq 0$. On the other hand we can write $f = xy^2 - x = 0 \cdot (xy + 1) + x \cdot (y^2 - 1)$ which implies $f\underset{G}{\longrightarrow}0$.
+\end{example}
+
+Using this definition Buchberger's Criterion may be reformulated as follows:
+
+\begin{theorem}
+\label{thm:groebnerreducestozero}
+A basis $G = \{g_0 ,\dots , g_{s-1} \}$ for an ideal $I$ is a Gröbner basis if and only if \[S(g_i,g_j)
+\underset{G}{\longrightarrow} 0\]
+for all $i \not= j$.
+\end{theorem}
+
+The proof of this theorem follows directly from the proof of Buchberger's criterion in \cite{Cox2005}.
+
+Buchberger's criterion (Theorem~\ref{theorem:buchberger}) and the Ascending Chain Condition (Theorem~\ref{theorem:acc}) lead to the following algorithm for
+computing Gröbner basis:
+
+\begin{algorithm}[ht]
+\KwIn{$F$ -- a finite subset of $P$}
+\KwResult{a Gröbner basis for the ideal spanned by $F$}
+
+\Begin{
+$G \longleftarrow F$\;
+$G_2 \longleftarrow \varnothing$\;
+\While{$G_2 \neq G$}{
+  $G_2 \longleftarrow G$\;
+  \For{$f,g \in G_2 \times G_2$}{
+      \If{$\LM(f)<\LM(g)$}{
+       $ \tilde{s} \longleftarrow \overline{S(f,g)}^G$\;
+       \lIf{$\tilde{s}\neq 0$}{add $\tilde{s}$ to $G$\;}
+      }
+   }
+ }
+ \Return{G}\;
+}
+\caption{Buchberger's Algorithm}
+\label{alg:buchberger}
+\end{algorithm}
+
+
+The correctness and termination of this algorithm may be derived from the
+following three observations:
+\begin{enumerate}
+\item At every stage of the algorithm, $G \subset I$ and $\langle G \rangle = I$ hold.
+\item If $G_2 = G$ then $S(f, g) \underset{G}{\longrightarrow} 0$ for all $f, g \in G$ and, by Buchberger's criterion, $G$ is a Gröbner basis.
+\item The equality $G_2 = G$ occurs in finitely many steps since the ideals $\ideal{\LM(G)}$, from successive iterations of the loop, form an ascending chain. Due to the Ascending Chain Condition (Theorem~\ref{theorem:acc}) this chain of ideals stabilizes after a finite number of iterations and at that moment $\ideal{\LM(G)} = \ideal{\LM(G_2)}$ holds, which implies $G_2 = G$.
+\end{enumerate}
+
+A straight-forward implementation of Buchberger's algorithm in \Sage is given below:
+
+\begin{lstlisting}
+spol = lambda f,g: LCM(f.lm(),g.lm())//f.lt()*f - \
+                   LCM(f.lm(),g.lm())//g.lt()*g
+def buchberger(F):
+  G = set(F)
+  G2 = set()
+  while G2!=G:
+    G2 = copy(G)
+    for f,g in cartesian_product_iterator([G2,G2]):
+        if f<g:
+          s = spol(f,g).reduce(G2)
+          if s != 0:
+            G.add(s)
+  return G
+\end{lstlisting}
+
+It is implemented as \verb|buchberger| in \verb|sage.rings.polynomial.toy_buchberger| by the author:
+
+\begin{lstlisting}
+sage: P.<x,y> = PolynomialRing(QQ, order='degrevlex')
+sage: f0 = x^3 - 2*x*y                                       
+sage: f1 = x^2*y -2*y^2 + x  
+sage: buchberger(Ideal(f0,f1))
+[x^2*y - 2*y^2 + x, -2*x*y, -2*y^2 + x, x^2, x^3 - 2*x*y]
+\end{lstlisting}
+
+Even though this algorithm terminates eventually it is well known \cite[p.511ff]{Becker1991} that its runtime is not polynomial in the number of variables, as the intermediate bases $G_2$ grow exponentially during the calculations. In particular, we have the following theorem:
+
+\begin{theorem}[\cite{faugere-ars-2004}]
+Let $I$ be an ideal in $\F_q[x_0,\dots,x_{n-1}]$ generated by polynomials $f_0,\dots,f_{n-1}$ of degrees $d_0,\dots,d_{n-1}$ respectively. Assume the ideal $I$ is zero-dimensional (defined in Section~\ref{sec:solvingmq}).
+\begin{itemize}
+ \item A Gröbner basis computation for a \emph{lexicographical} monomial order reaches at most degree $D \leq \prod_{i=0}^{n-1} d_i$.
+ \item A Gröbner basis computation for a \emph{degree reverse lexicographical} monomial order reaches at most degree $D \leq 1 - n + \sum_{i=0}^{n-1} d_i$.
+\end{itemize}
+\end{theorem}
+
+Buchberger's algorithm leaves a lot of freedom when implemented. The runtime can be reduced by applying a variety of improvements:
+\begin{itemize}
+\item The order in which the critical pairs $f,g$  are selected influences running time.
+\item One can use Buchberger's criteria to avoid useless reductions to zero.
+\item Algorithms exist \cite{fglm,Collart1997} to convert a Gröbner basis (of a zero-dimensional ideal) in one monomial order to a Gröbner basis in another monomial order, thus we may compute with respect to the degree reverse lexicographical ordering first and then convert the result to the lexicographical ordering.
+\end{itemize}
+
+Buchberger himself gave two criteria to avoid useless reductions to zero.
+
+\begin{definition}[Buchberger's First Criterion \cite{Becker1991}]
+Let $f,g \in \F[x_0,\dots,x_{n-1}]$ with disjoint leading terms, i.e.\ $GCD(\LM(f),\LM(g)) = 1$. Then $S(f,g) \underset{\{f,g\}}{\longrightarrow} 0$.
+\label{def:buchberger_first_criterion}
+\end{definition}
+
+\begin{citeproof}
+See \cite[p.222]{Becker1991}. 
+\end{citeproof}
+
+\begin{definition}[Buchberger's Second Criterion \cite{Becker1991}]
+Let $F$ be a finite subset of $\F[x_0,\dots,x_{n-1}]$ and $g_0, p, g_1 \in \F[x_0,\dots,x_{n-1}]$ such that the following hold:
+\begin{enumerate}
+ \item $\LM(p) \mid \LCM(\LM(g_0),\LM(g_1))$, and
+ \item $S(g_i,p)$ has a $t_i$-representation w.r.t. $F$ with \[t_i < \LCM(\LM(g_i),\LM(p)) \textnormal{ for } i = 0,1.\]
+\end{enumerate}
+Then $S(g_0,g_1) \underset{F}{\longrightarrow} 0$.
+\label{def:buchberger_second_criterion}
+\end{definition}
+
+\begin{citeproof}
+See \cite[p.224ff]{Becker1991}. 
+\end{citeproof}
+
+The standard instantiation of those two criteria is the \emph{Gebauer-Möller installation} \cite{Gebauer1988} which is implemented in most computer algebra systems that implement Gröbner basis algorithms. Later in this text we will discuss other improved Gröbner basis algorithms such as $F_4$ (Chapter~\ref{chapter:f4}) and $F_5$ (Chapters~\ref{chapter:f5matrix} and \ref{chapter:f5}), both due to Jean-Charles Faugère.
+
+We will also consider later the computation of Gröbner bases up to some degree $D$. That is, we run, for example, Buchberger's algorithm but discard any S-polynomials with a degree $> D$. If all input polynomials are homogeneous, Gröbner bases up to a degree $D$ are well-defined. However, in the affine case this is not true since the degree during a polynomial reduction may drop. Thus, the computation up to some degree $D$ in the affine case is little more than a random interruption of the Gröbner basis algorithm.
+
+\section{Solving Polynomial Systems with Gröbner Bases}
+\label{sec:solvingmq}
+
+This section is concerned with explaining the relationship between solving systems of polynomial equations and Gröbner bases. First we need to formally define the
+concept of a solution to a system of polynomials.
+
+\begin{definition}
+Given a field $\F$ and a positive integer $n$, we define the $n$-dimensional
+\emph{affine space} over $\F$ to be the set
+\[
+\F^n = \{(a_0 , \dots , a_{n-1} ) : a_0 , \dots , a_{n-1} \in \F\} .
+\]
+\end{definition}
+Evaluating a polynomial $f \in \F[x_0,\dots,x_{n-1}]$ at $(a_0 , \dots , a_{n-1} ) \in \field{K}^n$, where $\field{K}$ is some algebraic extension of $\F$, is a function
+\[
+f : \field{K}^n \longrightarrow \field{K},
+\]
+where every $x_i$ is replaced by $a_i \in \field{K}$ for $0 ≤ i < n$.
+
+The set of all solutions in $\field{K}^n$ to a system of equations
+\[
+f_0(x_0 ,\dots , x_{n-1}) = 0, \dots, f_{m-1} (x_0 , \dots , x_{n-1} ) = 0
+\]
+is called an \emph{affine $\F$-variety}, formally defined as follows.
+\begin{definition}
+Let $\F$ be a field, $\field{K}$ some algebraic extension of $\F$ and $f_0 ,\dots , f_{m-1}$ be polynomials in $\F[x_0,\ \dots\ ,x_{n-1}]$, that is all coefficients are in $\F$. We define
+\[
+V(f_0 , \dots , f_{m-1}) = \{(a_0 ,\dots , a_{n-1} ) \in \field{K}^n : f_i(a_0 , \dots , a_{n-1} ) = 0\textnormal{ for all }0 \leq i < m\}.
+\]
+We call $V(f_0 ,\dots , f_{m-1})$ the affine $\F$-variety defined by $f_0 ,\dots , f_{m-1}$.
+\end{definition}
+
+Note that the $\F$ in ``affine $\F$-variety'' refers to the field of the coefficients not the solution.
+
+\begin{definition}[PoSSo]
+Given a finite set $F = \{f_0, \dots, f_{m-1}\} \subset \F[x_0,\dots,x_{n-1}]$ of multivariate polynomials in $P$ we call PoSSo the problem of finding
+the affine variety of $F$.
+\end{definition}
+
+\begin{lemma}
+If $f_0 ,\dots , f_{s-1}$ and $g_0 ,\dots , g_{t-1}$ are bases of the same ideal in $P$,
+so that \[\langle f_0 ,\dots, f_{s-1}\rangle = \langle g_0 ,\dots , g_{t-1}\rangle,\] then \[V(f_0 ,\dots , f_{s-1} )
+=
+V(g_0 ,\dots , g_{t-1} ).\]
+\end{lemma}
+\begin{proof}
+Every $f \in \langle f_0 ,\dots , f_{s-1}\rangle$ is also in $\langle g_0,\dots , g_{t-1} \rangle$ and can therefore be
+expressed as \[f = h_0 g_0 + \cdots + h_{t-1} g_{t-1}.\] Hence, every $a = (a_0 ,\dots , a_{n-1} ) \in V(g_0 ,\dots ,
+g_{t-1} )$ satisfies $f(a) = 0$ and vice versa for all $g \in \langle g_0 ,\dots , g_{t-1}\rangle$ . This shows that
+both varieties consist of the same points.
+\end{proof}
+
+\begin{definition} Let $I \subset \F[x_0,\dots,x_{n-1}]$ be an ideal. We define $V(I)$ to be the set
+\[
+ \{(a_0, \dots, a_{n-1}) \in \field{K}^n : f(a_0,\dots, a_{n-1}) = 0 \textnormal{ for all } f \in I\}
+\]
+for some algebraic extension $\field{K}$ of $\F$.
+\end{definition}
+
+A consequence of Hilbert's Basis Theorem (Theorem~\ref{theorem:hilbbase}) is that the variety corresponding to a set of polynomials $F$ equals the variety of the ideal spanned by this set of polynomials.
+
+\begin{proposition}
+$V(I)$ is an affine variety. In particular, if $I= \langle f_0, \dots, f_{m-1} \rangle$, then
+$V(I) = V(f_0, \dots, f_{m-1})$.
+\end{proposition}
+
+\begin{citeproof}
+See \cite[p.77]{Cox2005}
+\end{citeproof}
+
+So an instance of the PoSSo problem may be considered as a basis of an ideal $I$. If there was a basis for the same ideal where the solution -- the variety $V(I)$ -- could be read from directly, the PoSSo problem was solved. It turns out, Gröbner bases satisfy this requirement under some conditions.
+
+
+To show this, some more notation needs to be established first. Given an ideal $I$ in a polynomial ring $P = \F[x_0 ,\dots , x_{n-1} ]$ over a field $\F$ and a number $j \in \{0,\dots , n-1\}$, consider the set of all polynomials in $I$ which involve only the variables $x_{0+j} ,\dots , x_{n-1}$. This set $I \cap \F[x_{0+j} , \dots , x_{n-1} ]$ is an ideal in $\F[x_{0+j},\dots,x_{n-1}]$.
+
+\begin{definition}[Elimination Ideal]
+Given $I = \langle f_0 ,\dots , f_{m-1} \rangle \subset \F[x_0 ,\dots , x_{n-1}]$, the $l$-th elimination
+ideal $I_l$ is the ideal of $\F[x_{0+l} , \dots , x_{n-1}]$ defined by
+\[ I_l = I \cap \F[x_{0+l} , \dots , x_{n-1} ]. \]
+\label{def:elimination-ideal}
+\end{definition}
+
+It turns out to be important whether the system of equations describes a finite set of solutions. The ideal spanned by the corresponding polynomials of such a system will be called \emph{zero-dimensional}. The following proposition provides an algorithmic criterion for finiteness.
+
+\begin{lemma}[Finiteness Criterion] 
+Let $P = \F[x_0 ,\dots , x_{n-1}]$. For a system of equations corresponding to an ideal $I = \ideal{f_0 , \dots, f_{m-1}}$, the following conditions are equivalent.
+\begin{enumerate}
+\item The system of equations has only finitely many solutions in the algebraic closure of $\F$.
+\item For $i = 0, \dots, n-1$, we have $I \cap \F[x_i] \not= 0$.
+\item The set of monomials $M(P) \setminus \{\LM(f) : f \in I\}$ is finite.
+\item The $\F$-vector space $P/I$ is finite-dimensional.
+\end{enumerate}
+\end{lemma}
+
+\begin{citeproof}
+See \cite[p.243ff]{Kreuzer2000}.
+\end{citeproof}
+
+Notice that Buchberger's Algorithm is able to test condition 3 of this lemma.
+
+\begin{example}
+Consider $P=\F[x,y,z]$. It can be shown that the ideal \[I = \ideal{x + y + z, xy + xz + yz, xyz -1}\] is zero-dimensional. While in $P'=\F[w,x,y,z]$ the ideal $J = \ideal{x + y + z, xy + xz + yz, xyz -1}$ is \emph{not} zero-dimensional since there is an infinite set of monomials $w^i$ with $i \in \Z_{>0}$ which is not in $\LM(J)$.
+\end{example}
+
+If we consider finite fields and add the field polynomials to a system of polynomials the ideal spanned by this combined set of polynomials is zero-dimensional as in this case condition 2 is satisfied. Those field polynomials are defined as follows:
+
+\begin{definition}
+Let $\F$ be a field with order $q = p^n$, $p$ prime and $n > 0$. Then the \emph{field polynomials} of the ring $\F[x_0,\dots,x_{n-1}]$ are defined as the set \[ \{x_0^q - x_0, \dots , x_{n-1}^q - x_{n-1} \}. \] The ideal spanned by this set  \[ \ideal{ x_0^q - x_0, \dots , x_{n-1}^q - x_{n-1}} \] is called the \emph{field ideal} of $\F[x_0,\dots,x_{n-1}] $.
+\end{definition}
+
+\begin{corollary}
+Let $I$ be an ideal in $\F[x_0,\dots,x_{n-1}]$. The ideal spanned by the generators of $I$ and the generators of the field ideal has the same variety
+over $\F$ as the ideal $I$ but excludes all coordinates from $\overline{\F}^n \setminus \F^n$, where $\overline{\F}$ is the algebraic closure of $\F$.
+\end{corollary}
+
+\begin{proof}
+Every finite field $\F$ with order $q$ satisfies $x^q = x, \forall x \in \F$. Thus the equations $x_i^q - x_i = 0 : 0 \leq  i < n$ are
+satisfied for every possible coordinate in $\F^n$ and in particular for every element of $V(I)$. Furthermore, $x_i^q - x_i$ factors completely over $\F$ and thus no point in $\overline{\F}^n \setminus \F^n$ satisfies it.
+\end{proof}
+
+For information about the possible polynomials occurring in the ideal described by a set of polynomials, the Hilbert's Nullstellensatz is of great importance. It states that a polynomial over an algebraically closed field having common zeros with the polynomials in $F = \{f_0 , \dots , f_{m-1} \}$, occurs to some power in the ideal spanned by $F$. But first, we need to define the ideal of an affine $\F$-variety.
+
+\begin{definition} Let $V \subset \F^n$ be an affine $\F$-variety. Then we define $I(V)$ as follows:
+\[I(V) = \{f \in \F[x_0,\dots,x_{n-1}] : f(a_0,\dots,a_{n-1}) = 0 \textnormal{ for all } (a_0,\dots,a_{n-1}) \in V\}.\]
+\end{definition}
+
+\begin{lemma}
+$I(V)$ is an ideal.
+\end{lemma}
+
+\begin{citeproof}
+See \cite[p.31ff]{Cox2005}.
+\end{citeproof}
+
+\begin{theorem}[Hilbert's Nullstellensatz] Let $\F$ be an algebraically closed field. If $f$ and $f_0 , \dots , f_{m-1}
+\in \F[x_0,\dots,x_{n-1}]$ are such that $f \in I(V(f_0 , \dots , f_{m-1} ))$, then there exists an
+integer $e \geq 1$ such that
+\[
+f^e \in \langle f_0 , \dots , f_{m-1} \rangle
+\]
+and conversely.
+\end{theorem}
+
+\begin{citeproof}
+See \cite[p.171]{Cox2005}.
+\end{citeproof}
+
+The set of polynomials satisfying this condition is called the radical of the ideal $I$.
+
+\begin{definition}
+Let $I \subset P$ be an ideal. The radical of I denoted by $\sqrt{I}$, is
+the set
+\[
+                                 \{f : f^e \in I \textrm{ for some integer } e ≥ 1\} .
+\]
+\end{definition}
+
+\begin{lemma}
+$\sqrt{I}$ is an ideal. 
+\end{lemma}
+
+\begin{citeproof}
+See \cite[p.174]{Cox2005}.
+\end{citeproof}
+
+Thus, Hilbert's Nullstellensatz says that $I(V(I)) = \sqrt{I}$.
+
+\begin{proposition}[Seidenberg's Lemma]
+Let $\F$ be a field, let $P = \F[x_0 ,\dots , x_{n-1}]$, and let $I \subset P$ be a zero-dimensional ideal. Suppose that for every $i \in \{0, \dots , n-1\}$  there exists a non-zero polynomial $g_i \in I \cap \F[x_i]$ such that the greatest common divisor (GCD) of $g_i$ and its derivative equals 1. Then $I$ is a radical ideal.
+\end{proposition}
+
+\begin{citeproof}
+See \cite[p.250ff]{Kreuzer2000}
+\end{citeproof}
+
+Consider a set of polynomial equations over $\F_q$, for $q$ the power of a prime $p$ with solutions in $\F_q^n$. Suppose  $$F = \{f_0 , \dots , f_{m-1} \} \subset \F_q[x_0 ,\dots , x_{n-1}]$$ and the equations 
+\begin{align*}
+0 &= f_0 (x_0 , \dots , x_{n-1} ),\\
+0 &= f_1 (x_0 , \dots , x_{n-1} ),\\
+& \vdots\\
+0 &= f_{m-1} (x_0 , \dots , x_{n-1} ),
+\end{align*}
+such that the possible solutions existing in $\overline{\F}^n \setminus \F^n$ are not of interest to us. Therefore, it follows from Seidenberg's Lemma, that appending the set
+\[
+  \{x_i^q − x_i : 0 ≤ i < n\}
+\]
+to $F$, creates a radical ideal $J$ with variety $V(J) =  V(I) \bigcap \F^n$.
+
+The following theorem states that a lexicographical Gröbner basis $G$ for the zero-dimensional radical ideal spanned by the
+polynomials of the PoSSo problem and the generators of the field ideal allows to read the solution to the PoSSo
+problem from $G$. 
+
+\begin{theorem}[Elimination Theorem]
+Let $I \subset \F[x_0,\dots,x_{n-1}]$ be an ideal and let $G$ be a Gröbner basis of $I$ with respect to the lexicographical monomial ordering where $x_0 > x_1 > \dots > x_{n-1}$. Then for every $0 \leq l < n$, the set 
+$$G_l = G \cap \F[x_{0+l},\dots,x_{n-1}]$$
+is a Gröbner basis fo the $l$-th elimination ideal $I_l$. 
+\end{theorem}
+
+In other words, the Gröbner basis $G$ has triangular shape. To illustrate this consider the following example.
+
+\begin{example}
+Let $\F = \F_{127}$, $P = \F_{127}[x,y,z]$, the monomial ordering \emph{lex} and
+consider the ideal
+\begin{align*}
+I = \langle x + y + z, x y + x z + y z, x y z - 1\rangle
+\end{align*}
+which is called \emph{Cyclic-3}. We add the field polynomials and compute the reduced Gröbner basis:
+\begin{align*}
+x + y + z, y^2 + yz + z^2, z^3 - 1,
+\end{align*}
+which has a triangular shape as predicted by the Elimination Theorem.
+\end{example}
+This result can be computed using \Sage as follows:
+
+\begin{lstlisting}
+sage: P.<x,y,z> = PolynomialRing(GF(127),order='lex')
+sage: I = sage.rings.ideal.Cyclic(P)
+sage: I
+Ideal (x + y + z, x*y + x*z + y*z, x*y*z - 1) of \
+Multivariate Polynomial Ring in x, y, z over \
+Finite Field of size 127
+sage: J = I + sage.rings.ideal.FieldIdeal(P)
+sage: g0,g1,g2 = J.groebner_basis(); g0,g1,g2
+(x + y + z, y^2 + y*z + z^2, z^3 - 1)
+sage: factor(g2)
+(z - 19) * (z - 1) * (z + 20)
+sage: factor(g1(x,y,19))
+(y - 1) * (y + 20)
+sage: factor(g0(x,1,19))
+x + 20
+sage: all(f(107,1,19)==0 for f in I.gens())
+True
+sage: J.variety()
+[{y: 19, z: 1, x: 107}, {y: 107, z: 1, x: 19}, 
+ {y: 1, z: 19, x: 107}, {y: 107, z: 19, x: 1}, 
+ {y: 1, z: 107, x: 19}, {y: 19, z: 107, x: 1}]
+\end{lstlisting}
+
+Thus, we can use Gröbner bases to solve the PoSSo problem.
+
+\section{Gröbner Bases in Quotient Rings}
+In this section we consider Gröbner bases in quotient rings of polynomial rings. The reason we are interested in these objects is that there are efficient implementations of Gröbner basis algorithms in the ring $\F_2[x_0,\dots,x_{n-1}]/\ideal{x_0^2 - x_0,\dots,x_{n-1}^2 - x_{n-1}}$ such as \PolyBoRi.
+
+\begin{definition}
+Let $I \subset P$ be an ideal, and let $f,g \in P$. We say $f$ and $g$ are \emph{congruent modulo} I, written
+\[ f \equiv g \mod I,\] if $f - g \in I$.
+\end{definition}
+
+\begin{proposition}
+Let $I \subset P$ be an ideal. The congruence modulo $I$ is an equivalence relation on $P$.
+\end{proposition}
+
+An equivalence relation on a set S partitions this set into a collection of disjoint subsets called equivalence classes. For any $f \in P$, the class of $f$ is the set
+\[
+ [f] = \{ g \in P : g \equiv f \mod I \}
+\]
+
+
+
+\begin{citeproof}
+See \cite[p.219]{Cox2005}.
+\end{citeproof}
+
+\begin{definition}
+The quotient of $\F[x_0,\dots,x_{n-1}]$ modulo $I$, written $\F[x_0,\dots,x_{n-1}]/I$, is the set of equivalence classes for congruence modulo $I$:
+\[
+ \F[x_0,\dots,x_{n-1}]/I = \{[f] : f \in \F[x_0,\dots,x_{n-1}]\}.
+\]
+\end{definition}
+
+In $P=\F[x_0,\dots,x_{n-1}]/I$  addition and multiplication may be defined as follows:
+
+\begin{align}
+\label{qringops}
+[f] + [g] &= [f + g]\\
+[f] \cdot [g] &= [f \cdot g]. \notag
+\end{align}
+
+These definitions are independent from the choice of the representative of $[f]$ and $[g]$: $f,g$. 
+
+\begin{theorem}{\cite[p.221]{Cox2005}}
+Let $I$ be an ideal in $\F[x_0, \dots, x_{n-1}]$. The quotient \[\F[x_0,\dots,x_{n-1}]/I\] is a commutative ring under the
+sum and product operations given in (\ref{qringops}).
+\end{theorem}
+
+Consequently $Q = P/I = \F[x_0,\dots,x_{n-1}]/I$ may be called a \emph{quotient ring}. 
+$P=\F[x_0,\dots,x_{n-1}]$ is called its cover ring and $I$ its defining ideal.
+
+As $Q$ is a commutative ring ideals can be constructed in it with the usual properties of ideals. These ideals have a close relationship with ideals in the cover ring $P$.
+
+\begin{theorem}{\cite[p.223]{Cox2005}}
+Let $I$ be an ideal in $\F[x_0,\dots,x_{n-1}]$. The ideals in the quotient ring $\F[x_0,\dots,x_{n-1}]/I$ are in one-to-one
+correspondence with the ideals in $\F[x_0,\dots,x_{n-1}]$ containing $I$ (that is, the ideals $J$ satisfying $I \subset J
+\subset P$).
+\end{theorem}
+
+\begin{citeproof}
+See \cite[p.223]{Cox2005}.
+\end{citeproof}
+
+In particular, we may identify \[I = \ideal{f_0,\dots,f_{m-1},x_0^2 - x_0,\dots,x_{n-1}^2-x_{n-1}} \in \F_q[x_0,\dots,x_{n-1}]\] with \[J = \ideal{[f]_0,\dots,[f]_{m-1}} \in \F_q[x_0,\dots,x_{n-1}]/\ideal{x_0^q - x_0,\dots,x_{n-1}^q-x_{n-1}}.\]
+
+\chapter{The \texorpdfstring{$F_4$}{F4} Algorithm}
+\label{chapter:f4}
+
+This chapter describes the $F_4$ algorithm due to Jean-Charles Faug\`ere. First, the basic idea is given; then, the original $F_{4}$ algorithm is presented and discussed; this chapter finishes with a presentation of $F_4$ proper which has the Buchberger criteria added. $F_4$ was first described by its author in the paper ``A new efficient algorithm for computing Gröbner bases ($F_4$)'' \cite{f4}, where he introduces a new reduction strategy for Gröbner basis algorithms. This reduction strategy is based on linking Gröbner Bases to linear algebra \cite{lazard:eurocal83} and allows one to reduce several S-polynomials at once instead of one by one. This chapter is an extended and revised version of a chapter in the author's Diplomarbeit \cite{Albrecht2007}. 
+
+Toy implementations for Sage of the algorithms described in this chapter can be found at
+\begin{center}
+\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/f4.py}.
+\end{center}
+
+\section{Coefficient Matrices and Polynomial Division}
+\label{sec:f4idea}
+
+Most algorithms considered in this and later chapters construct coefficient matrices from tuples of polynomials. Every ordered tuple of polynomials $F = [f_0, \dots, f_{m-1}]$ in $P = \F[x_0,\dots,x_{n-1}]$ may be represented as the pair $A_F,v_F$ as follows: Fix a monomial ordering on monomials in $P$ and let $$v_F = (m_{|M(F)|-1}, \dots, m_0)^T$$ be the vector containing the monomials occurring in $F$ in decreasing order (including $1$ if applicable). Let $a_{ij} = A_F[i,j]$ be the coefficient of $m_j$ in $f_i$ (possibly zero). Then $F$ can be recovered from the rows of $A_F \cdot v_F$.
+
+We call $A_F$ the \emph{coefficient matrix} of $F$ and $v_F$ the \emph{monomial vector} of $F$.
+
+So for example,\begin{align*}
+f_0 = & 81 z^{2} + 51 x + 125 z + 38\\
+f_1 = & 76 x y + 80 y^{2} + 49 x z + 62 y z + 45 z^{2}\\
+f_2 = & 122 x^{2} + 106 y z + 78 z^{2} + 48 x + 112 y\\
+\end{align*}
+in $\F_{127}[x, y, z]$ with monomial order \emph{degrevlex} can be expressed as:
+\[
+\left(\begin{array}{r} f_0\\
+ f_1\\
+ f_2 \end{array}\right) =
+\left(\begin{array}{rrrrrrrrrr}
+0 & 0 & 0 & 0 & 0 & 81 & 51 & 0 & 125 & 38 \\
+0 & 76 & 80 & 49 & 62 & 45 & 0 & 0 & 0 & 0 \\
+122 & 0 & 0 & 0 & 106 & 78 & 48 & 112 & 0 & 0
+\end{array}\right)
+\cdot
+\left(\begin{array}{r}
+x^{2} \\
+x y \\
+y^{2} \\
+x z \\
+y z \\
+z^{2} \\
+x \\
+y \\
+z \\
+1
+\end{array}\right).
+\]
+
+The same calculation using \Sage:
+\begin{lstlisting}
+sage: k = GF(127)
+sage: P.<x,y,z> = PolynomialRing(k, order='degrevlex')
+sage: f = -46*z^2 + 51*x - 2*z + 38
+sage: g = -51*x*y - 47*y^2 + 49*x*z + 62*y*z + 45*z^2
+sage: h = -5*x^2 - 21*y*z - 49*z^2 + 48*x - 15*y
+sage: F = mq.MPolynomialSystem([f,g,h])
+sage: A,v = F.coefficient_matrix()
+sage: A
+[  0   0   0   0   0  81  51   0 125  38]
+[  0  76  80  49  62  45   0   0   0   0]
+[122   0   0   0 106  78  48 112   0   0]
+sage: v
+[x^2]
+[x*y]
+[y^2]
+[x*z]
+[y*z]
+[z^2]
+[  x]
+[  y]
+[  z]
+[  1]
+\end{lstlisting}
+
+In order to find the reduced basis of linear system of polynomials, the straight-forward method is to write down the coefficient matrix as above and perform Gaussian elimination. Consider for example a linear system of equations over $\field{F}_{127}[x, y, z]$: $26y + 52z + 62, 54y + 119z + 55$ and $41x + 91z + 13$. The coefficient matrix is:
+\begin{align*}
+\left(\begin{array}{rrrr}
+0 & 26 & 52 & 62 \\
+0 & 54 & 119 & 55 \\
+41 & 0 & 91 & 13
+\end{array}\right)
+\end{align*}
+and its reduced row echelon form:
+\begin{align*}
+\left(\begin{array}{rrrr}
+1 & 0 & 0 & 29 \\
+0 & 1 & 0 & 38 \\
+0 & 0 & 1 & 75
+\end{array}\right)
+\end{align*}
+which corresponds to $x + 29, y + 38$ and $z + 75$.
+
+This motivates the definition of Gaussian elimination on a system of polynomials as Gaussian elimination on its coefficient matrix:
+
+\begin{algorithm}[ht]
+
+\KwIn{$F$ -- a polynomial system of equations}
+\KwResult{a polynomial system of equations}
+\Begin{ 
+$A_F,v_F \longleftarrow $ coefficient matrix for $F$\;
+$E \longleftarrow $ row echelon form of $A_F$\;
+\Return rows of $E*v_F$\;
+}
+\caption{\textsc{Gaussian Elimination}}
+\label{alg:gausselim}
+\end{algorithm}
+
+Now consider two polynomials in $\field{F}_{127}[x,y,z]$ with the degree reverse lexicographical monomial ordering: $f = x^2 + 2xy - 2y^2 + 14z^2 + 22z$ and $g = 3x^2 + y^2 + z^2 + x + 2z$. The corresponding coefficient matrix is
+\begin{align*}
+\left(\begin{array}{rrrrrr}
+1 & 2 & 125 & 14 & 0 & 22 \\
+3 & 0 & 1 & 1 & 1 & 2
+\end{array}\right)
+\end{align*}
+and its reduced row echelon form is
+\begin{align*}
+\left(\begin{array}{rrrrrr}
+1 & 0 & 85 & 85 & 85 & 43 \\
+0 & 1 & 20 & 28 & 21 & 53
+\end{array}\right)
+\end{align*}
+which corresponds to 
+\begin{align*}
+f' &= x^{2} + 85 y^{2} + 85 z^{2} + 85 x + 43 z,\\
+g' &= x y + 20 y^{2} + 28 z^{2} + 21 x + 53 z.
+\end{align*}
+Compare this result with the remainder of the polynomial division $f / g = r = 2 x y + 40 y^{2} + 56 z^{2} + 42 x + 106 z$ and note that this result is the same as $2g'$. Thus, we can use linear algebra to perform polynomial division in some situations. However, this straight-forward approach fails in general as shown for the following example:
+\begin{align*}
+f &= x^2 - 2xy - 2y^2 + 14z^2,\\
+g &= x + 2z.
+\end{align*}
+In this example, the reduced row echelon form does not differ from the initial coefficient matrix and thus fails to provide polynomial reduction since $x$ is not a monomial of $f$. On the other hand, $x$ divides two monomials of $f$, namely $x^2$ and $xy$ and thus divides the leading monomial of $f$. To perform polynomial reduction, we can include all multiples $m \cdot g$ of $g$ such that $\LM(m \cdot g) = m \cdot \LM(g) \in M(f).$
+This gives a system of four polynomials:
+\begin{align*}
+f &= x^2 - 2xy - 2y^2 + 14z^2,\\
+x \cdot g &= x^{2} + 2xz,\\
+y \cdot g &= xy + 2yz,\\
+g &= x + 2z,\\
+\end{align*}
+whose coefficient matrix is
+\begin{align*}
+\left(\begin{array}{rrrrrrrr}
+1 & -2 & -2 & 0 & 0 & 14 & 0 & 0 \\
+1 & 0 & 0 & 2 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 2 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 2
+\end{array}\right).
+\end{align*}
+The reduced row echelon form is
+\begin{align*}
+\left(\begin{array}{rrrrrrrr}
+1 & 0 & 0 & 2 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 2 & 0 & 0 & 0 \\
+0 & 0 & 1 & 1 & 125 & 120 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 2
+\end{array}\right)
+\end{align*}
+which corresponds to:
+\begin{align*}
+f' &= x^{2} + 2 x z,\\
+g' & = x y + 2 y z,\\
+g'' &= y^{2} + x z + 125 y z + 120 z^{2},\\
+g &= x + 2 z.\\
+\end{align*}
+Again, compare with the remainder of the polynomial division $r = f/g = -2y^2 + 4yz + 18z^2$ and note that the leading term of $r$ corresponds to the leading term of $g''$. We will get back later to the fact that $g''$ contains the monomial $xz$ but the remainder of $f/g$ does not. For now, we point out that this is the core idea of the $F_4$ algorithm.
+
+\section{The Original \texorpdfstring{$F_4$}{F4}}
+
+Given a finite ordered tuple $F$ of \emph{linear} polynomials in $P$, we call the (reduced) Gröbner basis of these polynomials $\tilde{F}$. A coefficient matrix
+$\tilde{A}$ may be constructed for $\tilde{F}$. This matrix $\tilde{A}$ is exactly the (reduced) row echelon form of $A_F$ and $\tilde{F}$ is called the \emph{row
+echelon basis} of $F$.
+
+Similarly, $A=A_F$ may be constructed for any tuple of polynomials containing linear and non-linear polynomials and the (reduced) row echelon form for $A$ -- called $\tilde{A}$ -- may be computed. Then $\tilde{F}$ constructed from $\tilde{A}$ is called the \emph{row echelon form} of $F$. One interesting property of row echelon forms of $F$ is the following:
+
+Let $\tilde{F}^+$ denote the set 
+\[
+  \{ g \in \tilde{F}: \LM(g) \not\in \LM(F)\}.
+\]
+If the elements of $\tilde{F}^+$ are joined with a subset $H$ of the original
+$F$, such that
+\[
+   \LM(H) = \LM(F) \textrm{ and } |H| = |\LM(F)|
+\]
+holds, then the ideal $\ideal{F}$ is spanned by $H \cup \tilde{F}^+$. Formally:
+
+\begin{theorem} \cite[p.4]{f4}
+\label{theorem:echelonform}
+Let $\field{F}$ be a field and $F$ a finite tuple of elements in the polynomial ring $P=\field{F}[x_0,\dots, x_{n-1}]$. Let $A$ be the coefficient matrix of $F$ and $\tilde{A}$ the row echelon form of this matrix. Finally, let $\tilde{F}$ be the finite tuple of polynomials corresponding to $\tilde{A}$.
+
+For any subset $H \subseteq F$ such that $\LM(H) = \LM(F)$  and $|H| = |\LM(F)|$, $G=\tilde{F}^+ \cup H$ is a triangular basis of the space of $\F$-linear combinations of ${F}$. That is to say, for all $f = \sum_{i=0}^{m-1} c_if_i$ with $c_i \in \F$ there exist $\lambda_k$ elements of $\F$ and $g_k$ elements of $G$ such that $f = \sum_k \lambda_kg_k$, $\LM(g_0)=\LM(f)$, and $\LM(g_k) > \LM(g_{k+1})$.
+\end{theorem}
+
+\begin{proof} \cite[p.58]{Segers2004}
+Write $G= \tilde{F}^+ \cup H$. All elements $g$ of $G$ have distinct leading terms and are linear combinations of
+elements of $F$. Hence, the matrix $A_{\tilde{F^+} \cup H}$ has full rank and spans a subspace of the space spanned
+by the matrix $A_F$. Also $\LM(G) = \LM(\tilde{F}^+) \cup \LM(H) =\LM(\tilde{F})$ holds, which implies $|\LM(G)| =
+|\LM(\tilde{F})|$ and the theorem follows.
+\end{proof}
+
+Instead of computing the reduction of every S-polynomial individually, $F_4$ creates a selection of critical pairs $p_{ij} = (f_i, f_j )$, for $f_i$, $f_j$ in the intermediate basis $G'$ and passes the two pairs
+\begin{align*}
+ \left(\sigma_{i,j}, f_i\right),
+ \left(\sigma_{j,i}, f_j\right)
+\end{align*}
+with $\sigma_{i,j} = \LCM(\LM(f_i),\LM(f_j))/\LM(f_i)$  to the reduction function. Note that for each critical pair the tuples $(\sigma_{i,j},f_i)$ and $(\sigma_{j,i},f_j)$  correspond to the unevaluated product for each \emph{component} of $S(f_i,f_j)$. This pair is constructed in a routine called \textsc{Pair}. The selection strategy recommended in \cite{f4} is the \emph{normal selection strategy}:
+
+\begin{definition}[Normal Strategy]
+Let $\mathcal{P}$ be a tuple of critical pairs and let $\LCM(p_{ij})$ denote the least common multiple of the leading monomials of the two parts of the critical pair $p_{ij} = (f_i,f_j)$. Further, let $d = \min\{\deg(\LCM(p)), p \in \mathcal{P}\}$ denote the minimal degree of those least common multiples of $p$ in $\mathcal{P}$. Then the normal selection strategy selects the subset $\mathcal{P}'$ of $\mathcal{P}$ with $\mathcal{P}' = \{ p \in \mathcal{P} \mid \deg(\LCM(p))=d\}$.
+\end{definition}
+
+\begin{definition}
+Let $p_{ij}$ denote a critical pair $f_i,f_j$ as above. 
+\begin{itemize}
+ \item  $Left(p_{ij})$ denotes the pair  $(\sigma_{i,j},f_i) \in M \times P$ where $\sigma_{i,j} = \LCM(p_{ij})/\LM(f_i)$ and
+ \item $Right(p_{ij})$ denotes the pair  $(\sigma_{j,i},f_j) \in M \times P$ where $\sigma_{j,i} = \LCM(p_{ij})/\LM(f_j)$. 
+\end{itemize}
+These definitions are extended to sets of critical pairs by applying them to their members individually. $\mathcal{L}_d$ denotes $Left(\mathcal{P}_d) \cup Right(\mathcal{P}_d)$.
+\end{definition}
+
+\begin{example}
+As an example consider
+\begin{align*}
+f_0 & = -45xy  + 36y^2 - 18xz - 63z^2 + 17,\\
+f_1 & = -34y^2 - 53xz  - 52yz - 58z^2 - 47x
+\end{align*}
+in the ring $\field{F}_{127}[x,y,z]$ with the degree reverse lexicographical monomial ordering. Then $Left(p_{0,1}) = (y,f_0)$ and $Right(p_{0,1}) = (x,f_1)$,
+since $\LCM(\LM(f_0),\LM(f_1)) = xy^2.$
+\end{example}
+
+Now that critical pairs to reduce are selected, reductors need to be added to the intermediate basis $G'$ to reduce those pairs, just like in the example in
+Section~\ref{sec:f4idea}. The addition of reductors is done by a routine called \textsc{Symbolic Preprocessing$_o$} which acts on $Left(\mathcal{P}_d) \cup
+Right(\mathcal{P}_d)$.
+
+\begin{definition}[Reductor]
+During the execution of an algorithm to compute Gröbner Bases, we call a polynomial $r$ satisfying
+\[ \LM(r) \in M(F) \setminus \LM(F). \] a \emph{reductor}.
+\end{definition}
+
+Note that the leading terms in $Left(\mathcal{P}_d) \cup Right(\mathcal{P}_d)$ do not need a reductor added to the system because they correspond to the two
+components of an S-polynomial which have not been reduced yet, thus one component will cancel the leading term of the other.
+
+\begin{algorithm}[ht]
+\KwIn{$L$ -- a finite subset of $M \times P$}
+\KwIn{$G$ -- a finite subset of $P$}
+\KwResult{a finite subsef of $P$}
+
+\Begin{
+  $F \longleftarrow \{t\cdot f, \forall (t,f) \in L\}$\;
+  $Done \longleftarrow LM(F)$\;
+  \While{$M(F) \neq Done$}{
+    $m \longleftarrow$ an element in $M(F) \setminus Done$\;
+    add $m$ to $Done$\;
+    \If{$\exists\ g \in G: \LM(g)\ \mid \ m$}{
+      $u = m/\LM(g)$\;
+      add $u \cdot g$ to $F$\;
+   }
+  }
+  \Return{$F$}\;
+}
+\caption{\textsc{Symbolic Preprocessing$_o$}} 
+\label{alg:symbolic_preprocessingo}
+\end{algorithm}
+
+\textsc{Symbolic Preprocessing$_o$} does more work than in the example in Section~\ref{sec:f4idea}. It will keep adding new reductors as long as any
+monomial in the intermediate set $F$ is not accounted for. This difference explains why $g''$ was not completely reduced in the example:  $z \cdot g$ was not added to account for the newly introduced monomial $yz$. \textsc{Symbolic Preprocessing$_o$} on the other hand, guarantees complete reduction by adding new reductors until every monomial occurring in the system is accounted for. Note that \textsc{Symbolic Preprocessing$_o$} only adds monomials to $M$ that are smaller
+than $\LM(F)$ and that there are only finitely many such monomials. \textsc{Symbolic Preprocessing$_o$} is used by a function called \textsc{Reduction$_o$} that
+simultaneously reduces polynomials corresponding to several critical pairs.
+
+\begin{algorithm}[ht]
+\KwIn{$L$ -- a finite subset of $M \times P$}
+\KwIn{$G$ -- a finite subset of $P$}
+\KwResult{a finite subsef of $P$}
+
+\Begin{
+ $F \longleftarrow$ \textsc{Symbolic Preprocessing$_o$}(L, G)\;
+ $\tilde{F} \longleftarrow $ \textsc{Gaussian Elimination}(F)\;
+ $\tilde{F}^+ \longleftarrow \{f \in \tilde{F}\ |\ \LM(f) \not\in \LM(F)\}$\;
+ \Return{$\tilde{F}^+$}\;
+}
+\caption{\textsc{Reduction}$_o$} 
+\label{alg:reductiono}
+\end{algorithm}
+
+S-polynomials that do not reduce to zero in Buchberger's Algorithm, extend the ideal spanned by the leading terms of the intermediate basis. This way, an ascending chain of leading term ideals is obtained. Similarly, the leading terms of the elements of $\tilde{F}^+$ contribute to the ideal spanned by the leading
+terms of the intermediate basis. This is formalized in the following lemma.
+
+\begin{lemma} \cite[p.59]{Segers2004}
+\label{lem:ftildeplus}
+Let $\tilde{F}^+$ denote the output of \textsc{Reduction} applied to $\mathcal{L}_d$ with respect to $G$. For all $f \in \tilde{F}^+$, $\LM(f)$ is not an element of $\ideal{\LM(G)}$.
+\end{lemma}
+
+\begin{proof} \cite[p.59]{Segers2004}
+Let $F$ be the set computed by the algorithm \textsc{Symbolic Preprocessing$_o$}($\mathcal{L}_d$, $G$). Assume for a contradiction that $\exists\ h \in \tilde{F}^+$ such that $t = \LM(h) \in \ideal{\LM(G)}$. Hence $\LM(g)$ divides $t$ for some $g \in G$. We have that $t$ is in $M(\tilde{F}^+) \subset  M(\tilde{F})
+\subset M(F)$ and is top reducible by $g$, hence $\frac{t}{\LM(g)}g$ is inserted in $F$ by \textsc{Symbolic Preprocessing$_o$} (or another product with the same leading monomial). This contradicts the fact that we require $\LM(h) \not\in \LM(F)$.
+\end{proof}
+
+The next lemma assures that the elements that are added to the intermediate
+basis, are members of the ideal $\ideal{G}$.
+
+\begin{lemma} \cite[p.59]{Segers2004}
+\label{lem:ftildesubsetidg}
+Let $\tilde{F}^+$ be as in Lemma~\ref{lem:ftildeplus}. Then $\tilde{F}^+ \subset \ideal{G}$.
+\end{lemma}
+\begin{proof} \cite[p.60]{Segers2004}
+Every $f \in \tilde{F}^+$ is a linear combination of elements of $\mathcal{L}_d$
+and reductors $R$, which are both subsets of $\ideal{G}$.
+\end{proof}
+
+The following lemma states that all S-polynomials in the set of possible
+$\field{F}$-linear combinations of $\mathcal{L}_d$ reduce to zero
+by a subset of $\tilde{F}^+ \cup G$. This is used to prove the correctness of the algorithm by the criterion stated in
+Theorem~\ref{thm:groebnerreducestozero}.
+
+\begin{lemma} \cite[p.60]{Segers2004}
+\label{lem:reducetozero}
+Let $\tilde{F}^+$ be as in Lemma~\ref{lem:ftildeplus}. For all $\field{F}$-linear combinations $f$ of elements of $\mathcal{L}_d$, we have that $f \underset{ \tilde{F}^+ \cup G}{\longrightarrow} 0$.
+\end{lemma}
+
+\begin{proof} \cite[p.60]{Segers2004}
+Let $f$ be a linear combination of elements of $\mathcal{L}_d$. Suppose $F$ is the output of the \textsc{Symbolic Preprocessing$_o$} of $\mathcal{L}_d$ and $G$.
+By construction, $\mathcal{L}_d$ is a subset of $F$ and, therefore due to
+Theorem~\ref{theorem:echelonform}, these elements are a linear
+combination of the triangular basis $\tilde{F}^+ \cup H$ for a suitable subset
+$H \subset F$. Elements of $H$ are either elements of $\mathcal{L}_d$ or (by
+construction in \textsc{Symbolic Preprocessing$_o$}) of the form $x^\alpha g$,
+for
+$g \in G$ and $\alpha \in \field{N}^n$, and $f$  can thus be written as
+\[
+f = \sum_i a_if_i + \sum_j a_jx^{\alpha_j}g_j,
+\]
+for $f_i \in \tilde{F}^+$ and $g_j \in G$, $a_i , a_j \in \F$ and $\alpha_j \in \field{Z}_{\geq 0}^n$. Thus the division algorithm  gives a remainder equal to $0$ for a suitable tuple of elements in $\tilde{F}^+ \cup G$ and hence there exists a reduction chain to 0.
+\end{proof}
+
+Based on these results we can formulate a first version of $F_4$ and prove its correctness.
+
+\begin{algorithm}
+\KwIn{$F$ -- a tuple of polynomials $f_0,\dots,f_{m-1}$}
+\KwResult{a Gröbner basis for $F$}
+
+\SetKw{KwAnd}{and}
+\SetKw{KwWith}{with}
+\Begin{
+$G,d \longleftarrow F,0$\;
+$\tilde{F}^+_{d} \longleftarrow F$\;
+$P \longleftarrow \{\textsc{Pair}(f,g): \forall f,g \in G$ \KwWith $g > f\}$\;
+\While{$P \neq \varnothing$}{
+  $d \longleftarrow d + 1$\;
+  $P_d \longleftarrow$ all pairs $\in P$ with minimal degree\;
+  $P \longleftarrow P\setminus P_d$\;
+  $\mathcal{L}_d \longleftarrow$ Left($P_d$) $\bigcup$ Right($P_d$)\;
+
+  $\tilde{F}^+_{d} \longleftarrow$ \textsc{Reduction}$_o$($\mathcal{L}_d, G$)\;
+  \For{$h \in \tilde{F}^+_{d}$}{
+    $P \longleftarrow P \bigcup \{\textsc{Pair}(f,h): \forall f \in G\}$\;
+    add $h$ to $G$\;
+  }
+}
+\Return{$G$}\;
+}
+\caption{Original $F_{4}$} 
+\label{alg:f4o}
+\end{algorithm}
+
+\begin{theorem}
+Algorithm~\ref{alg:f4o} computes a Gröbner basis $G$ for an ideal spanned by $F$, such that $F \subseteq G$, in
+a finite number of steps.
+\end{theorem}
+
+\begin{proof} \cite[p.8]{f4}
+Termination and correctness need to be proven:
+\begin{description}
+\item[Termination] Assume that the while-loop does not terminate. There exists an ascending sequence $(d_i)$ of natural numbers such that $\tilde{F}_{d_i}^+ \not= \emptyset$ for all $i$. Pick any $q_i \in \tilde{F}_{d_i}^+$.  Let $U_i$ be the ideal $U_{i-1} + \ideal{\LM(q_i)}$ for $i>1$ and $U_0 = \{0\}$. From Lemma~\ref{lem:ftildeplus} ($\LM(h) \not\in \LM(G)$) it follows that $U_{i-1} \subsetneq U_i$ as the elements of $\tilde{F}_{d_i}^+$ are added to $G$ at the end of every loop. This infinite chain of ideals contradicts the fact that $P$ is noetherian (cf.\ Chapter~\ref{chapter:groebner}).
+
+\item[Correctness] $G$ is  $\bigcup_{d\geq 0} \tilde{F}_d^+$. We claim is that the following statement are loop invariants of the while-loop: 
+\begin{itemize}
+ \item $G$ is a finite subset of $\field{F}[x_0,\dots,x_{n-1}]$ such that $F \subset G \subset \ideal{F}$ and
+ \item the S-polynomials for all $g_0,g_1 \in G$, such that $\{g_0,g_1\} \subsetneq \mathcal{P}$ reduce to zero with respect to $G$.
+\end{itemize}
+The first claim is an immediate consequence of Lemma~\ref{lem:ftildesubsetidg}. For the second one, if $\{g_0 , g_1\} \subsetneq \mathcal{P}$, this means that $\textsc{Pair}(g_0,g_1)$ has been selected in a previous step (say $d$). Hence both $Left(\textsc{Pair}(g_0,g_1))$ and $Right(\textsc{Pair}(g_0,g_1)$ are in $\mathcal{L}_d$ and so the S-polynomial of $g_0, g_1$ is an $\F$-linear combination of elements of $\mathcal{L}_d$. Hence by Lemma~\ref{lem:reducetozero} it reduces to zero with respect to G.
+\end{description}
+\end{proof}
+
+\section{The Improved \texorpdfstring{$F_4$}{F4}}
+While the original $F_{4}$ features the new reduction strategy using linear algebra, it does not constitute an efficient algorithm because it considers too many critical pairs. In \cite{f4} Faug\`ere also presents an improved version of his algorithm which has the  Buchberger Criteria ``inserted''. Faug\`ere suggests to use the Gebauer and Möller installation \cite{Gebauer1988}.
+
+The main algorithm remains almost unchanged, except that a function \textsc{Update} is called to create the tuple of critical pairs. So instead of adding \emph{all} critical pairs the only pairs added are the ones that survive the \textsc{Update} routine, which checks Buchberger's first and second criterion. Such a routine can be found for instance in \cite{Becker1991}.
+
+\begin{algorithm}
+\KwIn{$F$ -- a tuple of polynomials $f_0,\dots,f_{m-1}$}
+\KwResult{a Gröbner basis for $F$}
+
+\SetKw{KwAnd}{and}
+\SetKw{KwWith}{with}
+\Begin{
+$G,d \longleftarrow \varnothing, 0$\;
+$P \longleftarrow \varnothing$\;
+\While{$F \neq \varnothing$}{
+  $f \longleftarrow \min\{F\}$\;
+  $F \longleftarrow F\setminus \{f\}$\;
+  $G, P \longleftarrow$ \textsc{Update}($G,P,f$)\;
+}
+
+\While{$P \neq \varnothing$}{
+  $d \longleftarrow d+1$\;
+  $P_d \longleftarrow$ all pairs $\in P$ with minimal degree\;
+  $P \longleftarrow P\setminus P_d$\;
+  $\mathcal{L}_d \longleftarrow$ Left($P_d$) $\bigcup$ Right($P_d$)\;
+ $\tilde{F}^+_{d},F_d \longleftarrow$ \textsc{Reduction}($\mathcal{L}_d, G,
+(F_k)_{k=1,\dots,d-1}$)\;
+  \For{$h \in \tilde{F}^+_{d}$}{
+    $G,P \longleftarrow$ \textsc{Update}($G,P,h$)\;
+  }
+}
+\Return{$G$}\;
+}
+\caption{$F_{4}$}
+\label{alg:f4}
+\end{algorithm}
+
+The routines \textsc{Reduction$_o$} and \textsc{Symbolic Preprocessing$_o$} are adapted as follows and lose their $o$ subscript. The main addition is the introduction of the \textsc{Simplify} routine in \textsc{Symbolic Preprocessing}.
+
+\begin{algorithm}[ht]
+\KwIn{$L$ -- a finite subset of $M \times P$}
+\KwIn{$G$ -- a finite subset of $P$}
+\KwIn{$\mathcal{F}$ -- $(F_k)_{k=1,\dots,d-1}$ a tuple of finite subsets of
+$P$}
+\KwResult{a finite subsef of $P$}
+
+\Begin{
+  $F \longleftarrow \{$\textsc{Simplify}($m,f,\mathcal{F}$), $\forall
+(t,f) \in L\}$\;
+  $Done \longleftarrow LM(F)$\;
+  \While{$M(F) \neq Done$}{
+    $m \longleftarrow$ an element in $M(F) \setminus Done$\;
+    add $m$ to $Done$\;
+    \If{$\exists\ g \in G: \LM(g)|m$}{
+      $u = m/\LM(g)$\;
+      add \textsc{Simplify}($u,f,\mathcal{F}$) to $F$\;
+   }
+  }
+  \Return{$F$}\;
+}
+\caption{\textsc{Symbolic Preprocessing}} 
+\label{alg:symbolic_preprocessing}
+\end{algorithm}
+
+\begin{algorithm}[ht]
+\KwIn{$L$ -- a finite subset of $M \times P$}
+\KwIn{$G$ -- a finite subset of $P$}
+\KwIn{$\mathcal{F}$ -- $(F_k)_{k=1,\dots,d-1}$ a tuple of finite subsets of $P$}
+\KwResult{a finite subsef of $P$}
+
+\Begin{
+ $F \longleftarrow$ \textsc{Symbolic Preprocessing}($L, G, \mathcal{F}$)\;
+ $\tilde{F} \longleftarrow$ \textsc{Gaussian Elimination}($F$)\;
+ $\tilde{F}^+ \longleftarrow \{f \in \tilde{F}\ |\ \LM(f) \not\in \LM(F)\}$\;
+ \Return{$\tilde{F}^+$,$F$}\;
+}
+\caption{\textsc{Reduction}} 
+\label{alg:reduction}
+\end{algorithm}
+
+The only new routine is the \textsc{Simplify} algorithm which tries to find a better representation for a given element $t \cdot f$. In the original $F_{4}$ only the reduced matrices $\tilde{F}^+$ were kept. In $F_4$ the input matrices $F_d$ are stored and used to find representations $t' \cdot f'$ for $t \cdot f$ such that $t' \leq t$ and $\LM(t'\ \cdot f') = \LM(t\ \cdot\ f)$.  Intuitively, the idea behind this routine is to find a polynomial with leading term $\LM(t \cdot f)$ which had more reductions applied to it already.
+
+\begin{algorithm}[ht]
+\KwIn{$t$ -- $\in M$}
+\KwIn{$f$ -- $\in P$}
+\KwIn{$\mathcal{F}$ -- $(F_k)_{k=1,\dots,d-1}$ a tuple of finite subsets of
+$P$}
+\KwResult{an element in $P$}
+
+\Begin{
+\For{\{$u \in M(P) \mid u|t\}$}{
+  \If{$\exists j\mid 1\leq j < d, uf \in F_j$}{
+   $\tilde{F}_j \longleftarrow$ row echelon form of $F_j$\;
+   there exists a (unique) $p \in \tilde{F}_j$ such that $\LM(p) = \LM(uf)$\;
+   \eIf{$u \neq t$}{
+    \Return{\textsc{Simplify(}$t/u$,$p$,$\mathcal{F}$\textnormal{)}}\;
+   }{\Return{$p$}\;}
+}
+}
+\Return{$tf$}\; 
+}
+\caption{\textsc{Simplify}}
+\label{alg:simplify}
+\end{algorithm}
+
+As the \textsc{Simplify} subroutine is the most visible change to the algorithm, the main theorem about the \textsc{Simplify} algorithm is stated and proven below. It states that we can replace the elements $t\cdot f$ by whatever the \textsc{Simplify} returns without losing any information.
+
+\begin{lemma} \cite[p.10]{f4} If $(t',f')$ is the result of \textsc{Simplify}$(t,f,\mathcal{F})$, then $\LM(t'\cdot f') = \LM(t \cdot f)$. Moreover if $\tilde{\mathcal{F}}^+$ denotes $(\tilde{F}^+_k)_{k=1,\dots,d-1}$, then there exists $0 \not= \lambda \in P$, and $r \in \ideal{\tilde{\mathcal{F}}^+ \cup \mathcal{F}}$ such that $tf = \lambda \cdot t' \cdot f' + r$ with $\LM(r) < \LM(t\cdot f)$. 
+\end{lemma}
+
+\begin{citeproof}
+See  \cite[p.10]{f4}.
+\end{citeproof}
+
+
+Using this Lemma and the fact that \textsc{Update} only removes pairs which would reduce to zero anyway, it is easy to show that $F_4$ computes a Gröbner basis in a finite number of steps. The interested reader is referred to \cite{f4} for a formal proof.
+
+\section{A Toy Example for \texorpdfstring{$F_4$}{F4}}
+As an example consider the ideal $\ideal{107x_{0}x_{1} + x_{1}^{2} + 29, x_{0}^{2} + 80 x_{0}x_{1} + 114} \subset \F_{127}[x_{0}, x_{1}]$ with respect to a \emph{lex} ordering.
+When the main loop is entered, we have the critical pair $$\mathcal{P} = \mathcal{P}_1 = [ ((x_0, 107x_0x_1 + x_1^2 + 29), (x_1, x_0^2 + 80x_0x_1 + 114))]$$ and $$G = [107x_0x_1 + x_1^2 + 29, x_0^2 + 80x_0x_1 + 114]$$ as the intermediate basis.
+Consequently $\mathcal{L}_1 = [(x_1, x_0^2+ 80x_0x_1 + 114), (x_0, 107x_0x_1 +  x_1^2 + 29)]$.
+
+\textsc{Symbolic Preprocessing} returns $$[107x_0x_1^2 + x_1^3 + 29x_1,  x_0^2x_1 + 80x_0x_1^2 + 114x_1, 107x_0^2x_1 + x_0x_1^2 + 29x_0]$$ or in matrix form:
+\[
+F = A_F \cdot v_F = \left( \begin{array}{ccccc}
+0 & 107 & 0 & 1 & 29\\
+1 & 80 & 0 &0 & 114\\
+107 & 1 & 29 & 0 & 0\\
+\end{array}\right) \cdot 
+\left(\begin{array}{c}
+x_0^2x_1\\ x_0x_1^2\\ x_0\\ x_1^3\\ x1
+\end{array}\right).
+\]
+
+The row echelon form of $F$ is
+\[
+\tilde{F} = \tilde{A}_F \cdot v_F = \left( \begin{array}{ccccc}
+1 & 0 & 0 & 4  & 103\\
+0 & 1 & 0 & 19 & 43\\
+0 & 0 & 1 & 24 & 17\\
+\end{array}\right) \cdot 
+\left(\begin{array}{c}
+x_0^2x_1\\ x_0x_1^2\\ x_0\\ x_1^3\\ x1
+\end{array}\right).
+\]
+or as a set of polynomials $\tilde{F} = [x_0 + 24x_1^3 + 17x_1$, $x_0x_1^2+ 19x_1^3  + 43x_1$, 
+$x_0^2x_1 + 4x_1^3 + 103x_1]$. Those polynomials whose leading monomials are not in $F$ are $\tilde{F}^+ = [x_0 + 24x_1^3  + 17x_1]$.
+
+
+During the next iteration:
+\begin{align*}
+P = P_2 &=& [((x_1, 17x_1 + 24x_1^3 + x_0), (1,29 + x_1^2 + 107x_0x_1)), \\
+& & ((x_0, 17x_1 + 24x_1^3 + x_0), (1,114 + 80x_0x_1 + x_0^2))],\\
+G  &=& [17x_1 + 24x_1^3 + x_0],\\
+\mathcal{L}_2 &=& [(1, 29 + x_1^2 + 107x_0x_1), (1, 114 + 80x_0x_1 + x_0^2), \\
+& &(x_1, 17x_1 + 24x_1^3 + x_0), (x_0, 17x_1 + 24x_1^3 + x_0)],\\
+ F &=& [17x_1^2 + 24x_1^4 + x_0x_1, 29 + x_1^2 + 107x_0x_1, \\
+& &17x_1^4 + 24x_1^6 + x_0x_1^3, 114 + 80x_0x_1 + x_0^2, 17x_0x_1 + 24x_0x_1^3 + x_0^2],\\
+ \tilde{F} &=& [67 + 74x_1^2 + x_1^4, 122 + 52x_1^2 + x_1^6, 43 + 19x_1^2 + x_0x_1, \\
+& &124 + 34x_1^2 + x_0x_1^3, 103 + 4x_1^2 + x_0^2],\\
+ \tilde{F}^+ &=& [67 + 74x_1^2 + x_1^4, 122 + 52x_1^2 + x_1^6].\\
+\end{align*}
+
+The third is the last iteration and the involved sets are as follows:
+\begin{align*}
+P = P_3 &=& [((x_1^2, 67 + 74x_1^2 + x_1^4), (1,122 + 52x_1^2 + x_1^6))],\\
+G &=& [67 + 74x_1^2 + x_1^4, 17x_1 + 24x_1^3 + x_0],\\
+\mathcal{L}_3 &=& [(1, 122 + 52x_1^2 + x_1^6), (x_1^2, 67 + 74x_1^2 + x_1^4)],\\
+F &=& [67 + 74x_1^2 + x_1^4, 122 + 52x_1^2 + x_1^6, 67x_1^2 + 74x_1^4 + x_1^6],\\
+\tilde{F} &=& [67 + 74x_1^2 + x_1^4, 122 + 52x_1^2 + x_1^6],\\
+\tilde{F}^+ &=& \emptyset.
+\end{align*}
+
+As no critical pairs are left to choose the algorithm terminates and returns the Gröbner basis
+\[ G = [17x_1 + 24x_1^3 + x_0, 67 + 74x_1^2 + x_1^4]. \]
+
+This example was produced using the $F_4$ toy implementation available at
+\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/f4.py}.
+
+\section*{The SlimGB algorithm}
+
+The SlimGB \cite{slimgb} algorithm is another algorithm for computing Gr\"obner basis which is inspired by $F_4$. The algorithm also reduces several polynomials at once similarly to $F_4$ but does not depend on linear algebra for the reduction step. The key concept of SlimGB is that a strategy can be employed during the reduction step to keep the polynomials ``slim'' by some criterion. Possible criteria include ones to avoid coefficient growth or to keep the degree of the polynomials low. This algorithm is implemented in the computer algebra system \Singular~\cite{singular} and the library \PolyBoRi~\cite{polybori}. \PolyBoRi is an open-source library for computation in the boolean polynomial ring that uses zero-suppressed binary decision diagrams (ZDDs) to represent the boolean polynomials.
+
+\chapter{The Matrix-\texorpdfstring{$F_5$}{F5} Algorithm}
+\label{chapter:f5matrix}
+This chapter describes the matrix-$F_5$ algorithm which is a simplified, dense variant of $F_5$ proper \cite{f5}. While this algorithm is not competitive with $F_5$ in general, it serves well as an introduction to $F_5$. On the other hand, for some applications this algorithm is indeed competitive and achieves high performance. For instance, the original HFE challenge was broken using matrix-$F_5$ \cite{faugere-joux:crypto03}. A notable difference between $F_5$ proper and matrix-$F_5$ is that the question of termination is trivially solved for matrix-$F_5$: the algorithm computes up to a given degree $D$ regardless of whether it computed a Gröbner basis already or not. Thus, it is clear that it always terminates but not necessarily clear that it computes a Gröbner basis. However, for many cryptographic applications, such as system solving, this usually is not an issue since it is cheap to check whether for instance a univariate or linear polynomial is in the set of polynomials produced so far.
+
+So far, no formal publication describing matrix-$F_5$ in great detail is available in English. The most detailed account is given in two technical reports \cite{bardet-faugere-salvy:tech,faugere-ars-2004} discussing some complexity theoretic aspects of Gröbner basis algorithms and comparing $F_5$ with the XL algorithm. Furthermore, several French PhD theses \cite{bardet:thesis2004,ars:thesis2005,perret:thesis2005} describe and discuss this algorithm. Jean-Charles Faug{\`e}re also described the algorithm in his invited talk at FSE 2007 \cite{faugere:fse2007}.
+
+A toy implementation for Sage of the matrix-$F_5$ algorithm is provided by the author at
+\begin{center}
+\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/f5matrix.py}. 
+\end{center}
+
+\section{Introduction}
+\label{sec:matrixf5-introduction}
+In this chapter we restrict our attention to homogeneous polynomials and ideals. Thus, let $f_0, \dots f_{m-1}$ be homogeneous polynomials in $P$ (not necessarily of the same degree) and consider $J = \ideal{f_0, \dots, f_{m-1}}$. 
+
+As the rolling example of this section we use the ideal
+\begin{align*}
+J = \langle & 7816 a c + 5104 b^{2} + 16548 b c + 19066 c d + 8591 h^{2}\\
+& 23798 a b + 1124 a d + 16804 b^{2} + 15749 b d + 26076 c d\\
+& 2038 a c + 15107 a h + 21002 b^{2} + 2068 b c + 16781 d^{2}\\
+& 12681 b c + 27155 b d + 3365 d^{2} + 27312 d h + 1144 h^{2}\rangle
+\end{align*}
+over $\field{F}_{32003}[a,b,c,d,h]$ with the \emph{lexicographical} monomial ordering.
+
+For the set of $m$ polynomials $f_0,\dots, f_{m-1}$ we can define and construct the Macaulay matrix $\Mac{D,m}$ of degree $D$ as follows: list ``horizontally'' all the degree $D$ monomials from smallest to largest sorted by some fixed monomial ordering. The smallest monomial comes last. Multiply each $f_i$ by all monomials $t_{i,j}$ of degree $D-d_i$ where $d_i = \deg(f_i)$. Finally, construct the coefficient matrix for the resulting system:
+\begin{align*}
+\Mac{D,m} = \begin{array}{cc}
+ & \textnormal{monomials of degree } D\\
+\begin{array}{c}(t_{0,0},f_0)\\
+(t_{0,1},f_0)\\
+(t_{0,2},f_0)\\
+\vdots\\
+(t_{1,0},f_1)\\
+\vdots\\
+(t_{m-1,0},f_{m-1})\\
+(t_{m-1,1},f_{m-1})\\
+\vdots\\
+\end{array} &
+\left(\begin{array}{c} \\
+\hspace{5cm}\\	
+\\	
+\\	
+\\	
+\\	
+\\	
+\\
+\\
+\\
+\end{array}\right)
+\end{array}
+\end{align*}
+We sometimes write $\Mac{D}$ instead of $\Mac{D,m}$ when it is clear from the context which polynomials we are referring to. Furthermore, we may identify the list of polynomials
+$[t_{0,0}f_0$, $t_{0,1}f_0$, $t_{0,2}f_1$, $\dots,t_{1,0}f_1$, $\dots,t_{m-1,0}f_{m-1}$, $t_ {m-1,1}f_{m-1},\dots]$ with $\Mac{D}$ if it is clear from the context which representation we are referring to.
+
+\begin{theorem}[Lazard's Theorem~\cite{lazard:eurocal83}]
+\label{theorem:lazard}
+Let $F=\{f_0,\dots,f_{m-1}\}$ be set of homogeneous polynomials in $P$. There exists a positive integer $D$ for which Gaussian elimination on all $\Mac{d,m}$ for $1 \leq d \leq D$ computes a Gröbner basis for the ideal $\ideal{F}$.
+\end{theorem}
+
+\begin{proof}
+Recall that the S-polynomial $S(f,g)$ with $x^\gamma = \LCM(\LM(f),\LM(g))$ is represented in $\mathcal{M}^{acaulay}_{d,m}$ for $d = \deg(x^\gamma)$ as the two rows matching $\frac{x^\gamma}{\LM(f)} \cdot f$ and $\frac{x^\gamma}{\LM(g)} \cdot g$: the components of $S(f,g)$. Adding the right $\F$-multiples  of those two rows will cancel their leading term, efficiently constructing the S-polynomial in the row corresponding to $\frac{x^\gamma}{\LM(f)} \cdot f$ or $\frac{x^\gamma}{\LM(g)} \cdot g$. Now, consider that some $f \underset{F}{\rightarrow} h$ in one step. This
+implies that $f - t \cdot f_i = h$ for some $f_i \in F$ and $t \in M(P)$. Note that every multiple of $f_i$ of degree $d = \deg(f)$ is in $\Mac{d,m}.$ Particularly $t \cdot f_i$ is in $\Mac{d,m}$. Thus, adding the appropriate rows of $\Mac{d,m}$ performs this reduction step. Since the monomials are ordered in decreasing order Gaussian elimination will eliminate bigger terms first.
+\end{proof}
+
+It is easy to see that the XL~\cite{courtois-klimov-patarin-shamir:eurocrypt2000} algorithm -- which is well known in the cryptographic community -- is a simple application of this theorem. Indeed, if XL is repeated for increasing degrees up to $D$ it constructs $\Mac{d,m}$ for all  $2 \leq d \leq D$. Matrix-$F_5$ also uses Theorem~\ref{theorem:lazard}, but adds some criteria to avoid useless reductions or redundant rows.
+
+In order to describe matrix-$F_5$ we will first describe the XL algorithm in more detail and develop it to matrix-$F_5$ by adding the two criteria which are the core ideas of $F_5$. The XL algorithm in its simplest form is given in Algorithm~\ref{alg:xl}.
+\begin{algorithm}[ht]
+\KwIn{$F$ -- a polynomial system of equations}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a polynomial system of equations}
+\Begin{
+$M_D \longleftarrow$ all monomials of degree $D$\;
+$\mathcal{M} \longleftarrow \varnothing$\;
+\For{$f \in F$}{
+  \For{$m \in M_D$}{
+   add $m\cdot f$ to $\mathcal{M}$\;
+  }
+}
+$\tilde{\mathcal{M}} \longleftarrow$ \textsc{Gaussian Elimination}($\mathcal{M}$)\;
+\Return{$\tilde{\mathcal{M}}$}
+}
+\caption{XL\label{alg:xl}}
+\end{algorithm}
+
+A Gröbner basis algorithm $XL_{GB}$ based on XL is shown in Algorithm~\ref{alg:xlgb}.
+
+\begin{algorithm}[ht]
+\KwIn{$F$ -- a polynomial system of equations}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a $D$-Gröbner basis for $F$} 
+\Begin{
+$G \longleftarrow \varnothing$\;
+\For{$1 \leq  d \leq D$}{
+  $G \longleftarrow G \cup XL(F,d)$\;
+}
+\Return{$G$}
+}
+\caption{$XL_{GB}$}
+\label{alg:xlgb} 
+\end{algorithm}
+
+It is easy to see that the $XL_{GB}$ Gröbner basis algorithm is not very efficient since it does not attempt to avoid any useless pair. In the tradition of XL another algorithm was proposed -- XSL~\cite{courtois-pieprzyk:asiacrypt02} -- which was meant to address its inefficiency. However, it was later shown, that in fact, this extension was flawed \cite{Cid2005a}. Furthermore, note that in \cite{ars-faugere:asiacrypt04} it was shown that the $XL_{GB}$ algorithm is equivalent to the $F_4$ algorithm without any selection strategy or criterion to avoid useless reductions. Thus, $F_4$ can be viewed as an improved version of $XL_{GB}$ addressing the inefficiency (cf.\ Chapter~\ref{chapter:f4}). However, here we are concerned with a different strategy of avoiding useless computations.
+
+\hspace{1em}
+
+One way of measuring whether a linear algebra based Gröbner basis algorithm performs redundant computations is to consider the rank of the $m_d \times n_d$ matrices $A_d$ constructed at degree $d$. If the rank $r_d$ of $A_d$ is smaller than the number of rows $m_d$, then $m_d-r_d$ rows  were redundant; they are linear combinations of other rows. The matrix-$F_5$ algorithm can be viewed as a variant of XL which only constructs full-rank matrices under some conditions. Put differently, it never performs any reduction to zero under a particular condition, namely if the input system is \emph{regular} (cf. \cite{f5} for a definition of regularity).
+
+\section{From XL to Matrix-\texorpdfstring{$F_5$}{F5}}
+\label{sec:fromxltof5}
+In order to improve $XL_{GB}$ we first modify it to proceed strictly degree-by-degree. That is, now in the iteration $d$ the system\footnote{We identify the Macaulay matrix with the expanded list of polynomials generating it.} $\mathcal{M} = \Mac{d}$ only contains elements of the same degree $d$. Since for homogeneous systems only polynomials of the same degree affect each other in the linear step, this modification does not change the algorithm.
+
+This gives rise to the algorithm $XL_{GB}^1$ as presented in Algorithm~\ref{alg:xlgb1}.
+
+\begin{algorithm}
+
+\KwIn{$F$ -- a polynomial system of equations}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a $D$-Gröbner basis for $F$} 
+\SetKw{KwContinue}{continue}
+\Begin{
+$G \longleftarrow \varnothing$\;
+\For{$1 \leq d \leq D$}{
+  \tcp{abusing notation}
+  $\Mac{d} \longleftarrow \varnothing$\;
+  
+  \For{$f \in F$}{
+    \uIf{$\deg(f) = d$}{add $f$ to $\Mac{d}$\;}
+    \ElseIf{$\deg(f) < d$}{
+      $M_{d-\deg(f)} \longleftarrow$ all monomials of degree $d-\deg(f)$\;
+      \For{$m \in M_{d-\deg(f)}$}{
+        add $m\cdot f$ to $\Mac{d}$\;
+      }
+    }
+  }
+  $G \longleftarrow G\ \cup$ \textsc{Gaussian Elimination}($\Mac{d}$)\;
+ }
+\Return{$G$}
+}
+\caption{$XL_{GB}^1$\label{alg:xlgb1}} 
+\end{algorithm}
+
+We used Algorithm~\ref{alg:xlgb1} to compute a Gröbner basis for our example $J$ and we get the following matrix dimensions and number of zero rows after Gaussian elimination for each degree up to 12 where it computes a Gröbner basis.
+
+\begin{center}
+\begin{tabular}{|r|r|r|}
+\hline
+$d$ & matrix dim. & \#red. to zero\\
+\hline
+ 1 &                 --&   --\\
+ 2 & $   4 \times   11$&    0\\
+ 3 & $  20 \times   32$&    0\\
+ 4 & $  60 \times   67$&    6\\
+ 5 & $ 140 \times  123$&   30\\
+ 6 & $ 280 \times  207$&   86\\
+ 7 & $ 504 \times  327$&  190\\
+ 8 & $ 840 \times  492$&  361\\
+ 9 & $1320 \times  712$&  621\\
+10 & $1980 \times  998$&  995\\
+11 & $2860 \times 1362$& 1511\\
+12 & $4004 \times 1817$& 2200\\
+\hline
+\end{tabular}
+\end{center}
+
+Now assume that for a degree $d$ the matrix $\Mac{d}$ does not have full rank, i.e. at least one row is all zero after reduction. We say this row reduced to zero. Clearly, reductions to zero are redundant and thus should be avoided if possible. Assume this row corresponded to a polynomial $t_{k,j} \cdot f_k$. Of course any multiple of this polynomial $x_i t_{k,j} \cdot f_k$ in $\Mac{d+1}$ for $0 \leq i < n$ will also reduce to zero. These rows are therefore redundant and do not need to be considered. We can use this fact to improve Algorithm~\ref{alg:xlgb1}.
+
+Instead of starting from scratch the step $d$ from the $f_i$'s we may reuse the linear dependencies already discovered for the degree $d-1$. This is the kernel of the first criterion used by $F_5$: the ``Rewritten Criterion''.
+
+A naive algorithm which re-uses linear dependencies is given in Algorithm~\ref{alg:xlgb2} ($XL_{GB}^2$).
+
+\begin{algorithm}
+\KwIn{$F$ -- a polynomial system of equations}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a $D$-Gröbner basis for $F$} 
+
+\Begin{
+$G \longleftarrow \varnothing$\;
+$M_1 \longleftarrow$ all monomials of degree $1$\;
+$\tilde{M} \longleftarrow []$\;
+\For{$1 \leq d \leq D$}{
+ \tcp{abusing notation}
+  $\Mac{d} \longleftarrow \varnothing$\;  
+  \For{$f \in F$}{
+    \lIf{$\deg(f) = d$}{add $f$ to $\Mac{d}$\;}
+  }
+  \For{$f \in \tilde{\mathcal{M}}$}{
+    \For{$x \in M_1$}{
+     add $x\cdot f$ to $\Mac{d}$\;
+    }
+  }
+  $\tilde{\mathcal{M}} \longleftarrow$ \textsc{Gaussian Elimination}($\Mac{d}$)\;
+  \For{$f \in \tilde{\mathcal{M}}$}{
+    \lIf{$f = 0$}{remove $f$ from $\tilde{\mathcal{M}}$\;}
+  }
+  $G \longleftarrow G \cup \tilde{\mathcal{M}}$\;
+}
+\Return{$G$}
+}
+\caption{$XL_{GB}^2$\label{alg:xlgb2}} 
+\end{algorithm}
+
+However, its performance is worse than Algorithm~\ref{alg:xlgb1} ($XL_{GB}^1$). For example, the sizes of the matrices considered during a run of Algorithm~\ref{alg:xlgb1} and Algorithm~\ref{alg:xlgb2} for the ideal $J$ are tabulated below.
+
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|}
+\hline
+    & \multicolumn{2}{|c|}{$XL_{GB}^1$} & \multicolumn{2}{|c|}{$XL_{GB}^2$}\\
+\hline
+$d$ & matrix dim. & \#red. to zero & matrix dim. & \#red. to
+zero\\
+\hline
+ 1 &                 --&    --&                -- &    --\\
+ 2 & $   4 \times   11$&     0& $   4 \times   11$&     0\\
+ 3 & $  20 \times   32$&     0& $  20 \times   32$&     0\\
+ 4 & $  60 \times   67$&     6& $ 100 \times   67$&    46\\
+ 5 & $ 140 \times  123$&    30& $ 270 \times  123$&   160\\
+ 6 & $ 280 \times  207$&    86& $ 550 \times  207$&   356\\
+ 7 & $ 504 \times  327$&   190& $ 970 \times  327$&   656\\
+ 8 & $ 840 \times  492$&   361& $1570 \times  492$&  1091\\
+ 9 & $1320 \times  712$&   621& $2395 \times  712$&  1696\\
+10 & $1980 \times  998$&   995& $3495 \times  998$&  2510\\
+11 & $2860 \times 1362$&  1511& $4925 \times 1362$&  3576\\
+12 & $4004 \times 1817$&  2200& $6745 \times 1817$&  4941\\
+\hline
+\end{tabular}
+\end{center}
+
+This is because the ``improvement'' introduces a new problem. For example, when Algorithm~\ref{alg:xlgb1} multiplies by $xy$, Algorithm~\ref{alg:xlgb2} will multiply by $xy$ and $yx$ due to the incremental strategy. It does not keep track that e.g. $h_0 = xf_i$ and $h_1 = yf_i$ and will generate $xh_0 = x^2f_i$, $yh_0 = xyf_i$, $xh_1 = xyf_i$ and $yh_1 = y^2f_i$, i.e. it will produce $xyf_i$ twice. Thus, we need to keep track of by what monomials we multiplied already, to avoid this regression.
+
+Algorithm~\ref{alg:xlgb3} ($XL_{GB}^3$) uses \emph{signatures} to keep track of which polynomial $f_i$ and which multiplier $t$ gave rise to every element in the set $\tilde{\mathcal{M}}$.
+
+\begin{definition}[Signature]
+\label{def:signature}
+Let $P^m$ be the free module over $P  = \F[x_0,\dots,x_{n-1}]$ and let $\e_i$ be a canonical unit vector in $P^m$:  $\e_i = (0,\dots,0,1,0,\dots,0)$ where the $1$ is in the $i$-th position. A \textbf{signature} is any product $\sigma = t \cdot \e_i$, where $t$ is a monomial in $x_0,\ldots,x_{n-1}$.
+\end{definition}
+
+In this chapter we may write and think of signatures $\sigma = t \cdot \e_i$ as tuples $(t,\e_i)$.
+
+Using these signatures, we can define the rule to only multiply a row $tf_i$ with signature $t\e_i$ by variables $\geq \max(\{v \mid v \textnormal{ is a variable of }t\})$. This allows us to avoid the problem discussed above. Strictly speaking, we only need to store the largest variable of the monomial $t$ for Algorithm~\ref{alg:xlgb3}. However, storing $t$ will be useful later in Algorithm~\ref{alg:f5matrix}.
+
+\begin{algorithm}
+
+\KwIn{$F$ -- a polynomial system of equations}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a $D$-Gröbner basis for $F$} 
+\Begin{
+$G \longleftarrow \varnothing$\;
+$M_1 \longleftarrow$ all monomials of degree $1$\;
+\For{$1 \leq d \leq D$}{
+  $\Mac{d} \longleftarrow []$ \tcp*[h]{abusing notation}\; 
+  $\mathcal{L}_d \longleftarrow []$\;  
+  \For{$0 \leq i < |F|$}{
+    $f \longleftarrow F[i]$\;
+    \If{$\deg(f) = d$}{
+       append $(1,\textbf{e}_i,|\Mac{d}|)$ to $\mathcal{L}_d$\;
+       append $f$ to $\Mac{d}$\;
+     }
+  }
+  \For{$0 \leq i < |\Mac{d-1}|$}{
+    $m, j, r \longleftarrow \mathcal{L}_{d-1}[i]$\tcp*[h]{r==i}\;
+    \For{$x \in M_1$}{
+      $V \longleftarrow$ all variables in $m$\;
+      \If{$x \geq \max(V)$}{ 
+        append $(x\cdot m, \textbf{e}_j, |\Mac{d}|)$ to $\mathcal{L}_d$\;
+        append $x\cdot \Mac{d-1}[r]$ to $\Mac{d}$\;
+      }
+    }
+  }
+  $\Mac{d} \longleftarrow$ \textsc{Gaussian Elimination} ($\Mac{d}$)\;
+  $\mathcal{L}_d \longleftarrow $ swap element in $\mathcal{L}_d$ to match swaps in $\Mac{d}$\;
+  \For{$f \in \Mac{d}$}{
+    \If{$f = 0$}{
+      remove $f$ from $\Mac{d}$\;
+      remove $(\sigma,f)$ from $\mathcal{L}_d$\;
+    }
+  }
+  $G \longleftarrow G \cup \Mac{d}$\;
+}
+\Return{$G$}
+}
+\caption{$XL_{GB}^3$\label{alg:xlgb3}} 
+\end{algorithm}
+
+As we can see using our example, the performance of Algorithm~\ref{alg:xlgb3} ($XL_{GB}^3$) is indeed improved over Algorithm~\ref{alg:xlgb1} as the number of reductions to zero dropped (by up to an order of magnitude) or stayed the same for each $d$.
+
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|}
+\hline
+& \multicolumn{2}{|c|}{$XL_{GB}^1$} & \multicolumn{2}{|c|}{$XL_{GB}^3$}\\
+\hline
+$d$ & matrix dim. & \#red. to zero & matrix dim. & \#red. to zero\\
+\hline
+ 1&               --&  --&                  &\\
+ 2&$   4\times   11$&   0& $   4\times   11$&   0\\
+ 3&$  20\times   32$&   0& $  20\times   32$&   0\\
+ 4&$  60\times   67$&   6& $  60\times   67$&   6\\
+ 5&$ 140\times  123$&  30& $ 123\times  119$&  17\\
+ 6&$ 280\times  207$&  86& $ 208\times  188$&  33\\
+ 7&$ 504\times  327$& 190& $ 327\times  290$&  50\\
+ 8&$ 840\times  492$& 361& $ 492\times  434$&  71\\
+ 9&$1320\times  712$& 621& $ 706\times  626$&  93\\
+10&$1980\times  998$& 995& $ 984\times  879$& 118\\
+11&$2860\times 1362$&1511& $1339\times 1202$& 150\\
+12&$4004\times 1817$&2200& $1783\times 1611$& 185\\
+\hline
+\end{tabular}
+\end{center}
+
+To add the second criterion used by $F_5$ -- the $F_5$ criterion -- we need to define an order on signatures (and preserve it when performing Gaussian elimination). 
+
+\begin{definition}
+\label{def:sigorder}
+Let $t\e_i$ and $u\e_j$ be signatures, we say that $t\e_i > u\e_j$ if
+\begin{itemize}
+ \item $i > j$ or
+ \item $i = j$ and $t > u$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}
+A syzygy for $F = (f_0, \dots, f_{m-1})$ is a vector $G = (g_0, \dots, g_{m-1}) \in P^m$ such that $$\sum_{i=0}^{m-1} g_if_i = 0.$$
+\end{definition}
+
+The $F_5$ criterion avoids all reductions to zeros caused by trivial syzygys. We have that $g_i = f_j, g_j = -f_i, g_k = 0$ for $k\neq i,j$ is a trivial syzygy for $F$ because $f_if_j - f_jf_i = 0.$ Now consider some polynomials $f_0,f_1,f_2$ as an example and check that a combination of the trivial relations $f_i f_j = f_j f_i$ can always be written as
+
+      $$u(f_1f_2 - f_2f_1) + v(f_0f_2 - f_2f_0) + w(f_1f_0 - f_0f_1)$$
+
+where $u$, $v$, $w$ are arbitrary polynomials. This can be rewritten as
+
+       $$(uf_1 + vf_0)f_2 - uf_1f_2 - vf_0f_2 + wf_1f_0 - wf_0f_1$$
+
+Hence the multiples of $f_2$ that give rise to trivial syzygys (these are $(uf_1 + vf_0)$, $uf_1$ and $vf_0$) are in the ideal generated by $f_0$ and $f_1$. Since $u,v$ and $w$ are arbitrary elements of $P$ the argument also applies in the other direction: for all multiples $h \cdot f_2$ of $f_2$ with $h \in \ideal{f_0,f_1}$ there are elements in $\ideal{f_0, f_1}$ which will cause a reduction to zero.
+
+The same arguments apply to any $i>1$. Thus if a multiplier of $f_i$ is in the ideal spanned by $f_0,\dots,f_{i-1}$ we do not need to consider it. Furthermore, it is easy to check whether a multiplier of $f_i$ is in $\ideal{f_0,\dots,f_{i-1}}$ if we compute the $d$-Gröbner basis for $\ideal{f_0,\dots,f_{i-1}}$ first, i.e. if we compute the $d$-Gröbner basis for $\ideal{f_0,\dots,f_{i-1}}$ before the $d$-Gröbner basis for $\ideal{f_0,\dots,f_{i}}$. This explains the definition of the order on signatures above: we want multiples of $f_i$ to be smaller than multiples of $f_j$ if $i<j$ in order to exploit this relationship. Also, note that here we make use of the fact that all polynomials are homogeneous, i.e. the degrees never drop during elimination\footnote{We could address this issue by considering the sugar degree \cite[p.108]{Cox2005} for affine polynomials.}.
+
+Note that the construction of $\Mac{d}$ in Algorithm~\ref{alg:xlgb3} already preserves the order on signatures. However, Gaussian elimination freely swaps rows and does not preserve the order on signatures. More severely, a multiple of $f_i$ may affect a multiple of $f_j$ for $i>j$ which implies that the we cannot easily check whether a multiple of $f_k$ with $k>j$ is in $\ideal{f_0,\dots,f_{j}}$. Thus we need to restrict elimination, such that we iteratively compute the Gröbner basis for $\ideal{f_0}$, $\ideal{f_0, f_1}$ etc.
+
+In the language of signatures and matrices, we can rephrase this strategy as follows. Consider the signatures of the current basis $\tilde{\mathcal{M}}$. When we consider to generate a new polynomial as $x \cdot h$ we can check whether the signature of this polynomial -- $x\cdot m, f_i$ -- would give a signature that is recognisably larger than it needs to be . Then there is a syzygy that allows to rewrite the polynomial with a smaller signature, as above (cf.\ Chapter\ \ref{chapter:f5}). Since we already considered top-cancellations with smaller signatures -- due to the restriction of elimination mentioned briefly above -- we can discard the polynomial.
+
+However, we still need to define how to restrict elimination such that signatures and their order are preserved. This is done in Algorithm
+~\ref{alg:gausselim1}.
+
+\begin{algorithm}
+
+\KwIn{$F$ -- a polynomial system of equations}
+\KwResult{a polynomial system of equations}
+\SetKw{KwContinue}{continue}
+\SetKw{KwBreak}{break}
+\SetKw{KwAny}{any}
+\Begin{ 
+\tcp{create the $m \times n$ matrix $A$}
+$A,v \longleftarrow $ coefficient matrix for $F$\;
+\For{$0 \leq c < n$}{
+  \For{$0 \leq r < m$}{
+    \If{$A[r,c] \neq 0$}{
+      \lIf{\KwAny $A[r,i] \neq 0 \mid 0 \leq i < c$}{\KwContinue\;}
+      rescale the row $r$ such that the entry $A[r,c]$ is 1\;
+      \For(\tcp*[h]clear below){$r+1 \leq i < m$}{
+       \If{$A[i,c] \neq 0$}{
+         eliminate the entry $A[i,c]$ using the row $r$\;
+       }
+      }
+     \KwBreak;
+    }
+}
+}
+\Return rows of $A*v$\;
+}
+\caption{\textsc{Gaussian Elimination}$_{F5}$}
+\label{alg:gausselim1}
+\end{algorithm}
+
+Algorithm~\ref{alg:gausselim1} performs
+normal Gaussian elimination, except:
+\begin{itemize}
+ \item it does not compute the \emph{reduced} row echelon form,
+ \item it does not perform row swaps and
+ \item it does not allow lower rows to affect higher rows.
+\end{itemize}
+
+However, the following Lemma states that the result of both algorithms are essentially equivalent from a Gröbner basis perspective.
+
+\begin{lemma}
+\label{lem:gauss_correct}
+Let $F$ be a set of polynomials in $P = \F[x_0,\dots,x_{n-1}]$. Let $\tilde{F}$ be the result of Algorithm~\ref{alg:gausselim} (\textsc{Gaussian Elimination}) and $\tilde{F'}$ the result of Algorithm~\ref{alg:gausselim1} (\textsc{Gaussian Elimination}$_{F5}$). We have that $\LM(\tilde{F})  = \LM(\tilde{F'})$. 
+\end{lemma}
+
+\begin{proof}
+Assume for contradiction that there is an element $f \in \tilde{F}$ with $\LM(f) \not\in \LM(\tilde{F'})$. This implies that there is a row $r$ in the coefficient matrix of $F$ corresponding to a polynomial $g$ which would reduce to $f$ in Gaussian elimination. Assume that this reduction is not allowed in Algorithm~\ref{alg:gausselim1} because the necessary reductor is in a row
+$r'$ below of $r$. In that case Algorithm~\ref{alg:gausselim1} will add the row $r$ to the row $r'$ (since $r$ has smaller signature than $r'$) and store the result in $r'$ producing the same addition and cancellation of leading terms. Thus only the row index of the result changes but the same additions are performed except for the clearance of the upper triangular matrix which does not affect leading terms.
+\end{proof}
+
+With this modified Gaussian elimination in place, we are ready to state the main theorem that enables $F_5$ \cite{f5}. This theorem expresses, that we can skip a row for a multiple of $f_m$, if its leading term is in the ideal of leading terms of an ideal spanned by some $f_i$'s with $i<m$.
+
+\begin{theorem}[$F_5$ Criterion]
+For all $j < m$, if we have a row labelled $(t, f_j)$ in the matrix $\mathcal{M}^{acaulay}_{D-d_m,m-1}$ that has leading term $t'$ then the row $(t', f_m)$ in $\mathcal{M}^{acaulay}_{D,m}$ is
+redundant.
+\end{theorem}
+
+Adding this criterion to Algorithm~\ref{alg:xlgb3} completes the transition to matrix-$F_5$ which is given in Algorithm~\ref{alg:f5matrix}
+\begin{algorithm}
+
+\KwIn{$F$ -- a polynomial system of equations}
+\KwIn{$D$ -- an integer $> 0$} 
+\KwResult{a $D$-Gröbner basis for $F$} 
+\SetKw{KwContinue}{continue}
+\SetKw{KwBreak}{break}
+\SetKw{KwWhere}{where}
+\Begin{
+$M_1 \longleftarrow$ all monomials of degree $1$ sorted in increasing order\;
+\For{$1 \leq d \leq D$}{
+  \tcp{abusing notation}
+  $\Mac{d} \longleftarrow []$\;
+  $\mathcal{L}_d \longleftarrow []$\;
+  \For{$0 \leq i < |F|$}{
+    $f \longleftarrow F[i]$\;
+    \If{$\deg(f) = d$}{
+       append $(1,\textbf{e}_i,|\Mac{d}|)$ to $\mathcal{L}_d$\;
+       append $f$ to $\Mac{d}$\;
+       \KwContinue\;
+    }
+    \For{$(t, m, r) \in \mathcal{L}_{d-1} $ \KwWhere $m = i$}{
+      \For{$x \in M_1$}{
+        $V \longleftarrow$ all variables in $t$\;
+        \lIf{$x < \max(V)$}{\KwContinue\;}
+        $found \longleftarrow false$\;
+        \For(\tcp*[h]{the $F_5$ criterion}){$(\cdot,j,r_0) \in
+\mathcal{L}_{d-\deg(f)}$ \KwWhere $j < m$}{
+          \If{$\LM(\Mac{d-\deg(f)}[r_0]) = x \cdot t$}{
+             $found \longleftarrow true$\;
+          }
+        }
+        \If{$found = false$}{
+          append $(x\cdot t, \textbf{e}_i, |\Mac{d}|)$ to $\mathcal{L}_d$\;
+          append $x\cdot \Mac{d-1}[r]$ to $\Mac{d}$\;
+        }
+      }
+    }
+  }
+  $\tilde{\mathcal{M}} \longleftarrow $\textsc{Gaussian Elimination}$_{F5}(\Mac{d})$\;
+  $\mathcal{M}', \mathcal{L}' \longleftarrow [],[]$\;
+  \For{$0 \leq i < |\tilde{\mathcal{M}|}$}{
+   $m,i_0,r \longleftarrow \mathcal{L}_d[i]$\;
+    \If{$\tilde{\mathcal{M}}[i] \neq 0$}{
+      append $(m,\textbf{e}_{i_0},|\mathcal{M}'|)$ to $\mathcal{L}'$\;
+      append $\tilde{\mathcal{M}}[i]$ to $\mathcal{M}'$\; 
+    }
+  }
+  $\Mac{d},\mathcal{L}_d \longleftarrow \mathcal{M}',\mathcal{L}'$\;
+}
+\Return{$\bigcup_{d=1}^{D} \Mac{d}$}
+}
+\caption{matrix-$F_5$} 
+\label{alg:f5matrix}
+\end{algorithm}
+and we can check that for our main example matrix-$F_5$ indeed avoids all reductions to zero. 
+
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|r|r|}
+\hline
+& \multicolumn{2}{|c|}{$XL_{GB}^1$} & \multicolumn{2}{|c|}{$XL_{GB}^3$} &
+\multicolumn{2}{|c|}{matrix-$F_5$}\\
+\hline
+$d$ & matrix dim. & \#zero red.& matrix dim. & \#zero red. & matrix dim.
+& \#zero red.\\
+\hline
+ 1&               --&  --&               --&  --&                --&--\\
+ 2&$   4\times   11$&   0&$   4\times   11$&   0&$   4\times   11$ &0\\
+ 3&$  20\times   32$&   0&$  20\times   32$&   0&$  20\times   32$ &0\\
+ 4&$  60\times   67$&   6&$  60\times   67$&   6&$  54\times   67$ &0\\
+ 5&$ 140\times  123$&  30&$ 123\times  119$&  17&$ 110\times  123$ &0\\
+ 6&$ 280\times  207$&  86&$ 208\times  188$&  33&$ 194\times  207$ &0\\
+ 7&$ 504\times  327$& 190&$ 327\times  290$&  50&$ 314\times  327$ &0\\
+ 8&$ 840\times  492$& 361&$ 492\times  434$&  71&$ 479\times  492$ &0\\
+ 9&$1320\times  712$& 621&$ 706\times  626$&  93&$ 699\times  712$ &0\\
+10&$1980\times  998$& 995&$ 984\times  879$& 118&$ 985\times  998$ &0\\
+11&$2860\times 1362$&1511&$1339\times 1202$& 150&$1349\times 1362$ &0\\
+12&$4004\times 1817$&2200&$1783\times 1611$& 185&$1804\times 1817$ &0\\
+\hline
+\end{tabular}
+\end{center}
+
+However, note that for some $d$ the matrix dimensions increased over $XL_{GB}^3$. This is an artefact of the restricted elimination: $XL_{GB}^3$ computes the \emph{reduced} row echelon form, while matrix-$F_5$ does not. Below, we give the matrix dimensions for $XL_{GB}^3$ if non-reduced row echelon forms are computed. Note that with respect to this $XL_{GB}^3$ variant we have that indeed exactly those rows that would reduce to zero are removed.
+
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|}
+\hline
+& \multicolumn{2}{|c|}{$XL_{GB}^{3}$ w/o \emph{reduced} basis} & \multicolumn{2}{|c|}{matrix-$F_5$}\\
+\hline
+$d$ & matrix dim. & \#zero red.& matrix dim. & \#zero red.\\
+\hline
+   1&               --&  --&                --&--\\
+   2&$   4\times   11$&   0&$   4\times   11$ &0\\
+   3&$  20\times   32$&   0&$  20\times   32$ &0\\
+   4&$  60\times   67$&   6&$  54\times   67$ &0\\
+   5&$ 129\times  123$&  19&$ 110\times  123$ &0\\
+   6&$ 230\times  207$&  36&$ 194\times  207$ &0\\
+   7&$ 367\times  327$&  53&$ 314\times  327$ &0\\
+   8&$ 542\times  492$&  63&$ 479\times  492$ &0\\
+   9&$ 780\times  712$&  81&$ 699\times  712$ &0\\
+  10&$1082\times  998$&  97&$ 985\times  998$ &0\\
+  11&$1459\times 1362$& 110&$1349\times 1362$ &0\\
+  12&$1940\times 1817$& 136&$1804\times 1817$ &0\\
+\hline
+\end{tabular}
+\end{center}
+
+
+\section{On the Performance of Matrix-\texorpdfstring{$F_5$}{F5}}
+We have seen that matrix-$F_5$ is strictly better than the original XL algorithm since it skips rows from $\Mac{d}$ which are redundant. Still, the XL algorithm receives widespread attention, mainly due to its simplicity which allows easy adaptation to and improvements for particular problems \cite{courtois-patarin:ct-rsa03,murphy-paterson:jmc2008,antiquad,mxl2}. However, it seems like most of these variants of XL give rise to variants of matrix-$F_5$ which are expected to perform strictly better.
+
+Note, however, that while matrix-$F_5$ avoids many reductions to zero this does not imply it does not perform useless reductions. For comparison verify in the table below that $F_4$ as described in Chapter~\ref{chapter:f4} constructs much smaller matrices than matrix-$F_5$ for the example of this chapter. The advantage of $F_4$ over matrix-$F_5$ is that it only considers critical pairs, instead of computing all multiples of the input system except those which trivially reduce to zero. $F_5$ proper combines the use of critical pairs with the $F_5$ criteria and is discussed in the next chapter. Note that while $F_5$ in the following table considers degree 14 it already computes a Gröbner basis at degree 12. Note that $F_{5}$ in the table below refers to our implementation of $F_{4/5}$ discussed in the next chapter.
+
+\begin{center}
+\begin{tabular}{|r|r|r|r|r|r|r|}
+\hline
+    & \multicolumn{2}{|c|}{matrix-$F_5$} & \multicolumn{2}{|c|}{$F_4$} & \multicolumn{2}{|c|}{$F_{5}$}\\
+\hline
+$d$ & matrix dim. & \#zero red.& matrix dim. & \#zero red.& matrix dim. & \#zero red.\\
+\hline
+ 1&               -- &--&$ 3 \times  9$&  0&             --& 0\\
+ 2&$   4\times   11$ & 0&$14 \times 25$&  0&             --& 0\\
+ 3&$  20\times   32$ & 0&$39 \times 44$&  7& $13 \times 24$& 0\\
+ 4&$  54\times   67$ & 0&$55 \times 53$& 14& $20 \times 32$& 0\\
+ 5&$ 110\times  123$ & 0&$56 \times 55$& 13& $18 \times 30$& 0\\
+ 6&$ 194\times  207$ & 0&$44 \times 50$&  6& $13 \times 25$& 0\\
+ 7&$ 314\times  327$ & 0&$41 \times 50$&  3& $16 \times 28$& 0\\
+ 8&$ 479\times  492$ & 0&$40 \times 49$&  3& $19 \times 31$& 0\\
+ 9&$ 699\times  712$ & 0&$41 \times 50$&  3& $ 9 \times 21$& 0\\
+10&$ 985\times  998$ & 0&$42 \times 51$&  3& $ 5 \times 17$& 0\\
+11&$1349\times 1362$ & 0&$43 \times 52$&  3& $ 5 \times 17$& 0\\
+12&$1804\times 1817$ & 0&$44 \times 53$&  3& $ 5 \times 17$& 0\\
+13&               -- &--&$36 \times 45$&  3& $ 5 \times 17$& 0\\
+14&               -- &--&$25 \times 33$&  4& $ 5 \times 17$& 0\\
+15&               -- &--&$12 \times 23$&  1&            -- & 0\\
+16&               -- &--&$ 7 \times 18$&  1&            -- & 0\\
+17&               -- &--&$ 6 \times 17$&  1&            -- & 0\\
+18&               -- &--&$11 \times 22$&  1&            -- & 0\\
+\hline
+\end{tabular}
+\end{center}
+
+Considering the asymptotic complexity of the algorithm we are presented with the following result for matrix-$F_5$ for quadratic polynomials over $\F{2}$ in~\cite{bardet-faugere-salvy:tech}: for $n$ equations in $n$ variables (without counting the field equations), the degree for which matrix-$F_5$ stops is approximately $D\approx 0.09n$, the approximation being valid even for small $n$. This implies exponential complexity for matrix-$F_5$.
+
+For general systems (over $\F{2}$) the results are the following~\cite{bardet-faugere-salvy:tech}: when $m$ grows linearly with $n$, the size of the largest matrix is exponential in $n$, and the complexity of matrix-$F_5$ is exponential; when $n/m$ tends to zero, matrix-$F_5$ is subexponential; and when $m$ grows as $Nn^2$, matrix-$F_5$ has polynomial complexity, with exponent depending on $N$.
+
+
+
+\chapter{The \texorpdfstring{$F_5$}{F5} Algorithm}
+\label{chapter:f5}
+
+
+This chapter describes and discusses Jean-Charles Faugère's $F_5$ algorithm. However, instead of presenting $F_5$ in the ``traditional'' fashion as is done in \cite{f5,Stegers2005,Gash2008}, a variant of $F_5$ in $F_4$-``style'' is presented. We refer to this variant as $F_{4/5}$.
+The main differences between $F_{4/5}$ and $F_5$ are:
+\begin{itemize}
+ \item The two outermost loops are swapped (cf.~\cite{faugere:fse2007}), such that Algorithm~\ref{alg:f5} proceeds by degrees first and then by index of generators. $F_5$ proceeds by index of generators first and then by degrees.
+ \item The polynomial reduction routines are replaced by linear algebra quite similar to matrix-$F_5$ (cf.\ \cite{bardet-faugere-salvy:tech,faugere-ars-2004} and Chapter~\ref{chapter:f5matrix}).
+ \item The lists \emph{Rules$_i$} are kept sorted at all times, which  matches matrix-$F_5$ closer and seems to improve performance slightly.
+ \item Polynomial indices are reversed in Algorithm~\ref{alg:f5} compared to \cite{f5}. That is, we compute the Gröbner basis for the ideal $\ideal{f_0}$ first and not for the ideal $\ideal{f_{m-1}}$.
+\end{itemize}
+
+Another description of a similar algorithm already exists in Gwenole Ars' dissertation~\cite{ars:thesis2005}; unfortunately, this is only available in French, and although an implementation exists, it is not made available for study. We not only describe the algorithm, we also direct the reader to a study implementation for the free and open source \Sage computer algebra system \cite{sage}.
+
+A study implementation of Algorithm~\ref{alg:f5} is available at
+\begin{center}
+\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/f5_2.py}
+\end{center}
+and a study implementation of $F_5$ proper and variants is available at
+\begin{center}
+\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/f5.py}.
+\end{center}
+
+This chapter is joint work with John Perry \cite{albrecht-perry:f45}.
+
+\section{Background material}\label{sec:background}
+
+Let $P = \F[x_0,\ldots,x_{n-1}]$ be a polynomial ring over the field $\F$. The goal of any $F_5$-class algorithm (including $F_{4/5}$)
+is to compute a Gr\"obner basis of $f_0,\ldots,f_{m-1}\in P$ with respect to a given monomial ordering.
+
+The distinguishing feature of $F_5$ is that it records part of a representation of each polynomial (or row) in terms of the input. This record is kept in a so-called \emph{signature} (cf.\ Definition\ \ref{def:signature}).
+
+We denote by $\sigset$ the set of all signatures. Recall, that we extend the monomial ordering on $P$ to $\sigset$ as in Definition \ref{def:sigorder}.
+
+To each polynomial we associate a signature; this pair is called a \emph{labelled polynomial}. We are interested only in associating signatures with polynomials in a specific way.
+
+\begin{definition}[Labelled Polynomial]
+Let $\sigma\in\sigset$ and $f\in P$. We say that $(\sigma,f)$ is a
+\textbf{labelled polynomial}. In addition, we say that $(\sigma,f)$ is \textbf{admissible} if there exist $h_0,\ldots,h_{m-1}\in P$
+such that
+\begin{itemize}
+\item $f=h_0 f_0 + \cdots + f_{m-1} h_{m-1}$,
+\item $h_{i+1} = \cdots = h_{m-1} = 0$, and
+\item $\sigma = \LM(h_i) \e_i$.
+\end{itemize}
+\end{definition}
+
+The following properties of admissible polynomials are trivial.
+
+\begin{proposition}
+Let $t,u,v$ be monomials and $f,g\in P$.
+Assume that $(u\e_i,f)$ and $(v\e_j,g)$ are admissible.
+Each of the following holds.
+\begin{itemize}
+\item[(A)] $(tu\e_i, tf)$ is admissible.
+\item[(B)] If $i > j$, then $(u\e_i,f+g)$ is admissible.
+\item[(C)] If $i = j$ and $u > v$, then $(u\e_i,f+g)$ is admissible.
+\end{itemize}
+\end{proposition}
+
+In light of this fact, we can define the product of a monomial and a signature in a natural way. Let $t,u$ be monomials and $\sigma\in\sigset$ such that
+$\sigma=u\e_i$ for some $i\in \N$. Then\[
+t\cdot\sigma = tu\e_i.
+\]
+
+Whenever $F_5$ creates a labelled polynomial, it adds it to the global list $L$. Instead of passing around labelled polynomials, indices of $L$ are passed to subroutines. We thus identify a labelled polynomial $r$ with the natural number $i$ such that $L_i = r$. The algorithm's correctness and behaviour depends crucially on the assumption that all elements of $L$ are admissible. Thus all $F_5$-class algorithms ensure that this is the case at all times.
+
+\begin{notation}
+Let $r \in L$ and write $r= (t \cdot \e_i, p)$. We write
+\begin{itemize}
+ \item $\poly(r) = p$,
+ \item $\sig(r) = t \cdot \e_i$, and
+ \item $\idx(r) = i$.
+\end{itemize}
+\end{notation}
+
+\begin{definition}
+Let $a,b\in \N$ and suppose that $\sig(a)=u\e_i$ and $\sig(b)=v\e_j$.
+Let $t_a = \LM(\poly(a))$, $t_b = \LM(\poly(b))$, and $$\sigma_{a,b} = \LCM(t_a,t_b)/t_a.$$
+If $\sigma_{a,b} \sig(a) > \sigma_{b,a} \sig(b)$ then
+the \textbf{naturally inferred signature} of the S-polynomial $S$ of $\poly(a)$ and $\poly(b)$ is $\sigma_{a,b}\cdot u\e_i$.
+\end{definition}
+
+From (B) and (C) above we can see that $(\sigma_{a,b}\cdot u\e_i,S)$ is admissible if $a$ and $b$ are admissible.
+
+The following is proved in \cite{F5C}.
+
+\begin{proposition}
+Let $i,k\in \N$. Let $h_0,\ldots,h_{m-1}\in P$ such that $h_{i+1}=\ldots=h_{m-1}=0$ and $\sig(k)=\LM(h_i)\e_i$.
+The signature $\sig(k)$ is not the minimal signature of $\poly(k)$ if and only if there exists a syzygy $(z_0,\ldots,z_{m-1})\in P^m$ of $f_0,\ldots,f_{m-1}$ such that
+\begin{itemize}
+\item $\sig(k)$ is a signature of $z_0 f_0 + \cdots z_{m-1} f_{m-1}$;
+\item if $t\e_j$ is the minimal signature of $\poly(k)$, then $h_k-z_k=0$ for all $k>j$ and $\LM(h_j-z_j)=t$. 
+\end{itemize}
+\end{proposition}
+
+From this proposition it follows that we only need to consider S-polynomials with minimal signatures.
+
+Suppose that all syzygies of $F$ are generated by trivial syzygies of the form $f_i \e_j - f_j \e_i$. If $\sig(k)$ is not minimal, then some multiple of a principal syzygy $m(f_i \e_j − f_j \e_i)$ has the same signature $\sig(k)$. This provides an easy test for such a non-minimal signature and thus reductions to zero. Since all syzygies are in the module generated by trivial syzygies, the signature must be a multiple of the leading monomial of a polynomial already in the basis.
+
+\begin{theorem}[$F_5$ Criterion]
+An S-polynomial with signature $t\e_i$ is redundant and can be discarded if there exists some $g$ with $\idx(g) < i$ such that $\LM(g) \mid t$.
+\end{theorem}
+
+Another application of the signatures consists in ``rewrite rules''.
+
+\begin{definition}
+A \textbf{rule} is any $(\sigma,k)\in\sigset\times\N$ such that $\sigma=\sig(k)$.
+\end{definition}
+
+The algorithm uses a global variable, $Rules$, which is a list of $m$ lists of \emph{rules}. We can view the elements of any $Rules_i$ in two ways.
+\begin{itemize}
+\item Each element of $Rules_i$ designates a ``canonical reductor'' for certain monomials, in the following sense.
+Let $f, g_1, g_2\in P$ and assume that $\LM(g_1),\LM(g_2)\mid\LM(f)$ and $\idx(f)=\idx(g_1)=\idx(g_2)$. In a traditional algorithm to compute a Gr\"obner basis, the choice of whether to reduce $f$ by $g_1$ or by $g_2$ is ambiguous, and either may be done.
+In $F_5$ class algorithms, by contrast, \emph{there is no such choice!} One \emph{must} reduce $\LM(f)$ by exactly one of the two, depending on
+which appears later in $Rules_i$. A similar technique is used by involutive methods to compute Gr\"obner bases~\cite{involutive}.
+For both methods, the restriction to one canonical reductor appears to improve performance dramatically.
+\item Each element of $Rules_i$ corresponds to a ``simplification rule''; that is, a linear dependency already discovered. From the ``polynomial'' perspective, $(\sigma,k)\in Rules_i$ only if either $k < m$ or there exist $a,b\in\N$, $h_j\in P$, and monomials $t,u$ such that
+\begin{itemize}
+\item $S$ was first computed as the $S$-polynomial $t\cdot\poly(a) - u\cdot\poly(b)$  of $\poly(a)$ and $\poly(b)$;
+\item $S = \sum_{j\neq k}h_j\cdot\poly(j) + \poly(k)$ with $\LM(h_j\poly(j))\leq\LM(S)$ for each $j$; and
+\item $\sigma = \sig(k)$ is the naturally inferred signature of $S$.
+\end{itemize}
+In matrix-$F_5$, instead of starting from scratch from the original $f_i$ for each degree $d$, the matrix $\Mac{d-1}$ is used to construct the matrix $\Mac{d}$ in order to re-use the linear dependencies discovered at degree $d-1$. The same task is accomplished by the set of simplification rules in $Rules_i$, but instead of computing all multiples of the elements in $Rules_i$ we merely use it as a lookup table to replace a potential polynomial by an element from $L$ where reductions by smaller signatures were already performed.
+\end{itemize}
+
+Strictly speaking, any rule is somewhat redundant: if $(\sigma,k)\in Rules_i$ then we know that $\sigma=t\e_i$ for some monomial $t$. Hence it is sensible to store only $t$ rather than $\sigma$.
+
+\section{Pseudocode}
+
+We can now define the main loop of the $F_{4/5}$ algorithm (cf.~Algorithm~\ref{alg:f5}). This is similar to the main loop of $F_4$ except that:
+\begin{itemize}
+ \item for each input polynomial $f_i$ we create the labelled polynomial $(1\cdot\mathbf{e_i},\LC(f_i)^{-1}\cdot f_i)$, which is obviously admissible; and
+ \item for each computed polynomial $f_i$, the rule $(\sig(i),i)$ is added to $Rules_{\idx(i)}$.
+\end{itemize}
+
+\begin{algorithm}
+\caption{$F_{4/5}$} 
+\KwIn{$F$ -- a list of homogeneous polynomials $f_0,\dots,f_{m-1}$}
+\KwResult{a Gröbner basis for $F$}
+\SetKwFunction{KwRed}{reduction}
+\SetKw{KwAnd}{and}
+\SetKw{KwWith}{with}
+\Begin{
+sort $F$ by total degree\;
+$L, G, P \longleftarrow [], \varnothing, []$\;
+\For{$0 \leq i < m$}{
+  append $(1 \cdot \e_i, LC(f_i)^{-1} \cdot f_i)$ to $L$\;
+  \textsc{Add Rule}$(1 \cdot \e_i, i)$\;
+  $P \longleftarrow P \bigcup \{$\textsc{Update}$_{F5}(i,j,G): \forall j \in
+G\}$\;
+  add $i$ to $G$\;
+}
+
+\While{$P \neq \varnothing$}{
+  $d \longleftarrow$ the minimal degree in $P$\;
+  $P_d \longleftarrow$ all pairs with degree $d$\;
+  $P \longleftarrow P\setminus P_d$\;
+  $S \longleftarrow$ \textsc{S-Polynomials}$_{F5}$($P_d$)\;
+  $\tilde{S} \longleftarrow$ \textsc{Reduction}$_{F5}$($S,G$)\;
+  \For{$i \in \tilde{S}$}{
+    $P \longleftarrow P \bigcup \{$\textsc{Update}$_{F5}(i,j,G): \forall j \in
+G\}$\;
+    add $i$ to $G$\;
+  }
+}
+\Return{$\{\poly(f)\ |\ \forall f \in G\}$}\;
+}
+\label{alg:f5}
+\end{algorithm}
+
+The subroutine \textsc{Update}$_{F5}$ constructs a new critical pair for two labelled polynomials indexed in $L$. A critical pair in $F_5$ is represented the same way as a critical pair in $F_4$, except that the polynomials are replaced by indices to labelled polynomials.
+
+Just like the routine \textsc{Update} in $F_4$ imposes the Buchberger criteria, \textsc{Update}$_{F5}$ imposes the $F_5$ criteria. These checks are:
+
+\begin{itemize}
+ 
+ \item Make sure that the multipliers that give rise to the components of the S-polynomial are not in the leading monomial ideal spanned by the leading monomials of the polynomials with index smaller than the S-polynomial component. This would imply that the natural signature which the algorithm would assign to the S-polynomial is not the minimal signature, and can be discarded by the $F_5$ criterion.
+
+ \item Check whether a rule forbids generating one component of the S-polynomial. This has the same purpose as reusing $\Mac{d-1}$ for $\Mac{d}$ in matrix-$F_5$. If a component $u \cdot r$ of the S-polynomial is rewritable, this means that there is an element which can replace it which has probably had more reductions applied to it already. The element that rewrites the rewritable component was either already considered or will be considered in the future. Thus this avoids re-computation of the same linear combinations.
+
+ \item Ensure that the signature of the resulting S-polynomial is the one that we would infer naturally. This should be the larger signature of the components; that is, that the labelled polynomial remains admissible.
+\end{itemize}
+
+\begin{algorithm}[htbp]
+\caption{\textsc{Update}$_{F5}$}
+\label{alg:critpair} 
+\KwIn{$k$ -- an integer $0 \leq k < |L|$}
+\KwIn{$l$ -- an integer $0 \leq l\neq k < |L|$}
+\KwIn{$G$ -- a list of integers with elements $e$ such that $0 \leq e < |L|$}
+\KwResult{the critical pair for $\poly(k)$ and $\poly(l)$, iff the $F_5$
+criteria pass.}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\Begin{
+$t_k, t_l \longleftarrow \LT(\poly(k)), \LT(\poly(l))$\;
+$t \longleftarrow \LCM(t_k,t_l)$\;
+$u_k, u_l \longleftarrow t/t_k,t/t_l$\;
+$(m_k, \e_k), (m_l, \e_l) \longleftarrow \sig(k), \sig(l)$\;
+
+
+\If{\textsc{Top-reducible(}$u_k \cdot m_k$, \{$g_i \in G$: $\idx(g_i) <
+\e_k$\}\textnormal{)}}{\Return\;}
+\If{\textsc{Top-reducible(}$u_l \cdot m_l$, \{$g_i \in G$: $\idx(g_i) <
+\e_l$\}\textnormal{)}}{\Return\;}
+
+\If{\textsc{Rewritable}($u_k,k$) \KwOr
+\textsc{Rewritable}($u_l,l$)}{\Return\;}
+
+\If{$u_k \cdot \sig(k) < u_l \cdot \sig(l)$}{
+  swap $u_k$ and $u_l$\;
+  swap $k$ and $l$\;
+}
+\Return{$(t,u_k,k,u_l,l)$}\;
+}
+\end{algorithm}
+
+The routine \textsc{S-Polynomials}$_{F5}$ first checks the rewritable criterion again, in case new elements have been created which would rewrite a component after creation of the critical pair. Then it returns both components of the S-polynomial.
+
+\begin{algorithm}[htbp]
+\KwIn{$P$ -- a list of critical pairs}
+\KwResult{a list of S-polynomials}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\SetKw{KwContinue}{continue}
+\Begin{
+$S \longleftarrow \varnothing$\;
+sort $P$ by increasing signature\;
+\For{$(t,u,k,v,l) \in P$}{
+  \If{\textsc{Rewritable(}$u,k$\textnormal{)} \KwOr
+\textsc{Rewritable(}$v,l$\textsc{)}}{
+   \KwContinue\;
+  }
+  add $(u, k)$ to $S$\;
+  add $(v, l)$ to $S$\;
+}
+sort $S$ by signatures\;
+\Return{$S$}\; 
+}
+\caption{\textsc{S-Polynomials}$_{F5}$}
+\label{alg:compspols} 
+\end{algorithm}
+
+The routine \textsc{Add Rule} simply adds an entry to the list $Rules_i$ encoding that the signature $\sigma$ corresponds to the labelled polynomial $k$.
+Note, however, that $F_{4/5}$ sorts the list $Rules_i$ by $t$, while other versions of $F_5$ simply append new rules at the end of the list. The latter approach ensures that $Rules_i$ is sorted by degree of $t$, but it does not necessarily impose an ordering w.r.t. to the monomial ordering on $Rules_i$. 
+
+\begin{algorithm}
+\caption{\textsc{Add Rule}}
+\label{alg:addrule} 
+\KwIn{$\sigma$ --a signature}
+\KwIn{$k$ -- an integer $0 \leq k < |L|$}
+\Begin{
+let $t$, $i$ be such that $t \cdot \e_i = \sigma$\;
+insert $(t,k)$ into $Rules_i$ such that the order on $t$ is preserved\;
+}
+\end{algorithm}
+
+The routine \textsc{Rewritable} determines whether $u\cdot\sig(k)$ is rewritable, as outlined in the Section~\ref{sec:background}.
+
+\begin{algorithm}
+\KwIn{$u$ -- a monomial}
+\KwIn{$k$ -- an integer $0 \leq k < |L|$}
+\KwResult{true iff $u \cdot \sig(k)$ is rewritable}
+\SetKw{KwAnd}{and}
+\Begin{
+let $t$, $i$ be such that $t \cdot \e_i = \sig(k)$\;
+\For{$|Rules_i| > ctr \geq 0$}{
+  $(v,j) \longleftarrow Rules_i[ctr]$\;
+  \If{$v\ |\ (u \cdot t)$}{
+    \Return{$j\neq k$}\;
+  }
+}
+\Return{false}\;
+}
+\caption{\textsc{Rewritable}}
+\label{alg:rewritable} 
+\end{algorithm}
+
+
+\begin{algorithm}
+\KwIn{$t$ -- a monomial}
+\KwIn{$G$ -- a set of indices in $L$}
+\KwResult{true iff $t$ is top-reducible by any element in $G$}
+\Begin{
+\For{$g \in G$}{
+  \If{$\LM(\poly(g))\ |\ t$} {
+   \Return{true}\;
+  }
+}
+\Return{false}\;
+}
+\caption{\textsc{Top-reducible}}
+\label{alg:topreducible} 
+\end{algorithm}
+
+Algorithm \textsc{Reduction}$_{F5}$ organises the reduction of the S-polynomials. It first calls \textsc{Symbolic\ Preprocessing}$_{F5}$ to determine which monomials and polynomial multiples might be encountered while reducing the S-polynomials. The resulting list of polynomial multiples is sorted in decreasing order of their signatures, in order to avoid reducing a polynomial by another with a larger signature (a phenomenon called ``signature corruption'' which has catastrophic consequences on the computation of the basis). Reduction then calls \textsc{Gaussian\ Elimination}$_{F5}$, which transforms the list of polynomials into a matrix, performs Gaussian elimination without swapping rows or columns, then extracts the polynomials from the matrix.
+``New'' polynomials in the system are identified by the fact that their leading monomials have changed from that of the polynomials in $F$; that is, a reduction of the leading monomial took place.
+We add each new polynomial to the system, and create a new rule for this polynomial.
+
+Sometimes, a reductor has signature larger than the polynomial that it would reduce. To avoid signature corruption, $F_5$-class algorithms consider this as another S-polynomial, and as a consequence generate a new polynomial. However, \textsc{Symbolic\ Preprocessing}$_{F5}$ cannot know beforehand whether this new polynomial is indeed necessary, so it does not generate a new rule, nor add it to $L$. This is done in \textsc{Reduction}$_{F5}$.
+
+\begin{algorithm}
+\KwIn{$S$ -- a list of S-polynomials indexed in $L$}
+\KwIn{$G$ -- a list of polynomials indexed in $L$}
+\KwResult{the top-reduced set $\tilde{S}$}
+\SetKw{KwContinue}{continue}
+\SetKw{KwAnd}{and}
+\Begin{
+$F \longleftarrow $\textsc{Symbolic\ Preprocessing}$_{F5}$($S,G$)\;
+$\tilde{F} \longleftarrow$ \textsc{Gaussian Elimination}$_{F5}(F)$\;
+$\tilde{F}^+ \longleftarrow \varnothing$\;
+\For{$0 \leq k < |F|$}{
+  $(u, i) \longleftarrow F_k$\;
+  $\sigma \longleftarrow \sig(i)$\;
+  \If{$u\cdot\LM(\poly(i)) = \LM(\tilde{F}_k)$}{\KwContinue\;}
+  $\tilde{p} \longleftarrow \tilde{F}_k$\;
+  append $(u \sigma,\tilde{p})$ to $L$; \tcp{Create new entry}
+  \textsc{Add Rule}$(u \sigma,|L|-1)$\;
+  \If{$\tilde{p} \neq 0$}{add $|L|-1$ to $\tilde{F}^+$\;}
+
+}
+\Return{$\tilde{F}^+$}\;
+}
+\caption{\textsc{Reduction}$_{F5}$}
+\label{alg:reduction5} 
+\end{algorithm}
+
+\begin{algorithm}
+\KwIn{$S$ -- a list of components of S-polynomials}
+\KwIn{$G$ -- a list of polynomials indexed in $L$}
+\KwResult{$F$ -- a list of labelled polynomials that \emph{might} be used during reduction of the S-polynomials of $S$}
+\Begin{
+$F \longleftarrow S$\;
+$Done \longleftarrow LM(\{\poly(k) \mid \forall k \in F\})$\;
+let $M'$ be the monomials of $\{\poly(k) \mid \forall k \in F\}$\;  
+\While{$M' \neq Done$}{
+  let $m$ be maximal in $M' \setminus Done$\;
+  add $m$ to $Done$\;
+  let $\sigma$ be minimal in $\left\{\sig(k)\ |\ k \in F \textrm{ and } m \textrm{ is a monomial of } \poly(k)\right\}$\;
+  $t, k \longleftarrow$ \textsc{Find Reductor}$(m, \sigma, G, F)$\;
+  \If{$t\neq 0$}{
+   append $(t, k)$ to $F$\;
+   add the monomials of $t\cdot\poly(k)$ to $M'$\;  
+  }
+}
+sort $F$ by decreasing signature\;
+\Return{$F$}
+}
+\caption{\textsc{Symbolic Preprocessing}$_{F5}$}
+\label{alg:symbolic_preprocessing5}
+\end{algorithm}
+
+\begin{algorithm}
+\KwIn{$m$ -- a monomial}
+\KwIn{$G$ -- a list of polynomials indexed in $L$}
+\KwIn{$F$ -- a list of primary generators of $S$-poly\-nomials}
+\SetKw{KwContinue}{continue}
+\Begin{
+\For{$k \in G$}{
+ \If{$\LM(\poly(k)) \nmid m$}{\KwContinue\;}
+ $u \longleftarrow m/\LM(\poly(k))$\;
+ let $t\cdot\e_{i}$ be $\sig(k)$\;
+ \If{\textsc{Top-reducible(}$u\cdot t$, \{$g \in G \mid \idx(g) < i$\}\textsc{)}}
+ {\KwContinue}
+ \If{\textsc{Rewritable(}$u,k$\textsc{)}}{\KwContinue\;}
+ \Return{$u,k$}
+}
+\Return{0, -1}
+}
+\caption{\textsc{Find Reductor}}
+\label{alg:find_reductor}
+\end{algorithm}
+
+The routine \textsc{Find Reductor} tries to find a reductor for a monomial $m$ with signature $\sigma$ in $G$. After checking the normal top reduction criterion it applies the same criteria to $t \cdot k$ as \textsc{Update}$_{F5}$ applies to the components of each S-polynomial.
+
+The algorithm \textsc{Gaussian\ Elimination}$_{F5}$ constructs a matrix $A$ whose entries $a_{ij}$ correspond to the coefficient of the $j$th monomial of the $i$th product listed in the input $F$. 
+Subsequently, \textsc{Gaussian\ Elimination}$_{F5}$ computes a row-echelon reduction of the matrix, but in a straitjacketed sense: to respect the monomial ordering, we cannot swap columns, and to respect the signatures, we cannot swap rows, nor can we reduce lower rows (which have smaller signatures) by higher rows (which have larger signatures). As a result, each non-zero row has a unique pivot, but the appearance of the resulting matrix may not, in fact, be triangular. This is also why we must reset the index $i$ after any successful reduction to the top of the matrix, in case rows of higher signature can be reduced by the new row. 
+
+Finally, \textsc{Gaussian\ Elimination}$_{F5}$ returns a list of polynomials corresponding to the rows of the matrix $A$. Strictly speaking, there is no need to expand those polynomials of $F$ whose leading monomials have \emph{not} changed, since \textsc{Reduction}$_{F5}$ will discard them anyway. Thus, a natural optimisation would be to return the matrix $A$ to \textsc{Reduction}$_{F5}$, determine in that procedure which rows of the matrix need to be expanded, and expand only them. We have chosen to expand all of $A$ in the pseudocode in order to encapsulate the matrix entirely within this procedure.
+
+\begin{algorithm}
+\caption{\textsc{Gaussian\ Elimination}$_{F5}$}
+\label{alg:gaussian_elimination}
+\KwIn{$F$ -- a list of pairs $(u,k)$ indicating that the product $u\cdot\poly(k)$ must be computed}
+\KwResult{$\tilde{F}$ -- a list of labelled polynomials}
+\SetKw{KwContinue}{continue}
+\SetKw{KwBreak}{break}
+\SetKw{KwAny}{any}
+\Begin{
+  let $T$ be the list of monomials of $F$, in descending order ($t_0>t_1>\cdots$)\;
+  $m, n \longleftarrow |F|, |T|$\;
+  denote each $F_i$ by $(u_i,k_i)$\;
+  let $A$ be the $m\times n$ matrix such that $a_{ij}$ is the coefficient of
+  $T_j$ in $u_i\cdot\poly(k_i)$\;
+  \For{$0 \leq c < n$}{
+    \For{$0 \leq r < m$}{
+      \If{$a_{rc} \neq 0$}{
+        \tcp{Ensure that we are only reducing by leading terms}
+        \lIf{\KwAny $a_{ri} \neq 0 \mid 0 \leq i < c$}{\KwContinue\;}
+        rescale the row $r$ such that the entry $a_{rc}$ is 1\;
+        \For(\tcp*[h]clear below){$r+1 \leq i < m$}{
+          \If{$a_{ic} \neq 0$}{
+             eliminate the entry $a_{ic}$ using the row $r$\;
+          }
+        }
+        \KwBreak;
+      }
+    }
+  }
+  let $\tilde{F}=A\cdot T=\left[\sum_{j=0}^{n-1} a_{ij}\cdot t_i\right]_{i=0}^{m-1}$\;
+  \Return{$\tilde{F}$}
+}
+\end{algorithm}
+
+\section{Correctness}
+
+Since $F_{4/5}$ follows the general structure of $F_4$ it is helpful to assert that $F_4$ is correct.
+
+\begin{lemma}
+\label{lem:f4_correct}
+When $F_4$ terminates it returns a Gröbner basis.
+\end{lemma}
+
+\begin{citeproof}
+See \cite{f4}. 
+\end{citeproof}
+
+However, in $F_{4/5}$ we apply the $F_5$ criteria instead of Buchberger's criteria. Thus, we need to prove that these criteria do not discard any S-polynomial which would be needed for a Gröbner basis computation.
+
+\begin{lemma}[\cite{F5C}]
+\label{lem:criteria_correct}
+Assume that the main loop of Algorithm~\ref{alg:f5} terminates with output $G$. Let $\mathcal{G} = \{\poly(g) \mid g \in G\}$. If every $S$-polynomial $S$ of $\mathcal{G}$ satisfies
+\begin{itemize}
+ \item[(A)] $S$ reduces to zero with respect to $\mathcal{G}$\;
+ \item[(B)] a component $u\cdot\poly(k)$ of $S$ satisfies
+ \begin{itemize}
+   \item[(B1)] $u\cdot\sig(k)$ is not the minimal signature of $u\cdot\poly(k)$; or
+   \item[(B2)] $u\cdot\sig(k)$ is rewritable;
+ \end{itemize}
+\end{itemize}
+then $\mathcal{G}$ is a Gröbner basis for $\ideal{f_0,\dots,f_{m-1}}$.
+\end{lemma}
+
+\begin{citeproof}
+See \cite{F5C}.
+There is one subtlety to be noted: here we order $Rules_i$ by signature.
+An examination of the proof shows that this does not pose any difficulty for correctness.
+\end{citeproof}
+
+
+The other main differences between $F_4$ and $F_{4/5}$ is that we apply a variant of Gaussian elimination in $F_{4/5}$ to perform the reduction. However, as shown in Lemma~\ref{lem:gauss_correct} this does not affect the set of leading monomials.
+
+This allows us to prove that $F_{4/5}$ indeed computes a Gröbner basis if it terminates.
+
+\begin{theorem}
+\label{theorem:f45-correct}
+Let $f_0,\dots,f_{m-1}$ be homogeneous polynomials in $P = \F[x_0,\dots,x_{n-1}]$. If $F_{4/5}$ terminates and returns $g_0,\dots,g_{r-1}$ for the input $\{f_0,\dots,f_{m-1}\}$ then $g_0,\dots,g_{r-1}$ is a Gröbner basis for the ideal spanned by $f_0,\dots,f_{m-1}$.
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:f4_correct} states that the general structure of the algorithm is correct; Lemma~\ref{lem:gauss_correct} states that the output of \textsc{Gaussian Elimination}$_{F5}$ is not worse than the output of Gaussian elimination in $F_4$ from a correctness perspective since all new leading monomials are included. Inspection of Algorithm~\ref{alg:reduction5} shows that it does return the set $\{f \in \tilde{F} \mid \LM(f) \not\in F\}$ as required for correctness of $F_4$-style algorithms. Lemma~\ref{lem:criteria_correct} states that the pairs discarded by \textsc{Update}$_{F5}$ are not needed to compute a Gröbner basis. The correctness of the discarding of reductors in Algorithm~\ref{alg:find_reductor} also follows from Lemma~\ref{lem:criteria_correct}. Thus, we conclude that $F_{4/5}$ computes a Gröbner basis if it terminates.
+\end{proof}
+
+However, Theorem~\ref{theorem:f45-correct} does not imply that $F_{4/5}$ terminates for all inputs. We note however, that there are no known counter examples. The difficulty with proving termination is due to the fact that the set $F$ might not contain all possible reductors since the routine \textsc{Find Reductor} might discard a reductor if it is rewritable. While Lemma~\ref{lem:criteria_correct} shows that this discarding does not affect the correctness, it does not show that the algorithm terminates because elements might be added to $G$ and $P$ which have leading terms already in $\LM(\{\poly(g) \mid g \in G\})$.
+
+\section{Relationship to Previous Work}
+
+We briefly describe the differences between the algorithm outlined here and that in~\cite{ars:thesis2005}. We refer to the latter as $F_{5/Ars}$.
+
+\begin{itemize}
+\item $F_{5/Ars}$ takes as input not only $F$, but also a function $\mathcal{S}$el to select critical pairs (cf.~\cite{f4}), whereas $F_{4/5}$ always selects pairs according to lowest degree of the \LCM. In this case, $F_{5/Ars}$ is more general, but note that the description of $F_4$ in~\cite{f4} claims that the most efficient method to select critical pairs is, in general, by lowest degree of the LCM.
+\item $F_{5/Ars}$ uses two functions to update two lists of critical pairs:
+  \begin{itemize}
+  \item \textsc{Update1} is used to estimate the degree of termination (more correctly translated the \emph{degree of regularity --- degr{\'e} de regularit{\'e}}) and relies on Buchberger's LCM criterion. The critical pairs computed here are stored in a set $P$, but are never used to compute any polynomials, only to estimate the degree of termination.
+  \item \textsc{Update2} is used to compute critical pairs that \emph{are} used to generate polynomials, and is comparable to \textsc{Update}$_{F5}$ here. In addition to the indices of two labelled polynomials and the set of indices of computed polynomials, \textsc{Update2} requires the list of previously computed critical pairs, and the estimated degree of termination. It discards critical pairs whose signatures are top-reducible by polynomials of lower index (the F5 criterion), as well as those whose degrees are larger than the estimated degree of termination.
+
+\item Naturally, one wonders whether the estimated degree of termination is correct. The degree is estimated in the following way: any critical pair that passes Buchberger's second criterion is added to $P$, and the degree of termination is estimated as the largest degree of a critical pair in $P$.
+    
+  The reason such a method might be necessary in general is that no proof of termination exists for the $F_5$ algorithms\footnote{Ignoring matrix-$F_5$ which trivially terminates at some specified degree $D$.}, not even in special cases~\cite{Gash2008}. The difficulty lies in the fact that $F_5$ short-circuits many top-reductions in order to respect the criteria and the signatures (see \textsc{Symbolic\ Preprocessing} and \textsc{Find\ Reductor}). For various reasons, the redundant polynomials that result from this cannot be merely discarded --- some of their critical pairs are \emph{not} redundant --- but applying Buchberger's second criterion should allow one to determine the point at which all critical pairs are redundant.
+    
+    Note that a similar method to determine a degree of termination is given in~\cite{ederperry:f5+}, and is proven in detail. Each method has advantages over the other (one is slightly faster; the other computes a lower degree), and $F_{4/5}$ can be modified easily to work with either.
+  \end{itemize}
+\end{itemize}
+
+Thus, despite minor differences the algorithms are essentially equivalent.
+
+\section{A Small Example Run of \texorpdfstring{$F_{4/5}$}{F45}}
+
+We consider the ideal $\ideal{x^{2} y - z^{2} t, x z^{2} - y^{2} t, y z^{3} - x^{2} t^{2}} \in \F_{32003}[x, y, z, t]$ with the degree reverse lexicographical monomial ordering.
+
+After the initialisation $G$ contains three elements $$(\e_0, xz^2 - y^2t), (\e_1, x^2y - z^2t),(\e_2, yz^3 - x^2t^2)$$ and the list of critical pairs contains the three pairs $$((z^2, 1), (xy, 0)), ((x, 2), (yz, 0)), ((x^2, 2), (z^3, 1)).$$
+
+At degree $d=5$ the algorithm selects the pairs $((z^2, 1), (xy, 0))$ and $((x, 2), (yz, 0))$ of which both survive the $F_5$ criteria. These generate two new labelled polynomials $L_3 = (x\e_2, xyz^3 - x^3t^2)$ and $L_4 =(z^2\e_1, x^2yz^2 - z^4t)$. These reduce to $y^3zt - x^3t^2$ and $xy^3t - z^4t$ respectively and are returned by \textsc{Reduction}$_{F5}$.
+
+At degree $d=6$ the algorithm selects the pairs $((x^2, 2), (z^3, 1))$ and $((x, 3), (z, 4))$ of which only the pair $((x^2, 2), (z^3, 1))$ survives the $F_5$ criteria. This pair generates a new labelled polynomial $L_5 = (x^2\e_2,xy^3zt - x^4t^2)$ which reduces to $z^5t - x^4t^2$ and is returned by  \textsc{Reduction}$_{F5}$.
+
+At degree $d=7$ the algorithm selects the critical pairs $$((z^2, 4), (y^3t, 0)), ((xz, 3), (y^3t, 0)), ((x^2, 3), (y^2zt, 1)), ((x, 5), (z^3t, 0))$$ of which $((z^2, 4), (y^3t, 0))$ and $((x, 5), (z^3t, 0))$ survive the $F_5$ criteria. These pairs generate two new labelled polynomials $L_6 = (x^3\e_2, xz^5t - x^5t^2)$ and $L_7 = (z^4\e_1, xy^3z^2t - z^6t)$. \textsc{Reduction}$_{F5}$ these reduce to $x^5t^2 - z^2t^5$ and $z^6t - y^5t^2$. However, \textsc{Reduction}$_{F5}$ also returns a third polynomial in order to preserve signatures, that is $L_8 = (x^2z\e_2, y^5t^2 - x^4zt^2)$.
+
+At degree $d=8$ the algorithm selects the pair $((z^3t, 2), (y, 7))$ which survives the $F_5$ criteria. This pair generates a new labelled polynomial $L_9 = 
+(z^3t\e_2, yz^6t - x^2z^3t^3)$ which reduces to $y^6t^2 - xy^2zt^4$.
+
+Then the algorithm terminates and returns the Gröbner basis
+\begin{align*}
+& x z^{2} - y^{2} t, x^{2} y - z^{2} t,  x y^{3} t - z^{4} t, z^{6} t - y^{5} t^{2}, \\
+& y z^{3} - x^{2} t^{2}, y^{3} z t - x^{3} t^{2},  z^{5} t - x^{4} t^{2}, y^{5} t^{2} - x^{4} z t^{2}, \\
+& x^{5} t^{2} - z^{2} t^{5}, y^{6} t^{2} - x y^{2} z t^{4}.
+\end{align*}

@@ -1,0 +1,217 @@
+\documentclass[a4paper,11pt]{report}
+\usepackage[left=4.0cm,right=2.0cm,vmargin=2.0cm]{geometry}
+
+\usepackage{MinionPro}
+
+\usepackage[utf8x]{inputenc}
+\PrerenderUnicode{ä}
+\PrerenderUnicode{ü}
+\PrerenderUnicode{ö}
+
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage[vlined]{algorithm2e}
+\usepackage{listings,color}
+\usepackage{amsthm}
+\usepackage[hang,flushmargin]{footmisc}
+\usepackage{xspace}
+\usepackage[pdftex, bookmarks=true, bookmarksnumbered=true, bookmarksopenlevel=0,hyperfootnotes=false,bookmarksopen=true]{hyperref}
+\usepackage{multicol}
+\usepackage{setspace}
+
+\pdfadjustspacing=1
+\parindent = 0.0cm
+\parskip = 0.2cm
+\setlength{\parskip}{0.3cm plus 0.2cm minus 0.2cm}
+\clubpenalty = 300
+\widowpenalty = 300
+\hyphenpenalty = 0
+\displaywidowpenalty = 10000
+\onehalfspacing
+
+\definecolor{_orange}{rgb}{0.97,0.5,0.04}
+\definecolor{_gray}{rgb}{0.35,0.35,0.35}
+\definecolor{_lightgray}{rgb}{0.93,0.93,0.93}
+\definecolor{_blue}{rgb}{0.14, 0.43, 0.69}
+
+\lstdefinelanguage{Sage}[]{Python}
+{morekeywords={True,False,sage,with},
+sensitive=true}
+
+\lstset{frame=none,
+          showtabs=False,
+          showspaces=False,
+          showstringspaces=False,
+          keywordstyle={\bf },
+          language = Sage,
+          basicstyle=\small\ttfamily\singlespacing
+          }
+
+\hypersetup{
+ pdfauthor = {Martin Albrecht},
+ pdftitle = {PhD Thesis},
+ colorlinks = true,
+ linkcolor = black,
+ citecolor = black,
+ urlcolor = black,
+}
+
+\title{Algorithmic Algebraic Techniques and their Application to Block Cipher Cryptanalysis}
+\author{Martin Albrecht\\M.R.Albrecht@rhul.ac.uk}
+
+% Systems
+\newcommand{\Sage}{Sage\xspace}
+\newcommand{\Singular}{\textsc{Singular}\xspace}
+\newcommand{\PolyBoRi}{\textsc{PolyBoRi}\xspace}
+\newcommand{\Magma}{\textsc{Magma}\xspace}
+\newcommand{\GAP}{GAP\xspace}
+\newcommand{\MiniSat}{\textsc{MiniSat}\xspace}
+\newcommand{\CryptoMiniSat}{\textsc{Crypto\-Mini\-Sat}\xspace}
+
+% CPUs
+\newcommand{\xBG}{\textsf{x86\_64}\xspace}
+\newcommand{\Opteron}{\textsf{Opteron}\xspace}
+\newcommand{\CTD}{\textsf{Core 2 Duo}\xspace}
+\newcommand{\CT}{\textsf{Core 2}\xspace}
+\newcommand{\Xeon}{\textsf{Xeon}\xspace}
+
+% Ciphers
+\newcommand{\PRESENT}{\textsc{Present}\xspace}
+
+% Fields
+\newcommand{\field}[1]{\ensuremath{\mathbb{#1}}\xspace}
+\newcommand{\F}{\ensuremath{\field{F}}\xspace}
+\newcommand{\Z}{\field{Z}}
+\newcommand{\e}{\ensuremath{\mathbf{e}}\xspace}
+\newcommand{\N}{\field{N}}
+\newcommand{\GFZ}{\ensuremath{\field{F}_2}\xspace}
+\renewcommand{\mod}{\ \%\ }
+
+% Commutative Algebra
+\newcommand{\ideal}[1]{\langle {#1} \rangle}
+\newcommand{\Mac}[1]{\ensuremath{\mathcal{M}^{acaulay}_{#1}}}
+\newcommand{\LCM}{\ensuremath{\textsc{LCM}}\xspace}
+\newcommand{\LM}{\ensuremath{\textsc{LM}}\xspace}
+\newcommand{\LC}{\ensuremath{\textsc{LC}}\xspace}
+\newcommand{\LT}{\ensuremath{\textsc{LT}}\xspace}
+
+\newcommand{\sig}{\ensuremath{\textnormal{sig}}}
+\newcommand{\idx}{\ensuremath{\textnormal{idx}}}
+\newcommand{\poly}{\ensuremath{\textnormal{poly}}}
+\newcommand{\expvec}{\ensuremath{\textnormal{expvec}}}
+\newcommand{\pring}{\ensuremath{\mathcal{R}}}
+\newcommand{\sigset}{\ensuremath{\mathcal{S}}}
+
+
+\newcommand{\ord}[1]{\ensuremath{\mathcal{O}\!\left(#1\right)}}
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{notation}[theorem]{Notation}
+
+\newtheorem{example}{Example}[section]
+\newtheorem{definition}{Definition}[section]
+
+\newenvironment{citeproof}{\vspace{0.3cm}\emph{Proof.}}{\vspace{0.3cm}}
+\newcommand{\needcite}{\textbf{citation needed!}\xspace}
+
+\theoremstyle{definition}
+\newtheorem{alg}{Algorithm}
+
+\date{\vspace{8cm}Thesis submitted to\\Royal Holloway, University of London\\ for the degree of\\Doctor of Philosophy 2010.}
+\begin{document}
+
+\maketitle
+
+
+\newpage
+
+\addtocounter{page}{1}
+
+\chapter*{Declaration}
+\thispagestyle{empty}
+These doctoral studies were conducted under the supervision of Dr.\ Carlos Cid.
+
+The work presented in this thesis is the result of original research carried out by myself, in collaboration with others, whilst enrolled in the Department of Mathematics as a candidate for the degree of Doctor of Philosophy. This work has not been submitted for any other degree or award in any other university or educational establishment.
+
+Some of the work presented in this thesis was previously published in the following works:
+\begin{itemize}
+ \item Martin Albrecht. Algebraic attacks on the Courtois Toy Cipher. \emph{Cryptologia}, 32:220–276, 2008.
+ \item Martin Albrecht, Gregory V.\ Bard, and William Hart. Algorithm 898: Efficient multiplication of dense matrices over GF(2). \emph{ACM Transactions on Mathematical Software}, 37(1), 2009.
+ \item Martin Albrecht and Carlos Cid. Algebraic Techniques in Differential Cryptanalysis. \emph{Fast Software Encryption 2009}, Lecture Notes in Computer Science, Berlin, Heidelberg, New York, 2009. Springer Verlag.
+\item Martin Albrecht and Carlos Cid. Cold Boot Key Recovery using Polynomial System Solving with Noise presented at \emph{2nd International Conference on Symbolic Computation and Cryptography}, Egham, UK. 2010.
+\item Martin Albrecht, Carlos Cid, Thomas Dullien, Jean-Charles Faugère and Ludovic Perret. Algebraic Precomputations in Differential and Integral Cryptanalysis. \emph{6th China International Conference on Information Security and Cryptology}, 2010.
+\item Martin Albrecht and Clément Pernet. Efficient Decomposition of Dense Matrices over GF(2) presented at the ECrypt \emph{Tools for Cryptanalysis 2010} workshop, Egham, UK. 2010.
+\end{itemize}
+
+In all works all authors contributed equally. All experiments presented in this thesis and the works listed above were conducted by the author.
+
+\vspace{2cm}
+
+\begin{flushright}
+Martin Albrecht\\
+July 2010
+\end{flushright}
+
+\chapter*{Abstract}
+\input{abstract.tex}
+
+\chapter*{Foreword}
+\input{foreword.tex}
+
+\newpage
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+
+\part{Linear Algebra}
+\label{part:la}
+
+\chapter{Efficient Multiplication of Dense Matrices over GF(2)}
+\label{chapter:matmul}
+\input{matrix_multiplication.tex}
+
+\chapter{Efficient Decomposition of Dense Matrices over GF(2)}
+\label{chapter:matelim}
+\input{matrix_elimination.tex}
+
+\part{\texorpdfstring{Gröbner}{Groebner} Basis Algorithms}
+\label{part:gb}
+
+\input{groebner_bases.tex}
+
+\part{Algebraic Cryptanalysis}
+\label{part:ac}
+
+\chapter{Algebraic Cryptanalysis}
+\label{chapter:algebraic_attacks}
+\input{algebraic_attacks.tex}
+
+\chapter{Finding Block Cipher Features with Algebra}
+\label{chapter:algebraic_features}
+\input{algebraic_features.tex}
+
+\chapter{Algebraic Techniques in Linear Cryptanalysis}
+\label{chapter:algebraic_linear_cryptanalysis}
+\input{algebraic_linear_cryptanalysis.tex}
+
+\chapter{Algebraic Techniques in Differential Cryptanalysis}
+\label{chapter:algebraic_differential_cryptanalysis}
+\input{algebraic_differential_cryptanalysis.tex}
+
+\chapter{Algebraic Techniques in Higher Order Differential Cryptanalysis}
+\label{chapter:algebraic_integral_cryptanalysis}
+\input{algebraic_integral_cryptanalysis.tex}
+
+\chapter{Coldboot Attacks and Polynomial System Solving with Noise}
+\label{chapter:coldboot}
+\input{coldboot.tex}
+
+\bibliographystyle{plain}
+\bibliography{../literature}
+
+\end{document}

@@ -1,0 +1,550 @@
+This chapter is a revised and updated version of the paper ``Algorithm 898: Efficient Multiplication of Dense Matrices over GF(2)'' by the author, Gregory Bard and William Hart published in the ACM Transactions on Mathematical Software \cite{matmulgf2}.
+
+\section{Introduction}
+We describe an efficient implementation of a hierarchy of algorithms for multiplication of dense matrices over the field with two elements ($\GFZ$). Ma\-trix-matrix multiplication is an important primitive in computational linear algebra and as such, the fundamental algorithms we implement have been well known for some time. Therefore this chapter focuses on the numerous techniques employed for the special case of $\GFZ$ in the M4RI library \cite{M4RI} and the benefits so derived.
+
+We note that even for problems that do not reduce to matrix-matrix multiplication many of the techniques presented in this chapter are still applicable. For instance, Gaussian Elimination can be achieved via the ``Method of the Four Russians for Inversion''(M4RI) (cf. \cite[Ch. 5]{bard-phd}, \cite{bard-m4ri} and Chapter~\ref{chapter:matelim}) and borrows ideas from the ``Method of the Four Russians for Multiplication'' (M4RM)~\cite{ADKF70,AHU74} which we consider here.
+
+The M4RI library implements dense linear algebra over $\GFZ$ and is used by \Sage \cite{sage} mathematics software and the \PolyBoRi~\cite{polybori} package for computing Gröbner bases over \GFZ.
+
+Our optimisation efforts focus on 64-bit x86 architectures (\xBG), specifically the Intel \CTD and the AMD \Opteron. Thus, we assume in this chapter that each native CPU word has 64 bits ($w_s=64$). However it should be noted that our code also runs on 32-bit CPUs and on non-x86 CPUs such as the PowerPC.
+
+In machine terms, addition in $\GFZ$ is logical-XOR, and multiplication is logical-AND, thus a machine word of 64 bits allows one to operate on 64 elements of $\GFZ$ in parallel, i.e. at most one CPU cycle for 64 parallel additions or multiplications. As such, element-wise operations over $\GFZ$ are relatively cheap. In fact, in this chapter, we conclude that the actual bottlenecks are memory reads and writes and issues of data locality. We present our empirical findings in relation to minimizing these and give an analysis thereof.
+
+Gregory Bard proposed, in \cite{Bard2006} and \cite[Ch. 5]{bard-phd}, to count memory accesses rather than arithmetic operations to estimate the complexity of such algorithms and the empirical results of this chapter lend further support to this model. However, the model is a simplification as memory access is not uniform, i.e. an algorithm that randomly accesses memory will perform much worse than an algorithm with better spatial and temporal locality. These differences only affect the constant of a complexity estimation, if we assume that memory access is $\ord{1}$. However, in practice they make a very significant difference, as our empirical results demonstrate. 
+
+The chapter is structured as follows. We proceed from basic arithmetic (Section~\ref{sec:basic}) via the classical cubic multiplication algorithm (Section~\ref{sec:cubic}), through a detailed discussion of the ``Method of the Four Russians'' (Section~\ref{sec:m4rm}) to the Strassen-Winograd algorithm (Section~\ref{sec:strassen}). We start by introducing our basic data structures and conclude by presenting timing experiments to show the validity of our approach (Section~\ref{sec:benchmark}) and a brief discussion of these timing experiments.
+
+The main contribution of this work are variants of the M4RM algorithm which make better use of the memory hierarchy found in modern \xBG CPUs (cf. Table~\ref{tab:mem}). Particularly, we give a more cache-friendly version of the M4RM algorithm, a variant of the M4RM which uses more than one lookup table and tuning parameters for the two architectures considered in this work.
+\begin{table}
+\begin{center}
+\begin{tabular}{|l| c|c|c|}
+\hline
+Architecture & L1 & L2 & RAM \\
+\hline
+Intel \CTD T7600 & 32KB/3 cyc. & 4MB/14 cyc. & $\geq 1$GB/$\sim$ 200 cyc.\\
+AMD \Opteron 885& 64KB/3 cyc. & 1MB/16 cyc. &$\geq 1$GB/$\sim$ 200 cyc.\\
+\hline
+\end{tabular}
+\end{center}
+\caption{Sizes and approximate cost of memory access on modern \xBG CPUs}
+\label{tab:mem}
+\end{table}
+
+Note that all timings in this chapter correspond to Strassen-Winograd multiplication (cf.~Section~\ref{sec:strassen}) but with different base cases.
+
+\section{Basic Arithmetic}
+\label{sec:basic}
+\subsection{Our Matrix Data Structure}
+\label{sec:window}
+We use a ``flat row-major representation'' for our matrices. Thus 64 consecutive entries in one row are packed into one machine word. Consequently, bulk operations on rows are considerably cheaper than on columns and addressing a single column is more expensive than addressing a single row. Additionally, we maintain an array -- called \texttt{rows} -- containing the address in memory of the first word for each row in the matrix. To represent in-place submatrices (i.e. without copying out the data) we also use this \texttt{rows} array. We call these in-place submatrices ``matrix windows'' and they consist of addresses of the first word of each row and the number of columns each row contains. This approach is limited to matrix windows which start and end at full word borders but this is sufficient for our application. The advantages and disadvantages of the ``flat row-major'' data structure are, for instance, analysed in \cite{fflas}.
+
+\subsection{Row Additions}
+Since this basic operation -- addition of two rows -- is at the heart of every algorithm in this chapter, we should briefly mention the SSE2 instruction set \cite{optcpp} which is available on modern \xBG architectures. This instruction set offers an XOR operation for 128-bit wide registers, allowing one to handle two 64-bit machine words in one instruction. The use of these instructions does provide a considerable speed improvement on Intel CPUs. Table~\ref{tab:m4rm-sse2-c2d} shows that up to a 25\% improvement is possible when enabling SSE2 instructions. However, in our experiments performance declined on \Opteron CPUs when using SSE2 instructions. The authors were unable to identify a cause of this phenomenon.  Note that \Magma also does not use SSE2 instructions on the \Opteron \cite{magma-matmulgf2} which seems to agree with our findings (cf. Table~\ref{tab:m4rm-sse2-opteron}).
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|r|r|}
+\hline
+Matrix Dimensions      &  Using 64-bit & Using 128-bit (SSE2)\\
+\hline
+$10,000 \times 10,000$ &         1.981s &  1.504s\\ 
+$16,384 \times 16,384$ &         7.906s &  6.074s\\ 
+$20,000 \times 20,000$ &        14.076s & 10.721s\\ 
+$32,000 \times 32,000$ &        56.931s & 43.197s\\ 
+\hline
+\end{tabular}
+\caption{Strassen-Winograd multiplication on 64-bit Linux, 2.33Ghz
+\CTD}
+\label{tab:m4rm-sse2-c2d}
+\end{center}
+\end{table}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|r|r|}
+\hline
+Matrix Dimensions      &  Using 64-bit & Using 128-bit (SSE2)\\
+\hline
+$10,000 \times 10,000$ &   2.565s &  2.738s\\ 
+$16,384 \times 16,384$ &  10.192s & 10.647s\\ 
+$20,000 \times 20,000$ &  17.744s & 19.308s\\ 
+$32,000 \times 32,000$ &  65.954s & 71.255s\\ 
+\hline
+\end{tabular}
+\caption{Strassen-Winograd multiplication on 64-bit Linux, 2.6Ghz
+\Opteron}
+\label{tab:m4rm-sse2-opteron}
+\end{center}
+\end{table}
+
+\subsection{Cubic Multiplication}
+\label{sec:cubic}
+The simplest multiplication operation involving matrices is a matrix-vector product which can easily be extended to classical cubic matrix-matrix
+multiplication. To compute the matrix-vector product $Av$ we have to compute the dot product of each row $i$ of $A$ and the vector $v$. If the vector $v$ is stored as a row rather than a column, this calculation becomes equivalent to word-wise logical-AND and accumulation of the result in a word $p$ via logical-XOR. Finally, the parity of $p$ needs to be computed. However, as there is no native parity instruction in the \xBG instruction set this last step is quite expensive compared to the rest of the routine. To account for this, 64 parity bits can be computed in parallel~\cite[Ch. 5]{hackersdelight}. To extend this matrix-vector multiplication to matrix-matrix multiplication $B$ must be stored transposed.
+
+Alternatively, we may compute the matrix-matrix product as $\sum vB$ over all rows $v$ of $A$. This strategy avoids transposing a matrix and the expensive parity operation. Our implementation of this variant is more efficient if the number of columns in the matrix $B$ is small.
+
+\section{The Method of the Four Russians}
+\label{sec:m4rm}
+The ``Method of the Four Russians''\footnote{See \cite{linearmap2} for a discussion of this name.} matrix multiplication algorithm can be derived from the original algorithm published by Arlazarov, Dinic, Kronrod, and Faradzev for computing one step in the transitive closure of a directed graph \cite{ADKF70}, but does not directly appear there. It has however appeared in books including \cite[Ch. 6]{AHU74}.
+
+Consider a product of two matrices $C = AB$ where $A$ is an $m \times \ell$ matrix and $B$ is an $\ell \times n$ matrix, yielding an $m \times n$ matrix for $C$. The matrix $A$ can be divided into $\ell/k$ vertical ``stripes'' $A_0 \dots A_{\ell/k-1}$ of $k$ columns each, and $B$ into $\ell/k$ horizontal stripes
+$B_0 \dots B_{\ell/k-1}$ of $k$ rows each. For simplicity, assume $k$ divides $\ell$. The product of two stripes, $A_i B_i$ requires an $m \times \ell/k$ by $\ell/k \times n$ matrix multiplication, and yields an $m \times n$ matrix $C_i$. The sum of all $k$ of these $C_i$ equals $C$.
+\[
+C = AB = \sum_0^{\ell/k-1} A_iB_i. 
+\]
+
+\emph{Example:} Consider $k=1$ and
+\[
+A = \left(\begin{array}{rr}
+a_{0} & a_{1} \\
+a_{2} & a_{3}
+\end{array}\right), B = \left(\begin{array}{rr}
+b_{0} & b_{1} \\
+b_{2} & b_{3}
+\end{array}\right).
+\]
+Then \[
+A_0 = \left(\begin{array}{r}
+a_{0} \\
+a_{2}
+\end{array}\right), A_1 = 
+\left(\begin{array}{r}
+a_{1} \\
+a_{3}
+\end{array}\right), B_0 = \left(\begin{array}{rr}
+b_{0} & b_{1}
+\end{array}\right), \textnormal{ and } B_1 = 
+\left(\begin{array}{rr}
+b_{2} & b_{3}
+\end{array}\right)
+\] and consequently
+\[
+A_0 B_0 = \left(\begin{array}{rr}
+a_{0} b_{0} & a_{0} b_{1} \\
+a_{2} b_{0} & a_{2} b_{1}
+\end{array}\right) \textnormal{ and } A_1 B_1 = \left(\begin{array}{rr}
+a_{1} b_{2} & a_{1} b_{3} \\
+a_{3} b_{2} & a_{3} b_{3}
+\end{array}\right).
+\] Finally, we have
+\[
+C = AB = A_0B_0 + A_1B_1 = \left(\begin{array}{rr}
+a_{0} b_{0} + a_{1} b_{2} & a_{0} b_{1} + a_{1} b_{3} \\
+a_{2} b_{0} + a_{3} b_{2} & a_{2} b_{1} + a_{3} b_{3}
+\end{array}\right).
+\]
+\vspace{0.2cm}
+
+The principal benefit of multiplying in narrow stripes is that the bits across each row of a stripe of $A$ determine which linear combination of rows of $B$ will contribute to the product, e.g. in the above example $a_0, \dots , a_3$ dictate which linear combination of ($b_0$, $b_2$) and ($b_1, b_3$) must be written to the rows of $C$. However, if the stripe is relatively narrow as in this example, there is only a small  number of binary values each row of the stripe can take, and thus only a small number of possible linear combinations of the rows of $B$ that will be ``selected''. If we precompute all possible linear combinations of rows of $B$ that could be selected we can create a lookup table into which the rows of the stripes of $A$ can index.
+
+Returning to our example, if $a_0 = a_2$ and $a_1 = a_3$ then the same linear combination would be written to the first and the second row of $C$.
+Precomputation of all $2^4-1$ non-zero linear combinations, ($1\cdot b_0+ 0\cdot b_2,0\cdot b_0+ 1\cdot b_2,1\cdot b_0+ 1\cdot b_2$), ensures that the
+repeated linear combination has only been computed once. In our trivial example this did not reduce the number of operations, but for much
+larger matrices reuse of the precomputed combinations yields a reduction in the number of operations. Precomputing a table in this fashion is also called ``greasing''.
+
+The technique just described gives rise to Algorithm~\ref{alg:m4rm}.
+
+\begin{algorithm}[H]
+\KwIn{$A$ -- an $m \times \ell$ matrix}
+\KwIn{$r$ -- an integer $0 \leq r < m$}
+\KwIn{$c$ -- an integer $0 \leq c < \ell$}
+\KwIn{$k$ -- an integer such that $c + k < \ell$}
+\KwResult{an integer $0 \leq r < 2^k$}
+
+\Begin{
+\Return{$A[r,c]\times2^{k-1} + A[r,c+1]\times2^{k-2} + A[r,c+2]\times2^{k-3} + \cdots + A[r,c+k-1]\times2^0$}\;
+}
+\caption{\textsc{ReadBits}}
+\label{alg:readbits}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\KwIn{$A$ -- an $m \times \ell$ matrix}
+\KwIn{$B$ -- an $\ell \times n$ matrix}
+\KwIn{$k$ -- some integer $0 < k < \ell$}
+\KwResult{$C$ -- an $m \times n$ matrix such that $C = AB$}
+
+\Begin{
+$C \longleftarrow $ create an $m \times n$ matrix with all entries $0$\;
+\For{$0 \le i < (\ell/k)$}{ 
+  \tcp{create table of $2^k-1$ linear combinations}
+  $T \leftarrow$ \textsc{MakeTable}($B, i\times k, 0, k$)\;
+  \For{$0 \le j < m$}{
+    \tcp{read index for table T}
+    $id \longleftarrow$ \textsc{ReadBits}($A, j, k\times i, k$)\;
+    add row $id$ from $T$ to row $j$ of $C$\;
+  }
+}
+\Return{C}\;
+}
+\caption{\textsc{M4RM}}
+\label{alg:m4rm}
+\end{algorithm}
+
+In Algorithm~\ref{alg:m4rm} the subroutine \textsc{ReadBits}($A, r, sc, k$) reads $k$ bits from row $r$ starting at column $sc$ and returns the bit string interpreted as an integer between $0$ and $2^k-1$. Meanwhile, the subroutine \textsc{MakeTable}($B, r, c, k$) in Algorithm~\ref{alg:m4rm} constructs a table $T$ of all $2^k-1$ non-zero linear combinations of the rows of $B$ starting in row $r$ and column $c$. The traditional way of performing this calculation is to use the reflected binary code.
+
+\subsection{Gray Codes}
+The Gray code~\cite{graycode}, named after Frank Gray and also known as reflected binary code, is a numbering system where two consecutive values differ in only one digit. Examples of Gray codes for two, three and four bits are given in Figure~\ref{fig:graycodes}.
+
+\begin{figure}[htbp]
+\label{fig:graycodes}
+\begin{center}
+\begin{multicols}{2}
+\begin{tabular}{cc}
+0 & 0\\
+0 & 1\\
+1 & 1\\
+1 & 0\\
+\end{tabular}\\
+2-bit Gray Code\\
+\vspace{2em}
+\begin{tabular}{ccc}
+0 & 0 & 0\\
+0 & 0 & 1\\
+0 & 1 & 1\\
+0 & 1 & 0\\
+1 & 1 & 0\\
+1 & 1 & 1\\
+1 & 0 & 1\\
+1 & 0 & 0\\
+\end{tabular}\\
+3-bit Gray Code\\
+
+\begin{tabular}{cccc}
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 1\\
+0 & 0 & 1 & 1\\
+0 & 0 & 1 & 0\\
+0 & 1 & 1 & 0\\
+0 & 1 & 1 & 1\\
+0 & 1 & 0 & 1\\
+0 & 1 & 0 & 0\\
+1 & 1 & 0 & 0\\
+1 & 1 & 0 & 1\\
+1 & 1 & 1 & 1\\
+1 & 1 & 1 & 0\\
+1 & 0 & 1 & 0\\
+1 & 0 & 1 & 1\\
+1 & 0 & 0 & 1\\
+1 & 0 & 0 & 0\\
+\end{tabular}\\
+4-bit Gray Code\\
+
+\end{multicols}
+\end{center}
+
+\caption{Gray Codes}
+\end{figure}
+
+Gray code tables for $n$-bits can be computed from $n-1$-bit Gray code tables by prepending each entry of the $n-1$-bit Gray code table with $0$. Then the order of the entries is reversed and a $1$ is prepended to each entry. These two half-tables are then concatenated. Of course, there are other more direct ways of constructing these tables, but since we precompute these tables in our code, we are not concerned with optimising their creation in this chapter.
+
+These tables can then be used to construct all $2^k-1$ non-zero linear combinations of $k$ rows where each new entry in the table costs one row addition as its index differs in exactly one bit from that of the preceding row. Thus computing all $2^k-1$ non-zero linear combinations of $k$ rows can be done in $2^k-1$ row additions, rather than $(k/2-1)2^k-1$ as would be expected if each vector were to be tabulated separately.
+
+Overall, the complexity of the algorithm for multiplying two $n \times n$ matrices is as follows: The outer loop is repeated $n/k$ times, the construction of the table costs $2^k \times n$ operations and adding the table to $C$ costs $n^2$ operations: $n/k \times (2^k \times n + n^2)$. If $k= \log n$, this simplifies to $\ord{n^3/\log n}$ (cf. \cite{Bard2006}).
+
+From this complexity analysis it seems one should always choose the parameter $k = \lfloor \log_2 n \rceil$ for an $n \times n$ matrix. However, in practice this  is not the case. First, experimental evidence indicates \cite[Ch. 5]{bard-phd} that  $\lfloor 0.75 \times \log_2 n \rceil$ seems to be a better choice. Also, for cache  efficiency it makes sense to split the input matrices into blocks such that  these blocks fit into L2 cache (see below). If that technique is employed  then the block sizes dictate $k$ and not the total dimensions of the input matrices.  Thus in practice, a much smaller $k$ than $\log_2 n$ was found to be optimal (see below); restraining $k$ in this way actually improved performance.
+
+In our implementation, we pre-compute the Gray Code tables up to size 16. For matrices of size greater than $20$ million rows and columns, this is not enough. But, such a dense matrix would have nearly half a quadrillion entries, and this is currently beyond the capabilities of existing computational hardware. Also, for these dimensions the Strassen-Winograd algorithm should be used. Of course, if so desired we may generate the tables on the fly or generate the $2^k - 1$ linear combinations using some other technique which also achieves an optimal number of required row additions.
+
+\subsection{A Cache Friendly Version}
+Note that the M4RM algorithm creates a table for each stripe of $B$ and then iterates over all rows of $C$ and $A$ in the inner loop. If the matrices $C$ and $A$ are bigger than L2 cache then this means, that for each single row addition a new row needs to be loaded from RAM. This row will evict an older row from L2. However, as this row is used only once per iteration of all rows of $A$ and $C$ we cannot take advantage of the fact that it is now in L2 cache. Thus if the matrices $A$ and $C$ do not fit into L2 cache then the algorithm does not utilise this faster memory. Note that since $T$ instead of $B$ is used in the inner loop, we can ignore the size of $B$ for now.
+
+Thus, it is advantageous to re-arrange the algorithm in such a way that it iterates over the upper part of $A$ completely with all tables for $B$
+before going on to the next part. This gives rise to Algorithm~\ref{alg:m4rm_cf}, a cache friendly version of the M4RM algorithm. For simplicity we assume that $m,\ell,n$ are all multiples of some fixed block size in the presentation of Algorithm~\ref{alg:m4rm_cf}.
+
+
+\begin{algorithm}[H]
+\KwIn{$A$ -- an $m \times \ell$ matrix}
+\KwIn{$B$ -- an $\ell \times n$ matrix}
+\KwIn{$k$ -- some integer $0 < k < \ell$}
+\KwResult{$C$ -- an $m \times n$ matrix such that $C = AB$}
+
+\Begin{
+$C \longleftarrow $ create an $m \times n$ matrix with all entries $0$\;
+
+\For{$0 \le start < m/BlockSize$}{
+    \For{$0\leq i < \ell/k$}{
+        $T \longleftarrow$ \textsc{MakeTable}($B, i \times k, 0, k$)\;
+        \For{$0  \le s < BlockSize$}{
+            $j \longleftarrow start \times BlockSize + s$\;
+            $id \longleftarrow$ \textsc{ReadBits}($A, j, k \times i, k$)\;
+            add row $id$ from $T$ to row $j$ of $C$\;
+        }
+    }
+}
+\Return{C}\;
+}
+\caption{Cache Friendly \textsc{M4RM}}
+\label{alg:m4rm_cf}
+\end{algorithm}
+
+This cache-friendly rearrangement is at the expense of the repeated regeneration of the table $T$. In fact, the complexity of this cache-friendly
+version is strictly worse than the original algorithm. Namely it is $\ord{n^3}$ if we set $k = \log n$ and treat $BlockSize$ as a constant.
+However, our experiments indicate that this effect is outweighted by the better data locality for the dimensions we consider (cf. Section~\ref{sec:tuning} below). Table~\ref{tab:m4rm-techniques-c2d} shows that this strategy provides considerable performance improvements.
+
+\subsection{Increasing the Number of Precomputation Tables}
+Recall that the actual arithmetic is quite cheap compared to memory  reads and writes, and that the cost of memory accesses greatly depends on where in memory data is located: the L1 cache is approximately 50 times faster than main memory. It is thus advantageous to try to fill all of L1 with tables of linear combinations. For example consider $n = 10000$, $k=10$ and one such table. In this situation we work on 10 bits at a time. If we use $k=9$ and two tables, we still use the same memory for the tables but can deal with 18 bits at once. The price we pay is one additional row addition, which is cheap if the operands are all in cache. To implement this enhancement the algorithm remains almost unchanged, except that $t$ tables are generated for $tk$ consecutive rows of $B$, $tk$ values $x$ are read for consecutive entries in $A$ and $t$ rows from $t$ different tables are added to the target row of $C$. This gives rise to Algorithm~\ref{alg:m4rm_2t} where we assume that $tk$ divides $\ell$ and fix $t=2$.
+
+\begin{algorithm}[H]
+\KwIn{$A$ -- an $m \times \ell$ matrix}
+\KwIn{$B$ -- an $\ell \times n$ matrix}
+\KwIn{$k$ -- some integer $0 < k < \ell$}
+\KwResult{$C$ -- an $m \times n$ matrix such that $C = AB$}
+
+\Begin{
+$C \longleftarrow $ create an $m \times n$ matrix with all entries $0$\;
+
+\For{$0 \le i < \ell/(2\times k)$}{
+    $T_0 \longleftarrow$ \textsc{MakeTable}($B, 2\times i\times k, 0, k$)\;
+    $T_1 \longleftarrow$ \textsc{MakeTable}($B, 2\times i\times k + k, 0, k$)\;
+    \For{$0 \le j < m$}{
+        $r_0 \longleftarrow$ \textsc{ReadBits}($A, j, 2\times k\times i, k$)\;
+        $r_1 \longleftarrow$ \textsc{ReadBits}($A, j, 2\times k\times i+k, k$)\;
+        add row $r_0$ from $T_0$ to row $j$ of $C$\;
+        add row $r_1$ from $T_1$ to row $j$ of $C$\;
+    }
+}
+\Return{C}\;
+}
+\caption{\textsc{M4RM} with Two Precomputation Tables}
+\label{alg:m4rm_2t}
+\end{algorithm}
+
+Table~\ref{tab:m4rm-techniques-c2d} shows that increasing the number of tables is advantageous. Our implementation uses eight tables, which appears to be a good default value according to our experiments.
+
+\begin{table}[htbp]
+\begin{footnotesize}
+\begin{center}
+\begin{tabular}{|c|r|r|r|r|}
+\hline
+ & \multicolumn{4}{c|}{``base cases'' (cf. Section~\ref{sec:tuning})}\\
+\hline
+Matrix Dimensions & 
+Algorithm~\ref{alg:m4rm} &
+Algorithm~\ref{alg:m4rm_cf} & 
+Algorithm~\ref{alg:m4rm_2t}, $t=2$ &
+Algorithm~\ref{alg:m4rm_2t}, $t=8$ \\
+\hline
+$10,000\times10,000$ &  4.141s &  2.866s &  1.982s &  1.599s\\
+$16,384\times16,384$ & 16.434s & 12.214s &  7.258s &  6.034s\\ 
+$20,000\times20,000$ & 29.520s & 20.497s & 14.655s & 11.655s\\
+$32,000\times32,000$ & 86.153s & 82.446s & 49.768s & 44.999s\\
+\hline
+\end{tabular}
+\caption{Strassen-Winograd with different base cases on 2.33 Ghz \CTD}
+\label{tab:m4rm-techniques-c2d}
+\end{center}
+\end{footnotesize}
+\end{table}
+
+
+\section{Strassen-Winograd Multiplication}
+\label{sec:strassen}
+In 1969 Volker Strassen \cite{strassen} published an algorithm which multiplies two block matrices 
+\[
+ A = \left(\begin{array}{cc}
+           A_{00} & A_{01}\\
+           A_{10} & A_{11}\\
+           \end{array}\right)\hspace{13mm}
+ B = \left(\begin{array}{cc}
+           B_{00} & B_{01}\\
+           B_{10} & B_{11}\\
+           \end{array}\right)
+\]
+with only seven submatrix multiplications and 18 submatrix additions rather than eight multiplications and eight additions. As matrix multiplication
+($\ord{n^\omega}$, $2 \leq \omega < 3$) is much more expensive than matrix addition ($\ord{n^2}$), this is an improvement. Later the algorithm was improved by Winograd~\cite{winograd} to use 15 submatrix additions only, the result is commonly referred to as Strassen-Winograd multiplication. While both algorithms are to a degree less numerically stable than classical cubic multiplication over floating point numbers~\cite[Ch. 26.3.2]{Higham} this problem does not affect matrices over finite fields and thus the improved complexity of $\ord{n^{\log_2 7}}$ \cite{strassen,bard-phd} is applicable here.
+
+Let $m$, $\ell$ and $n$ be powers of two. Let $A$ and $B$ be two matrices of dimension $m \times \ell$ and $\ell \times n$ and let $C = A \times B$. Consider the block decomposition
+\[
+ \left(\begin{array}{cc}
+           C_{NW} & C_{NE}\\
+           C_{SW} & C_{SE}\\
+           \end{array}\right)
+  = \left(\begin{array}{cc}
+           A_{NW} & A_{NE}\\
+           A_{SW} & A_{SE}\\
+           \end{array}\right)
+  \left(\begin{array}{cc}
+           B_{NW} & B_{NE}\\
+           B_{SW} & B_{SE}\\
+           \end{array}\right)
+\]
+where $A_{NW}$ and $B_{NW}$ have dimensions $m/2 \times \ell/2$ and $\ell/2 \times n/2$ respectively. The Strassen-Winograd algorithm, which computes the $m \times n$ matrix $C = A \times B$, is given in Algorithm~\ref{alg:strassen}.
+
+
+\begin{algorithm}[ht]
+\KwIn{$A$ -- an $m \times \ell$ matrix}
+\KwIn{$B$ -- an $\ell \times n$ matrix}
+\KwResult{$C$ -- an $m \times n$ matrix such that $C = AB$}
+
+\Begin{
+$\left(\begin{array}{cc} A_{NW} & A_{NE} \\ A_{SW} & A_{SE}\end{array}\right) \longleftarrow A$; 
+\hspace{0.1in} $\left(\begin{array}{cc}B_{NW} & B_{NE} \\ B_{SW} & B_{SE}\end{array}\right) \leftarrow B$\;
+
+\tcp{8 additions}
+\begin{tabular}{ll}
+$S_0 \longleftarrow A_{SW} + A_{SE}$; & $T_0 \longleftarrow B_{NE} - B_{NW}$;\\
+$S_1 \longleftarrow S_0 - A_{NW}$;    & $T_1 \longleftarrow B_{SE} - T_0$;\\
+$S_2 \longleftarrow A_{NW} - A_{SW}$; & $T_2 \longleftarrow B_{SE} - B_{NE}$;\\
+$S_3 \longleftarrow A_{NE} - S_1$;    & $T_3 \longleftarrow T_1- B_{SW}$;\\
+\end{tabular}
+
+\tcp{7 recursive multiplications}
+
+\begin{tabular}{ll}
+$P_0 \longleftarrow$ $A_{NW} \times B_{NW}$; & $P_1 \longleftarrow$ $A_{NE} \times B_{SW}$;\\
+$P_2 \longleftarrow$ $S_3 \times B_{SE}$;    & $P_3 \longleftarrow$ $A_{SE} \times T_3$;\\
+$P_4 \longleftarrow$ $S_0 \times T_0$;       & $P_5 \longleftarrow$ $S_1 \times T_1$; \\
+$P_6 \longleftarrow$ $S_2 \times T_2$;\\
+\end{tabular}
+
+\tcp{7 final additions}
+\begin{tabular}{ll}
+$U_0 \longleftarrow P_0 + P_1$; & $U_1 \longleftarrow P_0 + P_5$; \\
+$U_2 \longleftarrow U_1 + P_6$; & $U_3 \longleftarrow U_1 + P_4$; \\
+$U_4 \longleftarrow U_3 + P_2$; & $U_5 \longleftarrow U_2 - P_3$; \\
+$U_6 \longleftarrow U_2 + P_4$; & \\
+\end{tabular}
+
+\Return{$\left(\begin{array}{cc} U_{0} & U_{4} \\
+U_{5} & U_{6}\end{array}\right)$}\;
+}
+\caption{Strassen-Winograd}
+\label{alg:strassen}
+\end{algorithm}
+
+At each recursion step the matrix dimensions must be divisible by two which explains the requirement of them being powers of two. However, in practice (for performance reasons) the recursion stops at a given \emph{cutoff} dimension ($c_s$) --- sometimes called ``cross-over'' dimension --- and switches over to another multiplication algorithm. In our case, this is the M4RM algorithm. Thus the requirement can be relaxed to the requirement that for each recursion step the matrix dimensions must be divisible by two.
+
+However, this still is not general enough. Additionally, in case of $\GFZ$ the optimal case is when $m,n,\ell$ are  64 times powers of 2 to avoid cutting within words. To deal with odd-dimensional matrices two strategies are known in the literature~\cite{strassen-implementation}: One can either increase the matrix dimensions -- this is called ``padding'' -- to the next ``good'' value and fill the additional entries with zeros, yielding $A^+$ and $B^+$. Then one can compute $C^+ = A^+B^+$ and finally cut out the actual product matrix $C$ from the bigger matrix $C^+$. A variant of this approach is to only virtually append rows and columns, i.e. we pretend they are present. Another approach is to consider the largest submatrices $A^-$ and $B^-$ of $A$ and $B$ so that the dimensions of $A^-$ and $B^-$ match our requirements -- this is called ``peeling''. Then once the product $C^- = A^-B^-$ is computed, one resolves the remaining rows and columns of $C$ from the remaining rows and columns of $A$ and $B$ that are not in $A^-$ and $B^-$ (cf. \cite{strassen-implementation}). For those remaining pieces Strassen-Winograd is not used but an implementation which does not cut the matrices into submatrices. We use the ``peeling'' strategy in our implementation, but note that it is easy to construct a case where our strategy is clearly not optimal, Table~\ref{tab:cutting} gives an example where ``padding'' would only add one row and one column, while ``peeling'' has to remove many rows and columns. This is an area for future improvement.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|r|}
+\hline
+Matrix Dimensions   & Time in $s$ \\
+\hline
+$2^{14}-1 \times 2^{14}-1$ & 7.86 \\
+$2^{14} \times 2^{14}$ & 6.09 \\
+$2^{14}+1 \times 2^{14}+1$ & 6.11 \\
+\hline
+\end{tabular}
+\caption{``Peeling'' strategy on 64-bit Linux, 2.33Ghz, \CTD}
+\label{tab:cutting}
+\end{center}
+\end{table}
+
+To represent the submatrices in Algorithm~\ref{alg:strassen} we use matrix windows as described earlier in Section~\ref{sec:window}. While this has the benefit of negligible required additional storage compared to out-of-place submatrices, this affects data locality negatively. To restore data locality, we copy out the target matrix $C$ when switching from Strassen-Winograd to M4RM. On the other hand our experiments show that copying out $A$ and $B$ at this crossover point does not improve performance. Data locality for $B$ is achieved through the precomputation tables and it appears that the read of $x$ from $A$ (cf. Algorithm~\ref{alg:m4rm}) does not significantly contribute to the runtime. 
+
+However, even with matrix windows Strassen-Winograd requires more memory than classical cubic multiplication. Additional storage is required to store intermediate results. The most memory-efficient scheduler (cf. \cite{strassen-memory}) uses two additional temporary submatrices and is utilised in our implementation. We also tried the ``proximity schedule'' used in FFLAS~\cite{fflas} but did not see any improvement in performance.
+
+\section{Tuning Parameters}
+\label{sec:tuning}
+Our final implementation calls Strassen-Winograd, which switches over to our optimised M4RM implementation if the input matrix dimensions are less than a certain parameter $c_s$. If $B$ then has fewer columns than $w_s$ (word size in bits) the classical cubic algorithm is called, which seems to be the most efficient choice for these dimensions. This last case is quite common in the fix-up step of ``peeling''. This strategy gives three parameters for tuning. The first is $c_s$, the crossover point where we switch from Strassen-Winograd to M4RM. Second, $b_s$ is the size for block decomposition inside M4RM for cache friendliness. Third, $k$ dictates the size of the tables containing $2^k - 1$ linear combination of $k$ rows. We always fix the number of precomputation tables to $t=8$ which appears to be a good default value according to our experiments.
+
+By default $c_s$ is chosen such that \emph{two} matrices fit into L2 cache, because this provides the best performance in our experiments. For the
+\Opteron (1MB of L2 cache) this results in $c_s=2048$ and for the \CTD (4MB of L2 cache) this results in $c_s=4096$. We only fit two matrices, rather than all three matrices in L2 cache as $b_s$ reduces the size of the matrices we are working with to actually fit three matrices in L2 cache. The default value is fixed at $b_s=c_s/2$. The value $k$ is set to $\lfloor 0.75 \times \log_2 b_s \rfloor - 2$. We subtract 2 as a means to compensate for the use of 8 precomputation tables. However, if additionally reducing $k$ by 1 would result in fitting all precomputation tables in L1 cache, we do that. Thus, $k$ is either $\lfloor 0.75 \times \log_2 b_s \rfloor - 2$ or $\lfloor 0.75 \times \log_2 b_s \rfloor - 3$ depending on the input dimensions and the size of the L1 cache. These values have been determined empirically and seem to provide the best compromise across platforms.
+
+On the \Opteron these values --- $c_s=2048$, $b_s=1024$, $k=5$, $t=8$ tables --- mean that the two input matrices fit into the 1MB of L2 cache, while the eight tables fit exactly into L1: $8 \cdot 2^5 \cdot 2048/8 = 64$Kb. The influence of the parameter $b_s$  in the final implementation is shown in Table~\ref{tab:parameters-opteron} for fixed $k=5$ and $c_s=2048$.
+
+On the \CTD these values are $c_s=4096$, $b_s=2048$, $k=6$, $t=8$ and ensure that all data fits into L2 cache. Since the \CTD has only 32kb of L1 cache we do not try to fit all tables into it. In our experiments, performance did not increase when we tried to optimise for L1 cache.
+
+\begin{table}[htbp]
+\begin{footnotesize}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Matrix Dimensions & $b_s=2048$ & {$b_s=1024$} & {$b_s=768$} \\
+\hline
+$10,000 \times 10,000$ &  2.96s  &  2.49s &  2.57s\\ 
+$16,384 \times 16,384$ & 13.23s  & 10.49s & 10.37s\\
+$20,000 \times 20,000$ & 21.19s  & 17.73s & 18.11s\\
+$32,000 \times 32,000$ & 67.64s  & 67.84s & 69.14s\\
+\hline
+\end{tabular}
+\caption{Strassen-Winograd multiplication, 64-bit Linux, 2.6Ghz \Opteron}
+\label{tab:parameters-opteron}
+\end{center}
+\end{footnotesize}
+\end{table}
+
+\section{Results}
+\label{sec:benchmark}
+To evaluate the performance of our implementation we provide benchmark comparisons against the best known implementations we are aware of. First, \Magma \cite{magma} is widely known for its high performance implementations of many algorithms. Second, \GAP \cite{GAP4} (or equivalently the C-MeatAxe \cite{meataxe}) is to our knowledge the best available open-source implementation of dense matrix multiplication over $\GFZ$. Note, that the high-performance FFLAS~\cite{fflas} library does not feature a dedicated implementation for $\GFZ$ and thus is not competitive.
+
+We note that all three projects implement different variants of matrix multiplication. \GAP implements a variant of Algorithm~\ref{alg:m4rm} with a fixed $k=8$ but does not implement asymptotically fast matrix multiplication. \Magma implements Strassen-Winograd matrix multiplication with ``padding'' and a version of Algorithm~\ref{alg:m4rm} as base case \cite{magma-matmulgf2}. The crossover from Strassen to Algorithm~\ref{alg:m4rm} in \Magma is hardcoded at $c_s = 2048$ for the \CTD and $c_s = 1800$ for the \Opteron. To achieve cache efficiency \Magma divides the input matrices into submatrices of dimensions $256 \times 512$ and $512 \times 2048$ on the \Opteron before applying Algorithm~\ref{alg:m4rm} and into submatrices of dimensions $2048 \times 512$ and $512 \times 2048$ on the \CTD. We note that while dense matrix multiplication over $\GFZ$ in \Magma was optimised for the \CTD and the \Opteron, it was not optimised for any other architecture.
+
+In the Tables~\ref{tab:mult-time-c2d} and~\ref{tab:mult-time-opteron} we give the average of ten observed runtimes and RAM usage for multiplying two random square matrices. The timings for M4RI were obtained using the \Sage mathematics software \cite{sage}. M4RI was compiled with GCC 4.3.1 on both machines and we used the options \texttt{-O2} on the \Opteron machine and \texttt{-O2 -msse2} on the \CTD machine.
+
+\clearpage
+\begin{table}[htbp]
+\begin{footnotesize}
+\begin{center}
+\begin{tabular}{|c|r|r|r|r|r|r|}
+\hline
+  & \multicolumn{2}{c|}{\Magma 2.14-17} &
+\multicolumn{2}{c|}{\GAP 4.4.10} & \multicolumn{2}{c|}{M4RI-20080821}\\
+\hline
+Matrix Dimensions & Time & Memory & Time & Memory & Time & Memory\\
+\hline
+$10,000 \times 10,000$ &  1.892s &  85~MB & 6.130s &  60~MB &  1.504s &  60~MB \\
+$16,384 \times 16,384$ &  7.720s & 219~MB &25.048s & 156~MB &  6.074s & 156~MB \\
+$20,000 \times 20,000$ & 13.209s & 331~MB &    --- &    --- & 10.721s & 232~MB\\
+$32,000 \times 32,000$ & 53.668s & 850~MB &    --- &    --- & 43.197s & 589~MB\\
+\hline
+\end{tabular}
+\caption{64-bit Debian/GNU Linux, 2.33Ghz \CTD}
+\label{tab:mult-time-c2d}
+\end{center}
+\end{footnotesize}
+\end{table}
+
+\begin{table}[htbp]
+\begin{footnotesize}
+\begin{center}
+% gcc 4.3.1, -O2, experiment 11.08.2008, 15:19, average of 10 runs
+\begin{tabular}{|c|r|r|r|r|r|r|}
+\hline
+  & \multicolumn{2}{c|}{\Magma 2.14-13} &
+\multicolumn{2}{c|}{\GAP 4.4.10} & \multicolumn{2}{c|}{M4RI-20090409}\\
+\hline
+Matrix Dimensions & Time & Memory & Time & Memory & Time & Memory\\
+\hline
+$10,000 \times 10,000$ &  2.603s &  85~MB & 10.472s &  60~MB &  2.565s & 60~MB\\
+$16,384 \times 16,384$ &  9.924s & 219~MB & 43.658s & 156~MB & 10.192s & 156~MB \\
+$20,000 \times 20,000$ & 18.052s & 331~MB &      -- &    --- & 17.744s & 232~MB \\
+$32,000 \times 32,000$ & 66.471s & 850~MB &      -- &    --- & 65.954s & 589~MB \\
+\hline
+\end{tabular}
+\caption{64-bit Debian/GNU Linux, 2.6Ghz \Opteron}
+\label{tab:mult-time-opteron}
+\end{center}
+\end{footnotesize}
+\end{table}
+
+\begin{table}[htbp]
+\begin{footnotesize}
+\begin{center}
+\begin{tabular}{|c|r|r|r|r|}
+\hline
+  & \multicolumn{2}{c|}{\Magma 2.14-16} & \multicolumn{2}{c|}{M4RI-20080909}\\
+\hline
+Matrix Dimensions & Time & Memory & Time & Memory\\
+\hline
+$10,000 \times 10,000$ &   7.941s &  85~MB &   4.200s &  60~MB\\
+$16,384 \times 16,384$ &  31.046s & 219~MB &  16.430s & 156~MB\\
+$20,000 \times 20,000$ &  55.654s & 331~MB &  28.830s & 232~MB\\
+$32,000 \times 32,000$ & 209.483s & 850~MB & 109.414s & 589~MB\\
+\hline
+\end{tabular}
+\caption{64-bit RHEL 5, 1.6GHz Itanium}
+\label{tab:mult-time-itanium}
+\end{center}
+\end{footnotesize}
+\end{table}
+
+
+We note that the advantage of our approach over other implementations varies greatly with the architecture considered. On one hand these timings demonstrate the validity of our approach by showing a $1.2 - 1.3$ speedup over the best known implementation on the \CTD. On the other hand, our approach seems to offer little if any advantage over the simpler approach followed by \Magma on the \Opteron. It seems unclear whether significant gains can be achieved on the \Opteron without any further theoretical advancements in the field of matrix multiplication or whether in fact the comparable performance indicates optimal performance using current techniques.
+
+We note that whilst the advantage over \Magma is considerable on the Itanium this does not allow one to draw conclusions about the underlying strategy, as \Magma was not optimised for this platform. Also \Magma hardcodes its optimisation parameters whereas we rely on compile time parameters which allow  greater flexibility across platforms.

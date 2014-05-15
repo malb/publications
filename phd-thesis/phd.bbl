@@ -1,0 +1,852 @@
+\begin{thebibliography}{100}
+
+\bibitem{scip}
+Tobias Achterberg.
+\newblock {\em Constraint Integer Programming}.
+\newblock PhD thesis, TU Berlin, 2007.
+\newblock \url{http://scip.zib.de}.
+
+\bibitem{AHU74}
+Alfred~V. Aho, John~E. Hopcroft, and Jeffrey~D. Ullman.
+\newblock {\em The Design and Analysis of Computer Algorithms}.
+\newblock Addison-Wesley, 1974.
+
+\bibitem{Albrecht2007}
+Martin Albrecht.
+\newblock {A}gebraic {A}ttacks against the {C}ourtois {T}oy {C}ipher.
+\newblock Master's thesis, Universtät Bremen, 2007.
+
+\bibitem{albrecht:cryptologia08}
+Martin Albrecht.
+\newblock Algebraic attacks on the {C}ourtois {T}oy {C}ipher.
+\newblock {\em Cryptologia}, 32(3):220--276, July 2008.
+
+\bibitem{matmulgf2}
+Martin Albrecht, Gregory~V. Bard, and William Hart.
+\newblock Algorithm 898: Efficient multiplication of dense matrices over
+  {GF(2)}.
+\newblock {\em {ACM} Transactions on Mathematical Software}, 37(1):14 pages,
+  January 2010.
+\newblock pre-print available as {\tt arxiv:0811.1714 [cs.MS]}.
+
+\bibitem{adc:fse2009}
+Martin Albrecht and Carlos Cid.
+\newblock {A}lgebraic {T}echniques in {D}ifferential {C}ryptanalysis.
+\newblock In {\em {Fast Software Encryption} 2009}, volume 5665 of {\em Lecture
+  Notes in Computer Science}, pages 193--208, Berlin, Heidelberg, New York,
+  2009. Springer Verlag.
+
+\bibitem{acdfp:inscrypt2010}
+Martin Albrecht, Carlos Cid, Thomas Dullien, Jean-Charles Faug{\`e}re, and
+  Ludovic Perret.
+\newblock Algebraic precomputations in {D}ifferential and {I}ntegral
+  cryptanalysis.
+\newblock In {\em INSCRYPT 2010 -- {I}nformation {S}ecurity and {C}ryptology
+  6th International Conference}, volume 6584 of {\em Lecture Notes in Computer
+  Science}, pages 387--403, Berlin, Heidelberg, New York, 2010. Springer
+  Verlag.
+
+\bibitem{albrecht-perry:f45}
+Martin Albrecht and John Perry.
+\newblock F4/5.
+\newblock {\em {\tt arXiv:1006.4933}}, 2010.
+
+\bibitem{M4RI}
+Martin~R. Albrecht and Gregory~V. Bard.
+\newblock {\em The {M4RI} Library -- Version 20111004}.
+\newblock The M4RI~Team, 2011.
+\newblock \url{http://m4ri.sagemath.org}.
+
+\bibitem{Albrecht2010}
+Martin~R. Albrecht and Clément Pernet.
+\newblock Efficient decomposition of dense matrices over {GF(2)}.
+\newblock {\em {\tt arXiv:1006.1744v1}}, Jun 2010.
+
+\bibitem{aes-rka}
+Ivica~Nikolić Alex~Biryukov, Dmitry~Khovratovich.
+\newblock Distinguisher and related-key attack on the full {AES-256}.
+\newblock In {\em Advances in Cryptology -- CRYPTO 2009}, volume 5677 of {\em
+  Lecture Notes in Computer Science}, pages 133--152. Springer Verlag, 2009.
+
+\bibitem{ADKF70}
+V.~Arlazarov, E.~Dinic, M.~Kronrod, and I.~Faradzev.
+\newblock On economical construction of the transitive closure of a directed
+  graph.
+\newblock {\em Dokl. Akad. Nauk.}, 194(11), 1970.
+\newblock (in Russian), English Translation in Soviet Math Dokl.
+
+\bibitem{ars:thesis2005}
+Gwenole Ars.
+\newblock {\em Applications des bases de Gr{\"o}bner {\`a} la cryptographie}.
+\newblock PhD thesis, Université de Rennes I, 2005.
+
+\bibitem{ars-faugere:inria2005}
+Gwenole Ars and Jean-Charles Faug\`ere.
+\newblock {A}lgebraic {I}mmunities of functions over finite fields.
+\newblock Technical Report 5532, Institut National de Recherche en Informatique
+  et en Automatique (INRIA), 2005.
+\newblock Available at
+  \url{http://gwenole.ars.ifrance.com/seminaire/RR-5532.pdf}.
+
+\bibitem{ars-faugere:asiacrypt04}
+Gwenole Ars, Jean-Charles Faug\`ere, Hideki Imai, Mitsuru Kawazoe, and Makoto
+  Sugita.
+\newblock Comparison between {XL} and {G}r\"obner basis algorithms.
+\newblock In {\em Advances in Cryptology - ASIACRYPT 2004}, volume 3329 of {\em
+  Lecture Notes in Computer Science}, Berlin, Heidelberg, New York, 2004.
+  Springer Verlag.
+
+\bibitem{Bard2006}
+Gregory~V. Bard.
+\newblock {Accelerating Cryptanalysis with the Method of Four Russians}.
+\newblock Cryptology ePrint Archive, Report 2006/251, 2006.
+\newblock Available at \url{http://eprint.iacr.org/2006/251.pdf}.
+
+\bibitem{bard-phd}
+Gregory~V. Bard.
+\newblock {\em Algorithms for Solving Linear and Polynomial Systems of
+  Equations over Finite Fields with Applications to Cryptanalysis}.
+\newblock PhD thesis, University of Maryland, 2007.
+
+\bibitem{bard-m4ri}
+Gregory~V. Bard.
+\newblock Matrix inversion (or {LUP}-factorization) via the {M}ethod of {F}our
+  {R}ussians, in $\theta(n^3/\log n)$ time.
+\newblock in submission, 2008.
+
+\bibitem{Bard2007a}
+Gregory~V. Bard, Nicolas~T. Courtois, and Chris Jefferson.
+\newblock {E}fficient {M}ethods for {C}onversion and {S}olution of {S}parse
+  {S}ystems of {L}ow-{D}egree {M}ultivariate {P}olynomials over {GF(2)} via
+  {SAT}-{S}olvers.
+\newblock Cryptology ePrint Archive, Report 2007/024, 2007.
+\newblock Available at \url{http://eprint.iacr.org/2007/024}.
+
+\bibitem{bardet:thesis2004}
+Magali Bardet.
+\newblock {\em \'Etude des syst\`emes alg\'ebriques surd\'etermin\'es.
+  Applications aux codes correcteurs et \`a la cryptographie}.
+\newblock PhD thesis, Universit\'e Paris VI, 2004.
+
+\bibitem{bardet-faugere-salvy:tech}
+Magali Bardet, Jean-Charles Faug\`ere, and Bruno Salvy.
+\newblock Complexity of {G}r\"obner basis computation for semi-regular
+  overdetermined sequences over {$F_2$} with solutions in {$F_2$}.
+\newblock Technical Report 5049, INRIA, December 2003.
+\newblock Available at \url{http://www.inria.fr/rrrt/rr-5049.html}.
+
+\bibitem{Becker1991}
+Thomas Becker and Volker Weispfenning.
+\newblock {\em {Gr{\"o}bner Bases - A Computational Approach to Commutative
+  Algebra}}.
+\newblock Springer Verlag, Berlin, Heidelberg, New York, 1991.
+
+\bibitem{linearmap2}
+Daniel~J. Bernstein.
+\newblock Optimizing linear maps modulo 2.
+\newblock In {\em Workshop Record of SPEED-CC: Software Performance Enhancement
+  for Encryption and Decryption and Cryptographic Compilers}, 2009.
+\newblock available at \url{http://cr.yp.to/papers.html}.
+
+\bibitem{serpent}
+Eli Biham, Ross~J. Anderson, and Lars~R. Knudsen.
+\newblock {Serpent}: A new block cipher proposal.
+\newblock In S.~Vaudenay, editor, {\em Fast Software Encryption 1998}, volume
+  1372 of {\em Lecture Notes in Computer Science}, pages 222--238. Springer
+  Verlag, 1998.
+
+\bibitem{des-dc}
+Eli Biham and Adi Shamir.
+\newblock {D}ifferential {C}ryptanalysis of {DES}-like {C}ryptosystems.
+\newblock {\em Journal of Cryptology}, 4(1):3--72, 1991.
+
+\bibitem{Biham1991}
+Eli Biham and Adi Shamir.
+\newblock {D}ifferential {C}ryptanalysis of {DES}-like {C}ryptosystems.
+\newblock In {\em Advances in Cryptology --- {CRYPTO} 1990}, volume 537 of {\em
+  Lecture Notes in Computer Science}, pages 3--72, Berlin, Heidelberg, New
+  York, 1991. Springer Verlag.
+
+\bibitem{fulldes-dc}
+Eli Biham and Adi Shamir.
+\newblock {D}ifferential {C}ryptanalysis of the {F}ull 16-round {DES}.
+\newblock In {\em Advances in Cryptology --- CRYPTO 1992}, volume 740 of {\em
+  Lecture Notes in Computer Science}, pages 487--496, Berlin, Heidelberg, New
+  York, 1991. Springer Verlag.
+
+\bibitem{biryukov-canniere:fse2003}
+Alex Biryukov and Christophe~De Cannière.
+\newblock {B}lock {C}iphers and {S}ystems of {Q}uadratic {E}quations.
+\newblock In Thomas Johansson, editor, {\em {Fast Software Encryption} 2003},
+  volume 2887 of {\em Lecture Notes in Computer Science}, pages 274--289,
+  Berlin, Heidelberg, New York, 2003. Springer Verlag.
+\newblock Available at:
+  \url{http://www.cosic.esat.kuleuven.be/publications/article-14.pdf}.
+
+\bibitem{present}
+Andrey Bogdanov, Lars~R. Knudsen, Gregor Leander, Christof Paar, Axel
+  Poschmann, Matthew J.~B. Robshaw, Yannick Seurin, and C.~Vikkelsoe.
+\newblock {PRESENT}: An ultra-lightweight block cipher.
+\newblock In {\em Cryptographic Hardware and Embedded Systems - CHES 2007},
+  volume 7427 of {\em Lecture Notes in Computer Science}, pages 450--466,
+  Berlin, Heidelberg, New York, 2007. Springer Verlag.
+\newblock Available at
+  \url{http://www.crypto.rub.de/imperia/md/content/texte/publications/conferences/present_ches2007.pdf}.
+
+\bibitem{biviummip}
+Julia Borghoff, Lars~R. Knudsen, and Mathias Stolpe.
+\newblock {B}ivium as a {M}ixed-{I}nteger {L}inear programming problem.
+\newblock In Matthew~G. Parker, editor, {\em Cryptography and Coding -- 12th
+  IMA International Conference}, volume 5921 of {\em Lecture Notes in Computer
+  Science}, pages 133--152, Berlin, Heidelberg, New York, 2009. Springer
+  Verlag.
+
+\bibitem{magma}
+Wieb Bosma, John Cannon, and Catherine Playoust.
+\newblock The {MAGMA} {A}lgebra {S}ystem {I}: {T}he {U}ser {L}anguage.
+\newblock In {\em Journal of Symbolic Computation 24}, pages 235--265. Academic
+  Press, 1997.
+
+\bibitem{slimgb}
+Michael Brickenstein.
+\newblock {S}lim{GB}: {G}r{\"o}bner {B}ases with {S}lim {P}olynomials.
+\newblock In {\em Reports On Computer Algebra 35}. Centre for Computer Algebra,
+  University of Kaiserslautern, 2005.
+\newblock Available at:
+  \url{http://www.mathematik.uni-kl.de/~zca/Reports_on_ca/35/paper_35_full.ps.gz}.
+
+\bibitem{brickenstein-phd}
+Michael Brickenstein.
+\newblock {\em Boolean {Gr\"{o}bner} bases -- Theory, Algorithms and
+  Applications}.
+\newblock PhD thesis, Technische Universit\"at Kaiserslautern, Germany, 2010.
+\newblock to appear.
+
+\bibitem{polybori}
+Michael Brickenstein and Alexander Dreyer.
+\newblock {PolyBoRi}: A framework for {G}r{\"o}bner basis computations with
+  {B}oolean polynomials.
+\newblock In {\em Electronic Proceedings of MEGA 2007}, 2007.
+\newblock Available at
+  \url{http://www.ricam.oeaw.ac.at/mega2007/electronic/26.pdf}.
+
+\bibitem{Buchmann2006}
+Johannes Buchmann, Andrei Pychkine, and Ralf-Philipp Weinmann.
+\newblock {A} {Z}ero-dimensional {G}r{\"o}bner {B}asis for {AES}-128.
+\newblock In {\em {Fast Software Encryption} 2006}, volume 4047 of {\em Lecture
+  Notes in Computer Science}, pages 78--88. Springer Verlag, 2006.
+
+\bibitem{flurry-curry}
+Johannes Buchmann, Andrei Pychkine, and Ralf-Philipp Weinmann.
+\newblock {B}lock {C}iphers {S}ensitive to {G}r{\"o}bner {B}asis {A}ttacks.
+\newblock In {\em {T}opics in {C}ryptology – {CT RSA'06}}, volume 3860 of
+  {\em Lecture Notes in Computer Science}, pages 313--331, Berlin, Heidelberg,
+  New York, 2006. Springer Verlag.
+\newblock pre-print available at: \url{http://eprint.iacr.org/2005/200}.
+
+\bibitem{CDK09}
+Christophe~De Cannière, Orr Dunkelman, and Miroslav Knežević.
+\newblock {KATAN} and {KTANTAN} — a family of small and efficient
+  hardware-oriented block ciphers.
+\newblock In Christophe Clavier and Kris Gaj, editors, {\em Cryptographic
+  Hardware and Embedded Systems - CHES 2009}, volume 5747 of {\em Lecture Notes
+  in Computer Science}, pages 272--288. Springer Verlag, 2009.
+
+\bibitem{present-lc:eprint}
+Joo~Yeon Cho.
+\newblock Linear cryptanalysis of reduced-round {PRESENT}.
+\newblock Cryptology ePrint Archive, Report 2009/397, 2009.
+\newblock available at \url{http://eprint.iacr.org/2009/397}.
+
+\bibitem{d-stvl7}
+Carlos Cid.
+\newblock {D.STVL}.7 algebraic cryptanalysis of symmetric primitives, 2008.
+\newblock available at
+  \url{http://www.ecrypt.eu.org/ecrypt1/documents/D.STVL.7.pdf}.
+
+\bibitem{Cid2005a}
+Carlos Cid and Ga{\"e}tan Leurent.
+\newblock {A}n {A}nalysis of the {XSL} {A}lgorithm.
+\newblock In {\em Advances in Cryptology --- {ASIACRYPT} 2005}, volume 3788 of
+  {\em Lecture Notes in Computer Science}, pages 333--352, Berlin, Heidelberg,
+  New York, 2005. Springer Verlag.
+
+\bibitem{cid-murphy-robshaw:fse2005}
+Carlos Cid, Sean Murphy, and Matthew Robshaw.
+\newblock {S}mall {S}cale {V}ariants of the {AES}.
+\newblock In {\em {Fast Software Encryption} 2005}, volume 3557 of {\em Lecture
+  Notes in Computer Science}, pages 145--162, Berlin, Heidelberg, New York,
+  2005. Springer Verlag.
+\newblock Available at
+  \url{http://www.isg.rhul.ac.uk/~sean/smallAES-fse05.pdf}.
+
+\bibitem{alg-aes-book}
+Carlos Cid, Sean Murphy, and Matthew Robshaw.
+\newblock {\em {A}lgebraic {A}spects of the {A}dvanced {E}ncryption
+  {S}tandard}.
+\newblock Springer Verlag, Berlin, Heidelberg, New York, 2006.
+
+\bibitem{Clegg1996}
+Matthew Clegg, Jeffery Edmonds, and Russell Impagliazzo.
+\newblock Using the {Groebner} basis algorithm to find proofs of
+  unsatisfiability.
+\newblock In {\em Proceedings of the 28th ACM Symposium on Theory of
+  Computing}, pages 174--183, 1996.
+\newblock Available at
+  \url{http://www.cse.yorku.ca/~jeff/research/proof_systems/grobner.ps}.
+
+\bibitem{present-stat-sat}
+Baudoin Collard and Francois-Xavier Standaert.
+\newblock A {S}tatistical {S}aturation {A}ttack against the {B}lock {C}ipher
+  {PRESENT}.
+\newblock In {\em Topics in Cryptology – CT-RSA 2009}, pages 195--210, 2009.
+
+\bibitem{Collart1997}
+Stephane Collart, Michael Kalkbrener, and Daniel Mall.
+\newblock Converting bases with the {G}r{\"o}bner {W}alk.
+\newblock In {\em Journal of Symbolic Computation 24}, pages 465--469. Academic
+  Press, 1997.
+
+\bibitem{courtois:rsa2001}
+Nicolas~T. Courtois.
+\newblock The security of {H}idden {F}ield {E}quations ({HFE}).
+\newblock In David Naccache, editor, {\em Progress in Cryptology - CT-RSA 2001:
+  The Cryptographers' Track at RSA Conference 2001}, volume 2020 of {\em
+  Lecture Notes in Computer Science}, Berlin, Heidelberg, New York, 2001.
+  Springer Verlag.
+
+\bibitem{courtois:crypto2003}
+Nicolas~T. Courtois.
+\newblock Fast algebraic attacks on stream ciphers with linear feedback.
+\newblock In {\em Advances in Cryptology -- CRYPTO 2003}, volume 2729 of {\em
+  Lecture Notes in Computer Science}, pages 176--194, 2003.
+
+\bibitem{Courtois2006a}
+Nicolas~T. Courtois.
+\newblock {How Fast can be Algebraic Attacks on Block Ciphers?}
+\newblock Cryptology ePrint Archive, Report 2006/168, 2006.
+\newblock Available at: \url{http://eprint.iacr.org/2006/168.pdf}.
+
+\bibitem{alg-des}
+Nicolas~T. Courtois and Gregory~V. Bard.
+\newblock {A}lgebraic {C}ryptanalysis of the {D}ata {E}ncryption {S}tandard.
+\newblock In Steven~D. Galbraith, editor, {\em Cryptography and Coding -- 11th
+  IMA International Conference}, volume 4887 of {\em Lecture Notes in Computer
+  Science}, pages 152--169, Berlin, Heidelberg, New York, 2007. Springer
+  Verlag.
+\newblock pre-print available at \url{http://eprint.iacr.org/2006/402}.
+
+\bibitem{courtois-klimov-patarin-shamir:eurocrypt2000}
+Nicolas~T. Courtois, Alexander Klimov, Jacques Patarin, and Adi Shamir.
+\newblock Efficient algorithms for solving overdefined systems of multivariate
+  polynomial equations.
+\newblock In {\em Advances in Cryptology --- {EUROCRYPT} 2000}, volume 1807 of
+  {\em Lecture Notes in Computer Science}, pages 392--407, Berlin, Heidelberg,
+  New York, 2000. Springer Verlag.
+
+\bibitem{courtois-meier:eurocrypt2003}
+Nicolas~T. Courtois and Willi Meier.
+\newblock Algebraic attacks on stream ciphers with linear feedback.
+\newblock In Eli Biham, editor, {\em Advances in Cryptology --- {EUROCRYPT}
+  2003}, volume 2656 of {\em Lecture Notes in Computer Science}, pages
+  345--359, Berlin, Heidelberg, New York, 2003. Springer Verlag.
+
+\bibitem{courtois-patarin:ct-rsa03}
+Nicolas~T. Courtois and Jacques Patarin.
+\newblock About the {XL} algorithm over {GF(2)}.
+\newblock In Marc Joye, editor, {\em Topics in Cryptology - CT-RSA 2003: The
+  Cryptographers' Track at the RSA Conference 2003; Proceedings}, volume 2612
+  of {\em Lecture Notes in Computer Science}, pages 141--157, Berlin,
+  Heidelberg, New York, 2003. Springer Verlag.
+
+\bibitem{courtois-pieprzyk:asiacrypt02}
+Nicolas~T. Courtois and Josef Pieprzyk.
+\newblock Cryptanalysis of block ciphers with overdefined systems of equations.
+\newblock In Yuliang Zheng, editor, {\em Advances in Cryptology --- {ASIACRYPT}
+  2002}, volume 2501 of {\em Lecture Notes in Computer Science}, pages
+  267--287, Berlin, Heidelberg, New York, 2002. Springer Verlag.
+
+\bibitem{Cox2005}
+David Cox, John Little, and Donal O'Shea.
+\newblock {\em {I}deals, {V}arieties, and {A}lgorithms}.
+\newblock Springer Verlag, Berlin, Heidelberg, New York, 2005.
+
+\bibitem{Daemen2002}
+Joan Daemen and Vincent Rijmen.
+\newblock {\em The Design of {Rijndael}: {AES} - the {Advanced Encryption
+  Standard}}.
+\newblock Springer Verlag, Berlin, Heidelberg, New York, 2002.
+
+\bibitem{diem:asiacrypt04}
+Claus Diem.
+\newblock The {XL} algorithm and a conjecture from commutative algebra.
+\newblock In Pil~Jong Lee, editor, {\em Advances in Cryptology - ASIACRYPT
+  2004}, volume 3329 of {\em Lecture Notes in Computer Science}, Berlin,
+  Heidelberg, New York, 2004. Springer Verlag.
+
+\bibitem{dullien-diplom}
+Thomas Dullien.
+\newblock Algebraic attacks specialized to {F2}.
+\newblock Master's thesis, University of Bochum, 2008.
+
+\bibitem{strassen-memory}
+Jean-Guillaume Dumas and Clement Pernet.
+\newblock {M}emory efficient scheduling of {S}trassen-{W}inograd's matrix
+  multiplication algorithm.
+\newblock Available at
+  \url{http://www.citebase.org/abstract?id=oai:arXiv.org:0707.2347}, 2007.
+
+\bibitem{kasumi-rka}
+Orr Dunkelman, Nathan Keller, and Adi Shamir.
+\newblock A practical-time attack on the {A5/3} cryptosystem used in third
+  generation {GSM} telephony.
+\newblock Cryptology ePrint Archive, Report 2010/013, 2010.
+
+\bibitem{ederperry:f5+}
+Christian Eder, Justin Gash, and John Perry.
+\newblock Modifying {F}5 to guarantee termination.
+\newblock {\em {\tt arXiv:1006.0318}}, 2010.
+
+\bibitem{F5C}
+Christian Eder and John Perry.
+\newblock {F}5{C}: A variant of {F}aug{\`e}re's {F}5 algorithm with reduced
+  {G}r{\"o}bner bases.
+\newblock {\em Journal of Symbolic Computation}, 45(12):1442--1458, 2010.
+
+\bibitem{minisat}
+Nicklas Een and Nicklas S{\"o}rensson.
+\newblock {A}n extensible {SAT}-solver.
+\newblock In {\em Proceedings of SAT '03}, pages 502--518, 2003.
+\newblock Available at
+  \url{http://www.cs.chalmers.se/Cs/Research/FormalMethods/MiniSat/}.
+
+\bibitem{f4}
+Jean-Charles Faug{\`e}re.
+\newblock A new efficient algorithm for computing {G}r{\"o}bner basis ({F4}).
+\newblock {\em Journal of Pure and Applied Algebra}, 139(1-3):61--88, 1999.
+
+\bibitem{f5}
+Jean-Charles Faug{\`e}re.
+\newblock A new efficient algorithm for computing {G}r{\"o}bner bases without
+  reduction to zero ({F5}).
+\newblock In {\em Proceedings of the 2002 International Symposium on Symbolic
+  and Algebraic Computation}, pages 75--83, New York, 2002. ACM.
+
+\bibitem{faugere:fse2007}
+Jean-Charles Faug{\`e}re.
+\newblock {G}roebner bases. {A}pplications in cryptology.
+\newblock FSE 2007 -- Invited Talk, 2007.
+\newblock Available at \url{http://fse2007.uni.lu/v-misc.html}.
+
+\bibitem{faugere-ars-2004}
+Jean-Charles Faug{\`e}re and Gw{\'e}nol{\'e} Ars.
+\newblock Comparison of {XL} and {G}r{\"o}bner basis algorithms over finite
+  fields.
+\newblock Technical Report 5251, Institut National de Recherche en Informatique
+  et en Automatique (INRIA), 2004.
+
+\bibitem{faugere-levy-perret:crypto2008}
+Jean-Charles Faug\`ere, Françoise~Levy dit Vehel, and Ludovic Perret.
+\newblock Cryptanalysis of {MinRank}.
+\newblock In {\em Advances in Cryptology -- CRYPTO 2008}, volume 5157 of {\em
+  Lecture Notes in Computer Science}, pages 280--296, 2008.
+
+\bibitem{fglm}
+Jean-Charles Faug{\`e}re, Patrizia~M. Gianni, Daniel Lazard, and Teo Mora.
+\newblock {E}fficient {C}omputation of {Z}ero-{D}imensional {G}r{\"o}bner
+  {B}ases by {C}hange of {O}rdering.
+\newblock In {\em Journal of Symbolic Computation 16}, pages 329--344. Academic
+  Press, 1993.
+
+\bibitem{faugere-joux:crypto03}
+Jean-Charles Faug\`ere and Antoine Joux.
+\newblock Algebraic cryptanalysis of hidden field equation ({HFE})
+  cryptosystems using {G}r\"obner bases.
+\newblock In Dan Boneh, editor, {\em Advances in Cryptology --- CRYPTO 2003},
+  volume 2729 of {\em Lecture Notes in Computer Science}, Berlin, Heidelberg,
+  New York, 2003. Springer Verlag.
+
+\bibitem{faugere-perret:crypto06}
+Jean-Charles Faug\`ere and Ludovic Perret.
+\newblock Cryptanalysis of {2R}$^{-}$ schemes.
+\newblock In {\em Advances in Cryptology -- CRYPTO 2006}, volume 4117 of {\em
+  Lecture Notes in Computer Science}, pages 357--372, 2006.
+
+\bibitem{faugere-perret:eurocrypt06}
+Jean-Charles Faug\`ere and Ludovic Perret.
+\newblock Polynomial equivalence problems: Algorithmic and theoretical aspects.
+\newblock In {\em Advances in Cryptology -- EUROCRYPT 2006}, volume 4004 of
+  {\em Lecture Notes in Computer Science}, pages 30--47, 2006.
+
+\bibitem{algebraic-higher-order-dc}
+Jean-Charles Faug{\`e}re and Ludovic Perret.
+\newblock Algebraic cryptanalysis of {C}urry and {F}lurry using correlated
+  messages.
+\newblock Cryptology ePrint Archive, Report 2008/402, 2008.
+\newblock available at \url{http://eprint.iacr.org/2008/402.pdf}.
+
+\bibitem{feldman:phd}
+Jon Feldman.
+\newblock {\em Decoding Error-Correcting Codes via Linear Programming}.
+\newblock PhD thesis, Massachusetts Institute of Technology, 2003.
+
+\bibitem{optcpp}
+Agner Fog.
+\newblock Optimizing software in {C}++, 2008.
+\newblock Available at \url{http://www.agner.org/optimize}.
+
+\bibitem{GAP4}
+The GAP~Group.
+\newblock {\em {GAP -- Groups, Algorithms, and Programming, Version 4.4.12}},
+  2007.
+
+\bibitem{garey-johnson:1979}
+Michael~R. Garey and David~S. Johnson.
+\newblock {\em Computers and Intractability: A Guide to the Theory of
+  NP-Completeness}.
+\newblock W. H. Freeman, 1979.
+
+\bibitem{Gash2008}
+Justin Gash.
+\newblock {\em On Efficient Computation of {G}r\"obner Bases}.
+\newblock PhD thesis, Indiana University, July 2008.
+\newblock available at
+  \url{http://wiki.sagemath.org/days12/f5?action=AttachFile&do=view&target=gash-phd.pdf}.
+
+\bibitem{Gebauer1988}
+Rüdiger Gebauer and H.~Michael M{\"o}ller.
+\newblock {O}n an {I}nstallation of {B}uchberger's {A}lgorithm.
+\newblock In {\em Journal of Symbolic Computation 6 (2 and 3)}, pages 275--286.
+  Academic Press, 1988.
+
+\bibitem{involutive}
+Vladimir Gerdt and Yuri Blinkov.
+\newblock Involutive bases of polynomial ideals.
+\newblock {\em Mathematics and Computers in Simulation}, 45(5--6):419--541,
+  1998.
+
+\bibitem{Gomes-Sabharwal-Selman-2009}
+Carla~P. Gomes, Ashish Sabharwal, and Bart Selman.
+\newblock {\em Handbook of Satisfiability}, chapter Model Counting, pages
+  633--654.
+\newblock IOS Press, 2009.
+
+\bibitem{graycode}
+Frank Gray.
+\newblock Pulse code communication, March 1953.
+\newblock US Patent No. 2,632,058.
+
+\bibitem{singular}
+Gert-Martin Greuel, Gerhard Pfister, and Hans Sch\"onemann.
+\newblock {S}ingular 3.0.
+\newblock {A Computer Algebra System for Polynomial Computations}, Centre for
+  Computer Algebra, University of Kaiserslautern, 2005.
+\newblock Available at: \url{http://www.singular.uni-kl.de}.
+
+\bibitem{gurobi}
+{Gurobi Optimization Inc.}
+\newblock Gurobi 2.0.
+\newblock \url{http://www.gurobi.com}, 2009.
+
+\bibitem{coldboot08}
+J.~Alex Halderman, Seth~D. Schoen, Nadia Heninger, William Clarkson, William
+  Paul, Joseph~A. Calandrino, Ariel~J. Feldman, Jacob Appelbaum, and Edward~W.
+  Felten.
+\newblock Lest we remember: Cold boot attacks on encryption keys.
+\newblock In {\em Proceedings of 17th USENIX Security Symposium}, pages 45--60,
+  2008.
+
+\bibitem{Heys2002}
+Howard~M. Heys.
+\newblock {A} {T}utorial on {L}inear and {D}ifferential {C}ryptanalysis.
+\newblock {\em Cryptologia}, XXVI(3):189--221, 2002.
+\newblock Available at
+  \url{http://www.engr.mun.ca/~howard/PAPERS/ldc_tutorial.pdf}.
+
+\bibitem{Higham}
+Nicholas Higham.
+\newblock {\em {A}ccuracy and {S}tability of {N}umerical {A}lgorithms}.
+\newblock Society for Industrial and Applied Mathematics, second edition, 2002.
+
+\bibitem{strassen-implementation}
+Steven Huss-Lederman, Elaine~M. Jacobson, J.~R. Johnson, Anna Tsao, and Thomas
+  Turnbull.
+\newblock Implementation of {S}trassen's algorithm for matrix multiplication.
+\newblock In {\em Proceedings of Supercomputing '96}, 1996.
+
+\bibitem{ibarra-moran-hui:1982}
+O.~Ibarra, S.~Moran, and R.~Hui.
+\newblock A generalization of the fast {LUP} matrix decomposition algorithm and
+  applications.
+\newblock {\em Journal of Algorithms}, 3:45–--56, 1982.
+
+\bibitem{present-lh}
+Jorge~Nakahara Jr, Pouyan Seperhdad, Bingsheng Zhang, and Meiqin Wang.
+\newblock Linear (hull) and algebraic cryptanalysis of the block cipher
+  {PRESENT}.
+\newblock In {\em The 8th International Conference on Cryptoplogy and Network
+  Security - CANS 2009}, 2009.
+
+\bibitem{digital-systems-2009}
+Raj Kamal.
+\newblock {\em Digital Systems: Principles and Design}.
+\newblock Prentice Hall, 2009.
+
+\bibitem{Knudsen1995}
+Lars~R. Knudsen.
+\newblock Truncated and higher order differentials.
+\newblock In {\em {Fast Software Encryption} 1995}, volume 1008 of {\em Lecture
+  Notes in Computer Science}, pages 196--211, Berlin, Heidelberg, New York,
+  1995. Springer Verlag.
+
+\bibitem{Knudsen1996}
+Lars~R. Knudsen and Matthew Robshaw.
+\newblock Non-linear approximations in linear cryptanalysis.
+\newblock In {\em Advances in Cryptology --- {EUROCRYPT} 1996}, volume 1070 of
+  {\em Lecture Notes in Computer Science}, pages 224--236, Berlin, Heidelberg,
+  New York, 1996. Springer Verlag.
+
+\bibitem{Kreuzer2000}
+Martin Kreuzer and Lorenzo Robbiano.
+\newblock {\em {C}omputational {C}ommutative {A}lgebra 1}.
+\newblock Springer Verlag, Berlin, Heidelberg, New York, 2000.
+
+\bibitem{Lai1994}
+Xuejia Lai.
+\newblock Higher order derivatives and differential cryptanalysis.
+\newblock In {\em {Symposium on Communication, Coding and Cryptography} in
+  honor of James L. Massey on the occasion of his 60'th birthday}, 1994.
+
+\bibitem{lazard:eurocal83}
+Daniel Lazard.
+\newblock Gr\"obner-bases, {G}aussian elimination and resolution of systems of
+  algebraic equations.
+\newblock In {\em Proceedings of the European Computer Algebra Conference on
+  Computer Algebra}, volume 162 of {\em Lecture Notes in Computer Science},
+  Berlin, Heidelberg, New York, 1983. Springer Verlag.
+
+\bibitem{lim-khoo:fse2007}
+Chu-Wee Lim and Khoongming Khoo.
+\newblock An analysis of {XSL} applied to {BES}.
+\newblock In Alex Biryukov, editor, {\em {Fast Software Encryption} 2007},
+  volume 4593 of {\em Lecture Notes in Computer Science}, pages 242--253.
+  Springer Verlag, 2007.
+
+\bibitem{Matsui1993}
+Mitsuru Matsui.
+\newblock {L}inear {C}ryptanalysis {M}ethod for {DES} {C}ipher.
+\newblock In {\em Advances in Cryptology --- {EUROCRYPT} 1993}, volume 765 of
+  {\em Lecture Notes in Computer Science}, pages 386--397, Berlin, Heidelberg,
+  New York, 1993. Springer Verlag.
+\newblock Available at
+  \url{http://homes.esat.kuleuven.be/~abiryuko/Cryptan/matsui_des.PDF}.
+
+\bibitem{mohamed-cabarcas-ding-buchmann-bulygin:icisc09}
+Mohamed Saied~Emam Mohamed, Daniel Cabarcas, Jintai Ding, Johannes Buchmann,
+  and Stanislav Bulygin.
+\newblock {MXL3}: An efficient algorithm for computing {G}r\"obner bases of
+  zero-dimensional ideals.
+\newblock In {\em 12th International Conference on Information Security and
+  Cryptology (ICISC)}, 2009.
+
+\bibitem{mxl2}
+Mohamed Saied~Emam Mohamed, Wael Said Abd~Elmageed Mohamed, Jintai Ding, and
+  Johannes Buchmann.
+\newblock {MXL2}: Solving polynomial equations over {GF(2)} using an improved
+  {M}utant strategy.
+\newblock In {\em Proceedings of Post-Quantum Cryptography 2008}, 2008.
+\newblock pre-print available at
+  \url{http://www.cdc.informatik.tu-darmstadt.de/reports/reports/MXL2.pdf}.
+
+\bibitem{mohamed-werner-ding-buchmann:cans09}
+Mohamed Saied~Emam Mohamed, Fabian Werner, Jintai Ding, and Johannes Buchmann.
+\newblock Algebraic attack on the {MQQ} public key cryptosystem.
+\newblock In Juan~A. Garay, Atsuko Miyaji, and Akira Otsuka, editors, {\em 8th
+  International Conference on Cryptology and Network Security (CANS)}, volume
+  5888 of {\em Lecture Notes in Computer Science}, pages 392--401. Springer
+  Verlag, 2009.
+\newblock pre-print available at \url{http://eprint.iacr.org/2008/451}.
+
+\bibitem{murphy-paterson:jmc2008}
+Sean Murphy and Maura~B. Paterson.
+\newblock A geometric view of cryptographic equation solving.
+\newblock {\em Journal of Mathematical Cryptology}, 2:63--107, 2008.
+\newblock Available at \url{http://www.rhul.ac.uk/mathematics/techreports}.
+
+\bibitem{murphy-paterson:ccc2009}
+Sean Murphy and Maura~B. Paterson.
+\newblock Geometric ideas for cryptographic equation solving in even
+  characteristic.
+\newblock In {\em Proceedings of the 12th IMA International Conference on
+  Coding and Cryptography,}, volume 5921 of {\em Lecture Notes in Computer
+  Science}, pages 202--0221, 2009.
+
+\bibitem{murphy-robshaw:crypto2002}
+Sean Murphy and Matthew Robshaw.
+\newblock {E}ssential {A}lgebraic {S}tructure {W}ithin the {AES}.
+\newblock In M.~Yung, editor, {\em Advances in Cryptology --- {CRYPTO} 2002},
+  volume 2442 of {\em Lecture Notes in Computer Science}, pages 1--16, Berlin,
+  Heidelberg, New York, 2002. Springer Verlag.
+
+\bibitem{cryptoeprint:2008:510}
+Hovav~Shacham Nadi~Heninger.
+\newblock Reconstructing {RSA} private keys from random key bits.
+\newblock Cryptology ePrint Archive, Report 2008/510, 2008.
+
+\bibitem{fflas}
+Clement Pernet.
+\newblock Implementation of {W}inograd's algorithm over finite {F}ields using
+  {ATLAS} {L}evel3 {B}las.
+\newblock Technical report, ID-Laboratory, 2001.
+
+\bibitem{perret:thesis2005}
+Ludovic Perret.
+\newblock {\em {\'E}tude d'outils alg{\'e}briques et combinatoires pour la
+  cryptographie {\`a} clef publique}.
+\newblock PhD thesis, Universit{\'e} de Marne–la–Vall{\'e}e, 2005.
+
+\bibitem{truecrypt}
+TrueCrypt Project.
+\newblock Truecrypt project.
+\newblock \url{http://www.truecrypt.org/}.
+
+\bibitem{Raddum2006}
+H{\aa}vard Raddum and Igor Semaev.
+\newblock New technique for solving sparse equation systems.
+\newblock Cryptology ePrint Archive, Report 2006/475, 2006.
+\newblock Available at \url{http://eprint.iacr.org/2006/475}.
+
+\bibitem{Raddum2008}
+H{\aa}vard Raddum and Igor Semaev.
+\newblock Solving {M}ultiple {R}ight {H}and {S}ides linear equations.
+\newblock {\em Designs, Codes and Cryptography}, 49(1-3):147 -- 160, 2008.
+\newblock Pre-print available at \url{http://eprint.iacr.org/2007/285}.
+
+\bibitem{meataxe}
+Michael Ringe.
+\newblock Meataxe 2.4.8.
+\newblock Available at \url{http://www.math.rwth-aachen.de/~MTX/}, 2007.
+
+\bibitem{Robshaw1994}
+Matthew Robshaw and B.S.~Kaliski Jr.
+\newblock Linear cryptanalysis using multiple approximations.
+\newblock In {\em Advances in Cryptology --- {CRYPTO} 1994}, volume 839 of {\em
+  Lecture Notes in Computer Science}, pages 26--39, Berlin, Heidelberg, New
+  York, 1994. Springer Verlag.
+\newblock Available at
+  \url{http://dsns.csie.nctu.edu.tw/research/crypto/HTML/PDF/C94/26.PDF}.
+
+\bibitem{twofish}
+Bruce Schneier, John Kelsey, Doug Whiting, David Wagner, Chris Hall, and Niels
+  Ferguson.
+\newblock {T}wofish: A 128-bit {B}lock {C}ipher, 1998.
+\newblock Available at \url{http://www.schneier.com/paper-twofish-paper.pdf}.
+
+\bibitem{Segers2004}
+A.J.M. Segers.
+\newblock {A}lgebraic {A}ttacks from a {G}r{\"o}bner {B}asis {P}erspective.
+\newblock Master's thesis, Technische Universiteit Eindhoven, 2004.
+\newblock Available at
+  \url{http://www.win.tue.nl/~henkvt/images/ReportSegersGB2-11-04.pdf}.
+
+\bibitem{Shannon1949}
+Claude~E. Shannon.
+\newblock {C}ommunication {T}heory of {S}ecrecy {S}ystems.
+\newblock In {\em Bell System Technical Journal 28}, pages 656--715, 1949.
+
+\bibitem{SNC09}
+Mate Soos, Karsten Nohl, and Claude Castelluccia.
+\newblock Extending {SAT} solvers to cryptographic problems.
+\newblock In Oliver Kullmann, editor, {\em Theory and Applications of
+  Satisfiability Testing - SAT 2009}, volume 5584 of {\em Lecture Notes in
+  Computer Science}, pages 244--257, Berlin, Heidelberg, New York, 2009.
+  Springer Verlag.
+
+\bibitem{steel:F404}
+Allan Steel.
+\newblock {A}llan {S}teel's {G}r\"obner basis timings page, 2004.
+\newblock Available at \url{http://magma.maths.usyd.edu.au/users/allan/gb/}.
+
+\bibitem{magma-matmulgf2}
+Allan Steel.
+\newblock Private communication, March 2009.
+
+\bibitem{Stegers2005}
+Till Stegers.
+\newblock Faug{\`e}re's {F}5 algorithm revisited.
+\newblock Master's thesis, Technische Universit{\"a}t Darmstadt, 2005.
+
+\bibitem{sage}
+W.\thinspace{}A. Stein et~al.
+\newblock {\em {S}age {M}athematics {S}oftware ({V}ersion 4.7.1)}.
+\newblock The Sage Development Team, 2011.
+\newblock {\tt http://www.sagemath.org}.
+
+\bibitem{strassen}
+Volker Strassen.
+\newblock Gaussian elimination is not optimal.
+\newblock {\em Nummerische Mathematik}, 13:354--256, 1969.
+
+\bibitem{SK98}
+Toshinobu~Kaneko Takeshi~Shimoyama.
+\newblock Quadratic relation of s-box and its application to the linear attack
+  of full round {DES}.
+\newblock In {\em Advances in Cryptology --- CRYPTO 1998}, volume 1462 of {\em
+  Lecture Notes in Computer Science}, pages 200--211. Springer Verlag, 1998.
+
+\bibitem{Wagner1999}
+David Wagner.
+\newblock The boomerang attack.
+\newblock In {\em {Fast Software Encryption} 1999}, volume 1636 of {\em Lecture
+  Notes in Computer Science}, pages 156--170, Berlin, Heidelberg, New York,
+  1999. Springer Verlag.
+\newblock Available at
+  \url{http://www.cs.berkeley.edu/~daw/papers/boomerang-fse99.ps}.
+
+\bibitem{present-differentials}
+Meiqin Wang.
+\newblock 24 differential characteristics for 14-round present we have found.
+\newblock private communication, 2008.
+
+\bibitem{present-dc:africacrypt}
+Meiqin Wang.
+\newblock Differential {C}ryptanalysis of reduced-round {PRESENT}.
+\newblock In Serge Vaudenay, editor, {\em {Africacrypt} 2008}, volume 5023 of
+  {\em Lecture Notes in Computer Science}, pages 40--49, Berlin, Heidelberg,
+  New York, 2008. Springer Verlag.
+
+\bibitem{hackersdelight}
+Henry~S. Warren.
+\newblock {\em Hacker's Delight}.
+\newblock Addison-Wesley Longman Publishing Co., Inc., Boston, MA, USA, 2002.
+
+\bibitem{winograd}
+Shmuel Winograd.
+\newblock On multiplication of 2 x 2 matrices.
+\newblock {\em Linear Algebra and Application}, 4:381–--388, 1971.
+
+\bibitem{yang-cheng:acisp04}
+B.-Y. Yang and J.-M. Chen.
+\newblock Theoretical analysis of {XL} over small fields.
+\newblock In Huaxiong Wang, Josef Pieprzyk, and Vijay Varadharajan, editors,
+  {\em Information Security and Privacy: 9th Australasian Conference, ACISP
+  2004}, volume 3108 of {\em Lecture Notes in Computer Science}, Berlin,
+  Heidelberg, New York, 2004. Springer Verlag.
+
+\bibitem{antiquad}
+Bo-Yin Yang, Owen Chia-Hsin Chen, D.~J. Bernstein, and Jiun-Ming Chen.
+\newblock Analysis of {QUAD}.
+\newblock In {\em {Fast Software Encryption} 2007}, volume 4593 of {\em Lecture
+  Notes in Computer Science}, pages 290--308, Berlin, Heidelberg, New York,
+  2007. Springer Verlag.
+\newblock pre-print available at
+  \url{http://cr.yp.to/streamciphers/antiquad-20070817.pdf}.
+
+\bibitem{bit-pattern-ia}
+Muhammad~Reza Z'Aba, Håvard Raddum, Matt Henricksen, and Ed~Dawson.
+\newblock Bit-pattern based integral attacks.
+\newblock In Kaisa Nyberg, editor, {\em {Fast Software Encryption} 2008},
+  number 5086 in Lecture Notes In Computer Science, pages 363--381, Berlin,
+  Heidelberg, New York, 2008. Springer Verlag.
+
+\end{thebibliography}

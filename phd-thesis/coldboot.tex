@@ -1,0 +1,366 @@
+\newcommand{\Ss}{\ensuremath{\mathcal{S}}}
+\newcommand{\Hs}{\ensuremath{\mathcal{H}}}
+\newcommand{\Serpent}{\textsc{Serpent}\xspace}
+\newcommand{\Twofish}{Twofish\xspace}
+
+\newcommand{\coldboot}{\emph{Cold Boot}\xspace}
+
+In~\cite{coldboot08} a method for extracting cryptographic key material from DRAM used in modern computers was proposed; the technique was called \coldboot \emph{attacks}. In the case of some block ciphers, such as the AES and DES, simple algorithms were also proposed in~\cite{coldboot08} to recover the cryptographic key from the observed set of round subkeys in memory (computed via the cipher key schedule operation), which were however subject to errors (due to memory bits decay). In this chapter we propose improved methods for key recovery for other ciphers used in Full Disk Encryption (FDE) products. Our algorithms are also based on closest code word decoding methods, however apply a novel method for solving a set of non-linear algebraic equations with noise based on Integer Programming (cf.\ Chapter~\ref{chapter:algebraic_attacks}). This method should have further applications in cryptology, and is likely to be of independent interest. We demonstrate the viability of the Integer Programming method by applying it against the \Serpent block cipher, which has a much more complex key schedule than AES. Furthermore, we also consider the Twofish key schedule, to which we apply a dedicated method of recovery.
+
+This chapter is a revised version of the paper ``Improved Cold Boot Key Recovery (using Polynomial System Solving with Noise)'' by Carlos Cid and the author which is in submission. This work was also presented at the 2nd International Conference on Symbolic Computation and Cryptography in Egham, UK in June 2010.
+
+We would like to thank Stefan Heinz, Timo Berthold and Ambros M.\ Gleixner for helpful discussions on Mixed Integer Programming and for providing tuning parameters for SCIP suitable for our experiments.
+
+\section{Introduction}
+The structure of block cipher key schedules has received much renewed attention, since the recent publication of high-profile attacks against the AES \cite{aes-rka} and Kasumi \cite{kasumi-rka} in the related-key model. 
+While the practicality of such attacks is subject of debate, they clearly highlight the relevance of the (often-ignored) key schedule operation from a cryptanalysis perspective. 
+An unrelated technique, called \coldboot attacks, was proposed in~\cite{coldboot08} and provided an insight into the strength of a particular key schedule against practical attacks. 
+The method is based on the fact that DRAM may retain large part of its content for several seconds after removing its power, with gradual loss over that period. Furthermore, the time of retention can be potentially increased by reducing the temperature of memory. Thus contrary to common belief, data may persist in memory for several minutes after removal of power, subject to slow decay. As a result, data in DRAM can be used to recover potentially sensitive data, such as cryptographic keys, passwords, etc.  A typical application is to defeat the security provided by disk encryption programs, such as Truecrypt \cite{truecrypt}. In this case, cryptographic key material is maintained in memory, for transparent encryption and decryption of data. One could apply the method from~\cite{coldboot08} to obtain the computer's memory image, potentially extract the encryption key and then recover encrypted data.
+
+The \coldboot attack has thus three stages: 
+\begin{enumerate}
+\item the attacker physically removes the computer's memory, potentially applying cooling techniques to reduce the memory bits decay,
+to obtain the memory image;
+\item locate the cryptographic key material and other sensitive information in the memory image; and
+\item recover the original cryptographic key. 
+\end{enumerate}
+We refer the reader to~\cite{coldboot08,cryptoeprint:2008:510} for discussion on stages 1 and 2. In this chapter we concentrate on stage 3.
+
+A few algorithms were proposed in~\cite{coldboot08} to tackle stage 3, which requires one to recover the original key based on the observed key material, probably subject to errors (the extent of which will depend on the properties of the memory, lapsed time from removal of power, and temperature of memory). In the case of block ciphers, the key material extracted from memory is very likely to be a set of round subkeys, which are the result of the cipher's key schedule operation. Thus the key schedule can be seen as an \emph{error-correcting code}, and the problem of recovering the original key can be essentially described as a decoding problem.
+
+The paper~\cite{coldboot08} contains methods for the AES and DES block ciphers (besides a discussion for the RSA cryptosystem, which we do not consider in this chapter). For DES, recovering the original 56-bit key is equivalent to decoding a repetition code. Textbook methods are used in~\cite{coldboot08} to recover the encryption key from the \emph{closest code word} (i.e. valid key schedule). The AES key schedule is not as simple as DES, but still contains a large amount of linearity (which has also been exploited in recent related-key attacks, e.g.~\cite{aes-rka}). Another feature is that the original encryption key is used as the initial whitening subkey, and thus should be present in the key schedule. The authors of~\cite{coldboot08} model the memory decay as a binary asymmetric channel, and recover an AES key up to error rates of $\delta_0 = 0.30,\delta_1=0.001$ (see notation in Section~\ref{sec:coldboot} below).
+
+
+Other block ciphers were not considered in~\cite{coldboot08}. For instance, the popular FDE product Truecrypt~\cite{truecrypt} provides the user with a choice of three block ciphers: \Serpent~\cite{serpent}, \Twofish~\cite{twofish} (both formerly AES candidates) and AES. The former two ciphers present much more complex key schedule operations (with more non-linearity) than DES and AES. Another feature is that the original encryption key does not \emph{explicitly} appear in the expanded key schedule material (but rather has its bits non-linearly combined to derive the several round subkeys). These two facts led to the belief that these ciphers are not susceptible to the attacks in~\cite{coldboot08}, and could be inherently more secure against \coldboot attacks. In this chapter, we demonstrate that one can still recover the encryption key for the \Serpent and \Twofish ciphers up to some reasonable amount of error. We expect that our methods can also be applied to other popular ciphers.
+  
+
+\section{The \coldboot Problem}
+\label{sec:coldboot}
+We define the \coldboot problem as follows. Consider an efficiently computable vectorial Boolean function $\mathcal{KS}: \F_2^n \rightarrow \F_2^N$ where $N > n$ and two real numbers $0\leq \delta_0, \delta_1 \leq 1$. Let $K = \mathcal{KS}(k)$ be the image for some $k \in \F_2^n$, and $K_i$ be the $i$-th bit of $K$. Now given $K$, compute $K' = (K'_0, K'_1, \ldots, K'_{N-1}) \in \F_2^N$ according to the following probability distribution: 
+$$
+\begin{array}{lllllll}
+Pr[K_i' = 0 \ | \ K_i = 0]  &=& 1 - \delta_1, & \ & Pr[K_i' = 1 \ | \ K_i = 0]  &=& \delta_1,\\
+Pr[K_i' = 1 \ | \ K_i = 1]  &=& 1 - \delta_0, & \ & Pr[K_i' = 0 \ | \ K_i = 1]  &=& \delta_0.\\
+\end{array}
+$$
+Thus we can consider such a $K'$ as the output of $\mathcal{KS}$ for some $k \in \F_2^n$ except that $K'$ is noisy. It follows that a bit $K'_i = 0$ of $K'$ is correct with probability
+$$
+Pr[K_i = 0 \ | \ K_i' = 0] = \frac{Pr[K_i'=0 | K_i=0]Pr[K_i=0]}{Pr[K_i'=0]} = \frac{(1 - \delta_1)}{(1 - \delta_1 + \delta_0)}.
+$$
+Likewise, a bit $K'_i = 1$ of $K'$ is correct with probability $\frac{(1 - \delta_0)}{(1 - \delta_0 + \delta_1)}$. We denote these values by $\Delta_0$ and $\Delta_1$ respectively.
+
+Now assume we are given the function $\mathcal{KS}$ and a vector $K' \in \F_2^N$ obtained by the process described above.
+Furthermore, we are also given a control function $\mathcal{E}: \F_2^n \rightarrow \{True,False\}$ which returns \emph{True} or \emph{False} for a candidate $k$.  The task is to recover $k$ such that $\mathcal{E}(k)$ returns $True$. For example, $\mathcal{E}$ could use the encryption of some known data to check whether $k$ is the original key.
+
+In the context of this chapter, we can consider the function $\mathcal{KS}$ as the key schedule operation of a block cipher with $n$-bit keys. The vector $K$ is the result of the key schedule expansion for a key $k$, and the noisy vector $K'$ is obtained from $K$ due to the process of memory bit decay.
+We note that in this case, another goal of the adversary could be recovering $K$ rather than $k$ (that is, the expanded key rather than the original encryption key), since with the round subkeys one could implement the encryption/decryption algorithm. In most cases, one should be able to efficiently recover the encryption key $k$ from the expanded key $K$. However it could be conceivable that for a particular cipher with a highly non-linear key schedule, the problems are not equivalent.
+ 
+Finally, we note that the \coldboot problem is equivalent to decoding (potentially non-linear) binary codes with biased noise.
+
+\section{Considered Ciphers}
+
+In this section we briefly describe some of the relevant features of the key schedule operation of the target ciphers.
+
+\subsection{AES}
+For details of the key schedule of the AES block cipher we refer the reader to~\cite{Daemen2002}. 
+In this chapter, we are interested in its description as a system of polynomial equations over $\field{F}_2$, see~\cite{alg-aes-book}.
+We note that the non-linearity of the key schedule is provided by four S-box operations in the computation of each round subkey.
+The explicit degree of the S-box Boolean functions is 7, while it is well known that the key schedule can be described as a system of quadratic equations. Finally, we present the simple lemma below.
+
+\begin{lemma}
+\label{lemma:aes}
+Let $K_0, K_1, \ldots, K_{43}$ be the 44 32-bit words resulting from the AES-128 key schedule (thus $[K_0,K_1, K_2,K_3]$ is the user-supplied key). Then for any $i$, knowledge of either:
+\begin{itemize}
+\item $K_i, K_{i+1}, K_{i+2}, K_{i+3}$ (i.e. any four consecutive 32-bit words) or, 
+\item $K_i, K_{i+4}, K_{i+8}, K_{i+12}$ (i.e. any four 32-bit words, four positions apart)
+\end{itemize}
+allows one to compute the user-supplied key. 
+\end{lemma}
+The proof of the first statement follows straight-forwardly from the definition of the key schedule and the fact that the operation is invertible. For the second item, we note that with $K_{i}$ and $K_{i+4}$,
+one can compute $K_{i+3}$ for any $i$. One can repeatedly use this fact to compute four consecutive 32-bit words (namely, $K_{i+9}, K_{i+10}, K_{i+11}, K_{i+12}$), and then follow as item 1 to compute 
+the user-supplied key. 
+
+\subsection{\Serpent}
+\Serpent, designed by Ross Anderson et al.\ \cite{serpent}, was one of the five AES finalists. The cipher key schedule operation
+produces 132 32-bit words of key material as follows. First, the user-supplied key $k$ is padded to 256 bits using known constants, and written as eight 32-bit words $w_{−8},\dots , w_{−1}$. This new string
+is then expanded into the prekey words $w_0 ,\dots , w_{131}$ by the following affine recurrence:
+$$w_i = (w_{i−8} \oplus w_{i−5} \oplus w_{i−3} \oplus w_{i−1} \oplus \psi \oplus i) \lll 11,$$ 
+where $\psi$ is some known constant. Finally the round keys are calculated from the prekeys using the S-boxes in bitslice mode in the following way:
+\begin{eqnarray*}
+\{k_{ 0} , k_{ 1} , k_{ 2} , k_{ 3} \} &=& S_3(w_0 , w_1 , w_2 , w_3)\\
+\{k_{ 4} , k_{ 5} , k_{ 6} , k_{ 7} \} &=& S_2(w_4 , w_5 , w_6 , w_7 )\\
+\{k_{ 8} , k_{ 9} , k_{10} , k_{11} \} &=& S_1(w_8 , w_9 , w_{10} , w_{11} )\\
+\{k_{12} , k_{13} , k_{14} , k_{15} \} &=& S_0(w_{12} , w_{13} , w_{14} , w_{15} )\\
+\{k_{16} , k_{17} , k_{18} , k_{19} \} &=& S_7(w_{16} , w_{17} , w_{18} , w_{19} )\\
+\dots & \\                                                                           
+\{k_{124} , k_{125} , k_{126} , k_{127} \} &=& S_4 (w_{124} , w_{125} , w_{126} , w_{127} )\\
+\{k_{128} , k_{129} , k_{130} , k_{131} \} &=& S_3 (w_{128} , w_{129} , w_{130} , w_{131} ).\\
+\end{eqnarray*}
+The round subkeys are then $K_i = \{k_{4i} , k_{4i+1} , k_{4i+2} , k_{4i+3}\}$. 
+
+We note the following features of the cipher key schedule which are of relevance to Cold Boot key recovery: the user-supplied key does not appear in the output of the \Serpent key schedule operation, the explicit degree of the S-box Boolean functions is three, and that every output bit of the key schedule depends non-linearly on the user-supplied key.
+
+\subsection{Twofish}
+\label{subsec:twofish}
+
+Twofish, designed by Bruce Schneier et al.\ \cite{twofish}, was also one of the five AES finalists. The cipher is widely deployed, e.g. it is part of the cryptographic framework in the Linux kernel and is also available in Full Disk Encryption products. Twofish has a rather complicated key schedule, which makes it a challenging target for Cold Boot key recovery attacks. 
+We note that while Twofish is defined for all key sizes up to 256 bits, we will focus here on the 128-bit version. We also follow the notation from \cite{twofish}.
+
+The Twofish key schedule operation generates 40 32-bit words of expanded key $K_0$, $\dots$, $K_{39}$, as well as four key-dependent S-boxes from the user-provided key $M$. Let $k=128/64=2$, then the key $M$ consists of $8k = 16$ bytes $m_0, \dots, m_{8k-1}$. The cipher key schedule operates as follows. Each four consecutive bytes are converted into 32-bit words in little endian byte ordering. That is, the leftmost byte is considered as the least significant byte of the 32-bit word. This gives rise to four words $M_i$. Two key vectors $M_e$ and $M_o$ are defined as $M_e = (M_0,M_2)$ and $M_o = (M_1,M_3)$. The subkey words $K_{2i}$ and $K_{2i+1}$ for $0 \leq i < 20$ are then computed from $M_e$ and $M_o$ by the routine \verb|gen_subkeys| given in Algorithm~\ref{alg:gensubkeys}.
+
+\begin{algorithm}[htbp]
+\KwIn{$i$ -- an integer}
+\KwIn{$M_e$ -- a list of 32-bit words}
+\KwIn{$M_o$ -- a list of 32-bit words}
+\KwResult{two 32-bit words}
+\SetLine
+\Begin{
+$\rho \longleftarrow 2^{24} + 2^{16} + 2^{8} + 2^{0}$\;
+$A_i \longleftarrow h(2i\rho, M_e)$\;
+$B_i \longleftarrow h((2i+1)\rho, M_o) \lll 8$\;
+$K_{2i} \longleftarrow A_i + B_i \textnormal{ mod } 2^{32}$\;
+$K_{2i+1} \longleftarrow (A_i + 2B_i \textnormal{ mod } 2^{32})\lll 9$\;
+\Return{$K_{2i},K_{2i+1}$}\;
+}
+\caption{gen\_subkeys}
+\label{alg:gensubkeys}
+\end{algorithm}
+
+\begin{algorithm}[htbp]
+\KwIn{$Z$ -- a 32-bit word}
+\KwIn{$L$ -- a list of two 32-bit words}
+\KwResult{a 32-bit word}
+\SetLine
+\Begin{
+$L_0, L_1 \longleftarrow L[0],L[1]$\;
+$z_0,z_1,z_2,z_3 \longleftarrow $ split $Z$ into four bytes\;
+$z_0,z_1,z_2,z_3 \longleftarrow q_0[z_0], q_1[z_1], q_0[z_2], q1[z_3]$\;
+$z_0,z_1,z_2,z_3 \longleftarrow z_0 \oplus L_1[0], z_1 \oplus L_1[1], z_2 \oplus L_1[2], z_3 \oplus L_1[3]$\;
+$z_0,z_1,z_2,z_3 \longleftarrow q_0[z_0], q_0[z_1], q_1[z_2], q_1[z_3]$\;
+$z_0,z_1,z_2,z_3 \longleftarrow z_0 \oplus L_0[0], z_1 \oplus L_0[1], z_2 \oplus L_0[2], z_3 \oplus L_0[3]$\;
+$z_0,z_1,z_2,z_3 \longleftarrow q_1[z_0], q_0[z_1], q_1[z_2], q_0[z_3]$\;
+$z_0,z_1,z_2,z_3 \longleftarrow MDS(z_0,z_1,z_2,z_3)$\;
+
+\Return the 32-bit word consisting of the four bytes $z_0,z_1,z_2,z_3$\;
+}
+\caption{$h$}
+\label{alg:h}
+\end{algorithm}
+
+Algorithm~\ref{alg:h} defines the function $h$. There, we have that $q_0$ and $q_1$ are applications of two 8-bit S-boxes defined in \cite{twofish} and $MDS(Z)$ is a multiplication of $Z$ interpreted as a 4 element vector over the field $\field{F}_{2^8}
+\cong \field{F}_2[x]/\langle x^8 + x^6 + x^5 + x^3 + 1 \rangle$ by a $4 \times 4$ MDS matrix. The explicit degree of the S-boxes' Boolean functions is also 7.
+
+Finally, a third vector $S$ is also derived from the key. This is done by combining the key bytes into groups of eight (e.g. $m_0,\dots,m_7$), interpreting them as a vector over the field $\field{F}_{2^8} \cong \field{F}_2[x]/\langle x^8 + x^6 + x^3 + x^2 + 1\rangle$, which is multiplied by a $4 \times 8$ matrix $RS$.
+
+Each resulting four bytes are then interpreted as a 32-bit word $S_i$. These words make up the third vector $S = (S_1,S_0)$. The key dependent S-Box $g$ maps
+32 bits to 32 bits and is defined as $g(X) = h(X,S)$.
+
+Full disk encryption products use infrequent re-keying, and to provide efficient and transparent access to encrypted data, applications will in practice precompute the key schedule and store the expanded key in memory. For the Twofish block cipher, this means that the subkey words $K_0$, $\dots$, $K_{39}$ as well as the key dependent S-boxes are typically precomputed. 
+
+Storing 40 words $K_0,\dots,K_{39}$ in memory is obviously straight-forward (we note however that this set of words does not contain any copy of the user-supplied key).
+To store the key dependent S-box, the authors of \cite{twofish} state: ``Using 4 Kb of table space, each S-box is expanded to a 8-by-32-bit table that combines both the S-box lookup and the multiply by the column of the MDS matrix. Using this option, a computation of $g$ consists of four table lookups, and three xors. Encryption and decryption speeds are constant regardless of key size.'' We understand that most software implementations choose this strategy to represent the S-box (for instance, the Linux kernel chooses this approach, and by default Truecrypt also implements this technique, which can however be disabled with the C macro \verb|TC_MINIMIZE_CODE_SIZE|), and we assume this is the case in our analysis.
+
+
+\section{Solving Systems of Algebraic Equations with Noise}
+\label{sec:algebra}
+
+In this section we propose a method for solving systems of multivariate algebraic equations with noise. We use the method to implement a \coldboot attack against ciphers with key schedule with a higher degree of non-linearity, such as \Serpent.
+
+Recall (cf.\ Section~\ref{sec:solvingmq}), that polynomial system solving (\emph{PoSSo}) is the problem of finding the affine variety for a system of polynomial equations over some field $\field{F}$. In this chapter, we consider a variant of the PoSSo problem where it is sufficient to find \emph{one} solution. In particular, we consider the set $F = \{f_0,\dots,f_{m-1}\} \subset \F[x_0,\dots,x_{n-1}]$. A solution to $F$ is \emph{any} point $x \in \field{F}^n$ such that $\forall f \in F$, we have $f(x) = 0$. Note that we restrict ourselves to solutions in the base field in the context of this chapter. We denote this problem as \emph{PoSSo1}.
+
+We can define a family of ``Max-PoSSo'' problems, analogous to the well-known Max-SAT family of problems. In fact, these problems can be reduced to their SAT equivalents. However, the modelling as polynomial systems seems more natural in this context since more algebraic structure can be preserved.
+
+Denote by \emph{Max-PoSSo} the problem of finding any $x \in \field{F}^n$ that satisfies the maximum number of polynomials in $F$. 
+Likewise, by \emph{Partial Max-PoSSo} we denote the problem of returning a point $x \in \field{F}^n$ such that for two sets of polynomials $\Hs, \Ss \subset \F[x_0, \dots, x_{n-1}]$, we have $f(x) = 0$ for all $f \in \Hs$, and the number of polynomials $f \in \Ss$ with $f(x) = 0$ is maximised. Max-PoSSo is Partial Max-PoSSo with $\Hs = \varnothing$.
+
+Finally, by \emph{Partial Weighted Max-PoSSo} we denote the problem of returning a point $x \in \field{F}^n$ such that $\forall f \in \Hs: f(x) = 0$, and $\sum_{f \in \Ss} \mathcal{C}(f,x)$ is minimised where $\mathcal{C}: f \in \Ss,x \in \field{F}^n \rightarrow \field{R}_{\geq 0}$ is a cost function that returns $0$ if $f(x) = 0$ and some value $v> 0$ if $f(x) \neq 0$. Partial Max-PoSSo is Partial Weighted Max-PoSSo where $\mathcal{C}(f,x)$ returns 1 if $f(x) \neq 0$ for all $f$.
+We can consider the \coldboot Problem as a Partial Weighted Max-PoSSo problem over $\field{F}_2$.
+
+Let $F_\mathcal{K}$ be an equation system corresponding to $\mathcal{KS}$ such that the only pairs $(k,K)$ that satisfy $F_\mathcal{K}$ are any $k \in \F_2^n$ and $K = \mathcal{K}(k)$. In our task however, 
+we need to consider $F_\mathcal{K}$ with $k$ and $K'$. Assume that for each noisy output bit $K'_i$ there is some $f_i \in F_\mathcal{K}$ of the form $g_i + K'_i$ where $g_i$ is some polynomial. Furthermore assume that these are the only polynomials involving the output bits  ($F_\mathcal{K}$ can always be brought into this form) and denote the set of these polynomials by $\Ss$. Denote the set of all remaining polynomials in $F_\mathcal{K}$ as $\Hs$, and define the cost function $\mathcal{C}$ as a function which returns 
+\[
+\begin{array}{cr} \frac{1}{1 - \Delta_0} &\textnormal{ for } K'_i = 0, f(x) \neq 0,\\
+\frac{1}{1 - \Delta_1} & \textnormal{ for } K'_i=1, f(x) \neq 0,\\
+0 & \textnormal{otherwise}.\end{array}
+\]
+Finally, let $F_\mathcal{E}$ be an equation system that is only satisfiable for $k \in \F_2^n$ for which $\mathcal{E}$ returns \emph{True}. This will usually be an equation system for one or more encryptions. Add the polynomials in $F_\mathcal{E}$ to $\Hs$. Then $\Hs,\Ss,\mathcal{C}$ define a Partial Weighted Max-PoSSo problem. Any optimal solution $x$ to this problem is a candidate solution for the \coldboot problem. We note that our linear cost function $\mathcal{C}$ is an approximation of the actual noise. However, this approximation seems to be sufficient for our task (see below).
+
+In order to solve Max-PoSSo problems, we can reduce them to Max-SAT problems. However, in this chapter we consider a different approach which appears to better capture the algebraic  structure of the underlying problems.
+
+\subsection{Mixed Integer Programming}
+
+Recall, that we can convert sparse boolean polynomial systems to Mixed Integer Programs (cf.\ Section~\ref{sec:mip}). Thus, we can solve \emph{PoSSo1} using Mixed Integer Programming.
+
+Furthermore, we can convert a Partial Weighted Max-PoSSo problem into a Mixed Integer Programming problem as follows.
+Convert each $f \in \Hs$ to linear constraints as before. For each $f_i \in \Ss$ add some new binary slack variable $e_i$ to $f_i$ and convert the resulting polynomial as before.  The objective function we minimise is $\sum c_i e_i$, where $c_i$ is the value of $\mathcal{C}(f,x)$ for some $x$ such that $f(x) \neq 0$. Any optimal solution $x \in S$ will be an optimal solution to the Partial Weighted Max-PoSSo problem.
+
+We note that this approach is essentially the non-linear generalisation of decoding random linear codes with linear programming \cite{feldman:phd}.
+
+
+\section{Cold Boot Key Recovery}
+\label{sec:keyrecovery}
+
+The original approach proposed in~\cite{coldboot08} is to model the memory decay as a binary asymmetric channel (with error probabilities $\delta_0, \delta_1$), 
+and recover the encryption key from the \emph{closest code word} (i.e. valid key schedule) based
+on commonly used decoding techniques. The model of attack used in~\cite{coldboot08} often assumes $\delta_1 \approx 0$, which appears to be a reasonable 
+assumption to model memory decay in practice. We will often do the same in our discussions below.
+
+Under the adopted model, recovering the original 56-bit key for DES is equivalent to decoding a repetition code, as discussed in~\cite{coldboot08}. 
+In this section we will discuss potential methods for recovering the user-supplied key for the key schedules of Twofish, \Serpent and the AES, under the Cold Boot attack scenario.
+
+\subsection{Dedicated Approach to AES}
+
+The AES key schedule is not as simple as the one from DES, but still contains a large amount of linearity. Furthermore, the original encryption key is used as the initial whitening subkey, and thus should be present in the key schedule. 
+The method proposed in~\cite{coldboot08} for recovering the key for the AES-128 divides this initial subkey into four subsets of 32 bits, and uses 24 bits of the second subkey as redundancy. These small sets are then decoded in order of likelihood, combined and the resulting candidate keys are checked against the full schedule. The idea can be easily extended to the AES with 192- and 256-bit keys. 
+The authors of~\cite{coldboot08} recover an AES key up to error rates of $\delta_0 = 0.30,\delta_1=0.001$.
+
+A better insight into the cipher key schedule may however be able to improve the complexity and/or success rate of key recovery in some cases. For the AES, we note that by Lemma~\ref{lemma:aes}, one needs not to be restricted
+to the first two subkeys, and can thus have different data points for decoding\footnote{We note that this can potentially improve the rate of success for other methods discussed in this chapter as well.}. 
+
+Indeed, if we denote by $k_{i,0}, k_{i,1}, 
+\ldots , k_{i,15}$ the 16 bytes of $i$-th subkey, we have that in~\cite{coldboot08} the 32-bit words 
+$$[k_{0,j}, k_{0,4+j}, k_{0,8+j}, k_{0,12 + (j+1 \ mod 4)}]$$
+were recovered for $j=0,1,2,3$, using as redundancy the three bytes 
+$$
+\begin{array}{l}
+k_{1,j} = k_{0, j} \oplus S(k_{0,12 + (j+1 \ mod 4)}) \oplus \psi_0,\\
+k_{1,4+j} = k_{0, 4+ j} \oplus k_{0, j} \oplus S(k_{0,12 + (j+1 \ mod 4)}) \oplus \psi_0,\\
+k_{1,8+j} = k_{0,8+j} \oplus k_{0, 4+ j} \oplus k_{0, j} \oplus S(k_{0,12 + (j+1 \ mod 4)}) \oplus \psi_0,\\
+\end{array}
+$$
+where $S()$ is the AES S-box and $\psi_0$ is the round constant. However we do not need to concentrate on the first two subkeys to recover the original key. If we use the $i$-th subkey, $i>0$, we can also add
+the following two bytes from the previous subkey as redundancy
+$$
+\begin{array}{l}
+k_{i-1,4+j} = k_{i,j} \oplus k_{i,4+j} \\
+k_{i-1,8+j} = k_{i,4+j} \oplus k_{i,8+j}. \\
+\end{array}
+$$
+This will very likely allow the attacker to select a smaller number of key candidates and thus potentially reduce the overall complexity of key recovery. Another possibility is to consider the 24-bit words
+$$
+[k_{i,j}, k_{i,12 + (j+1 \ mod 4)}, k_{i-1,12 + (j+1 \ mod 4)}],
+$$
+for $j=0, \dots ,3$, and $i>0$, and use as redundancy the three bytes
+$$
+\begin{array}{l}
+k_{i+1,j} = k_{i, j} \oplus S(k_{i,12 + (j+1 \ mod 4)}) \oplus \psi_i,\\
+k_{i-1,j} = k_{i, j} \oplus S(k_{i-1,12 + (j+1 \ mod 4)}) \oplus \psi_{i-1},\\
+k_{i, 8 + (j+1 \ mod 4)} = k_{i,12 + (j+1 \ mod 4)} \oplus k_{i-1,12 + (j+1 \ mod 4)}.\\
+\end{array}
+$$
+Again, this is likely to make the initial decoding more efficient, as well as increase the success rate of the attack (by using different data points).
+
+\subsection{Combinatorial Approach}
+If the cipher key schedule operation is invertible, we can also consider a combinatorial approach. In order to recover the full $n$-bit key, we will consider at least $n$ bits of key schedule output. We assume that bit-flips are biased towards zero with overwhelming probability (i.e. $\delta_1 \approx 0$, as discussed above) and assume the distribution of bits arising in the original key schedule material is uniform. Then for an appropriate $n$-bit segment $K$ in the noisy key schedule, we can expect approximately $\frac{n}{2} + r$ zeros, where $r = \lceil \frac{n}{2} \delta_0  \rceil$.
+We have thus to check 
+$$\sum_{i=0}^{r} { n/2 + r \choose i }$$ 
+candidates for the segment $K$. 
+Each check entails to correct the selected bits, invert the key schedule and verify the candidate for $k$ using for example $\mathcal{E}$. For $n=128$ and $\delta_0 = 0.15$ we would need to check approximately 
+$2^{36}$ candidates; for $\delta_0 = 0.30$ we would have to consider approximately $2^{62}$ candidates. This approach is applicable to both \Serpent and the AES. However we need to slightly adapt it 
+for Twofish.
+
+\subsection{Dedicated Approach for Twofish}
+We recall that for the Twofish key schedule, we assume that the key dependent S-boxes are stored as a lookup table in memory. In fact, each S-box is expanded to a 8-by-32-bit table holding 32-bit values combining both the S-Box lookup and the multiplication by the column of the MDS matrix (see Section~\ref{subsec:twofish}) Thus, we will have in memory a 2-dimensional 32-bit word array $s[4][256]$, where $s[i][j]$ holds the result of the substitution for the input value $j$ for byte position $i$. The output of the complete S-Box for the word $X = (X_0,X_1,X_2,X_3)$ is $s[0][X_0] \oplus s[1][X_1] \oplus s[2][X_2] \oplus s[3][X_3]$. 
+
+Each array $s[i]$ holds the output of an MDS matrix multiplication by the vector $X$, with three zero entries and all possible values $0 \leq X_i < 256$, with each value occurring only once. 
+Thus, we have exactly 256 possible values for the 32-bit words in $s[i]$ and we can simply adjust each disturbed word to its closest possible word. Furthermore, we do not need to consider all values, we can simply use those values with low Hamming distance to their nearest candidate word but a large Hamming distance to their second best candidate. We can thus implement a simple decoding algorithm to eventually recover an explicit expression for each of the four key-dependent S-boxes.
+
+Using this method, we can recover all bytes of $S_0$ and $S_1$.
+More specifically, if we assume that bit-flips are uniformly random, we can recover the correct $S_0,S_1$ with overwhelming probability if 30\% of the bits have been flipped. If we assume that bit flips are not uniformly random but biased towards the value $0$ with overwhelming probability then we can recover the correct values for $S_0,S_1$ with overwhelming probability if 60\% of the bits have been flipped. This gives us 64-bit of \emph{information} about the key.
+
+In order to recover the full 128-bit key, we can adapt the combinatorial approach discussed above. In the noise-free case, we can invert the final modular addition and the MDS matrix multiplication. Since these are the only steps in the key schedule where diffusion between S-box rows is performed, we should get eight 8-bit equation systems of the form $C_1 = Q_0(C_0 \oplus M_0) \oplus M_1$, where $Q_0$ is some S-box application and $C_0$ and $C_1$ are known constants. Each such equation restricts the number of possible candidates for $M_0,M_1$ from $2^{16}$ to $2^{8}$. Using more than one pair $C_0,C_1$ for each user-supplied key byte pair $M_0,M_1$ allows us to recover the unique key. Thus, although the Twofish key schedule is not as easily reversed as the \Serpent or AES key schedule, the final solving step is still very simple. 
+Thus, the estimates given for the combinatorial approach also apply to Twofish.
+
+Alternatively, we may consider one tuple of $C_{0},C_{1}$ only and add the linear equations for $S$. This would provide enough information to recover a unique solution; however $S$ does mix bytes from $M_0$ across S-box rows, which makes the solving step more difficult.
+
+
+\subsection{Algebraic Approach using Max-PoSSo}
+If the algebraic structure of the key schedule permits, we can model the \coldboot key recovery problem as a Partial (Weigh\-ted) Max-PoSSo problem, and use the methods
+discussed earlier to attempt to recover the user-supplied key or a noise-free version of the key schedule. 
+We applied those methods to implement a Cold Boot attack against the AES and \Serpent. We focused on the 128-bit versions of the two ciphers.
+
+For each instance of the problem, we performed our experiments with between $40-100$ randomly generated keys. In the experiments we usually did not consider the full key schedule but rather a reduced number of rounds in order to improve the running time of our algorithms. We also did not include equations for $\mathcal{E}$ explicitly. Finally, we also considered at times an ``aggressive'' modelling, where we set $\delta_1=0$ instead of $\delta_1 = 0.001$. In this case all values $K_i' = 1$ are considered correct (since $\Delta_1=1$), and as a result all corresponding equations are promoted to the set \Hs.
+We note that in the ``aggressive'' modelling our problem reduces to Partial Max-PoSSo and that the specific weights assigned in the cost function are irrelevant, since all weights are identical.
+
+Running times for the AES and \Serpent using the MIP solvers Gurobi \cite{gurobi} and SCIP \cite{scip} are given in Tables~\ref{tab:aes} and \ref{tab:serpent} respectively.
+For the MIP solver SCIP the tuning parameters were adapted to meet our problem\footnote{\texttt{branching/relpscost/maxreliable = 1}, \texttt{branching/relpscost/inititer = 1}, \texttt{separating/cmir/maxroundsroot = 0} We note that there are more efficient settings for each value of $\delta_0$ and each cipher. However, these values seem to provide reasonable performance across all instances.}; no such optimisation was performed for Gurobi. 
+The column ``a'' denotes whether we chose the aggressive (``+'') or normal (``--'') modelling. The column ``cutoff $t$'' denotes the time we maximally allowed the solver to run until we interrupted it. The column $r$ gives the success rate, i.e. for what percentage of instances we recovered the correct key.
+
+For the \Serpent key schedule we consider $\delta_0$ up to $0.30$. We also give running times and success rates for the AES up to $\delta_0 = 0.40$ in order to compare our approach with that in \cite{coldboot08} (where error rates up to $\delta_0 = 0.30$ were considered). We note that in the case of the AES, a success rate lower than $100\%$ may still allow a successful key recovery since the algorithm can be run using other data points in the key schedule if it fails for the first few rounds (see Lemma~\ref{lemma:aes}). Our attacks were implemented using the Sage mathematics software~\cite{sage}.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c| c|r|r|r|r|}
+\hline
+ & & \multicolumn{5}{c|}{Gurobi}\\
+\hline
+$N$ & $\delta_0$  & a & \#cores & cutoff $t$ & $r$ & max $t$ \\
+\hline
+3 & 0.15 &-- & 24 & $\infty$ & 100\% & 17956.4s \\
+3 & 0.15 &-- &  2 &   240.0s &  25\% &   240.0s \\
+\hline
+3 & 0.30 & + & 24 &  3600.0s &  25\% &  3600.0s \\
+\hline
+3 & 0.35 & + & 24 & 28800.0s &  30\% & 28800.0s \\
+\hline
+ & & \multicolumn{5}{c|}{SCIP}\\ %hardlp.set
+\hline
+3 & 0.15 & + & 1 &  3600.0s &  65\% & 1209.0s\\ %bla.set
+\hline
+4 & 0.30 & + & 1 &  7200.0s &  47\% &  7200.0s\\ %bla.set
+\hline
+4 & 0.35 & + & 1 & 10800.0s &  45\% & 10800.0s\\ % bla.set
+\hline
+4 & 0.40 & + & 1 & 14400.0s &  52\% & 14400.0s\\ % bla.set
+5 & 0.40 & + & 1 & 14400.0s &  45\% & 14400.0s\\ % bla.set
+\hline
+\end{tabular}
+\end{center}
+\caption{AES considering $N$ rounds of key schedule output.}
+\label{tab:aes}
+\end{table}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c| c|r|r|r|r|}
+\hline
+ & & \multicolumn{5}{c|}{Gurobi}\\
+\hline
+$N$ & $\delta_0$ & a & \#cores & cutoff $t$ & $r$ & Max $t$\\
+\hline
+ 8 & 0.05 & -- &  2 &   60.0s & 50\% &  16.22s\\
+12 & 0.05 & -- &  2 &   60.0s & 85\% &  60.00s\\ 
+\hline
+ 8 & 0.15 & -- & 24 &  600.0s & 20\% &  103.17s\\ 
+12 & 0.15 & -- & 24 &  600.0s & 55\% &  600.00s\\ 
+\hline
+12 & 0.30 &  + & 24 & 7200.0s & 20\% & 7200.00s\\
+\hline
+\hline
+ & & \multicolumn{5}{c|}{SCIP}\\ 
+\hline
+12 & 0.15 &  + & 1 &  600.0s & 32\% &  597.37s\\ % bla.set
+16 & 0.15 &  + & 1 & 3600.0s & 48\% &  369.55s\\ % bla.set
+20 & 0.15 &  + & 1 & 3600.0s & 29\% &  689.18s\\ % bla.set
+32 & 0.15 &  + & 1 & 3600.0s & 21\% & 1105.58s\\ % bla.set
+\hline
+16 & 0.30 &  + & 1 & 3600.0s & 55\% & 3600.00s\\ % bla.set
+20 & 0.30 &  + & 1 & 7200.0s & 57\% & 7200.00s\\ % bla.set
+\hline
+\end{tabular}
+\end{center}
+\caption{\Serpent considering $32 \cdot N$ bits of key schedule output}
+\label{tab:serpent}
+\end{table}
+
+
+\section{Discussion}
+\label{sec:conclusion}
+
+The structure of the key schedule of block ciphers has recently started attracting much attention of the cryptologic research community. Traditionally, the key schedule operation has perhaps received much less consideration from designers, and other than for efficiency and protection against some known attacks (e.g. slide attacks),  the key schedule was often designed in a somewhat ad-hoc way (in contrast to the usually well-justified and motivated cipher round structure).  However the recent attacks against the AES and Kasumi have brought this particular operation to the forefront of block cipher cryptanalysis (and as a result, design). While one can argue that some of the models of attack used in the recent related-key attacks may be far too generous to be of practical relevance, it is clear that resistance of ciphers against these attacks will from now on be used as another form of measure of security of block ciphers.
+
+In this spirit, we propose in this chapter a further measure of security for key schedule operations, based on the \coldboot attack scenario. These attacks are arguably more practical than some of the other attacks targeting the key schedule operation. More importantly, we believe the model can be used to further evaluate the strength of the key schedule operation of block ciphers. Our results show however that it is not trivial to provide high security against Cold Boot attacks. In fact, by carefully studying the key schedule operation and proposing dedicated techniques (in contrast to simpler decoding techniques as described in~\cite{coldboot08}), we showed that, contrary to general belief, several popular block ciphers are also susceptible to attack under this model. How to come up with design criteria for a secure key schedule under this model (while preserving
+other attractive features such as efficiency, etc) remains a topic for further research.
+
+Another contribution of this chapter, which is very likely to be of independent interest, is the treatment of the problem of solving nonlinear multivariate equations with noise. In particular, this chapter presents a novel method, based on Integer Programming, which proved to be a powerful technique in some situations, and we expect that this will bring MIP solvers further to the attention of the cryptography research community. In fact, several interesting problems in cryptography such as algebraic attacks, side-channel attacks and the crypt\-analysis of LPN/LWE-based schemes can be modelled as Max-PoSSo problems and thus we consider studying and improving (MIP-based) Max-PoSSo methods an interesting area for future research.
+

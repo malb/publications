@@ -1,0 +1,356 @@
+Algebraic cryptanalysis can be described as a general framework that permits to asses the security of a wide range of cryptographic schemes \cite{ars:thesis2005,courtois-pieprzyk:asiacrypt02,courtois-meier:eurocrypt2003,courtois:crypto2003,faugere-joux:crypto03,faugere-perret:eurocrypt06,faugere-perret:crypto06,faugere-levy-perret:crypto2008}. In fact the recent proposal and development of algebraic cryptanalysis is now widely considered an important breakthrough in the analysis of cryptographic primitives. It is a powerful technique that applies potentially to a wide range of cryptosystems. In this part we are going to focus on its applications to block ciphers.
+
+The basic principle of such cryptanalysis is to model a cryptographic primitive by a set of algebraic equations. The system of equations is constructed in such a way as to have a correspondence between the solutions of this system and a secret information of the cryptographic primitive (for instance, the secret key of an encryption scheme).
+
+This line of research is somehow inspired by C.E. Shannon who stated that: ``Breaking a good cipher should require as much work as solving a system of simultaneous equations in a large number of unknowns of a complex type'' \cite{Shannon1949}. By such an ``prophetic" sentence, Shannon relates the security of a cryptosystem to the difficulty of solving a set of algebraic equations, and lays the foundation of algebraic cryptanalysis.
+
+In principle, any cryptosystem can be modelled by a set of algebraic equations over a finite field \cite{garey-johnson:1979}. In fact, it is often the case that the same cryptographic primitive can be described by several algebraic systems. Consequently, the security of most symmetric cryptosystems is strongly linked to the difficulty of solving a large system of polynomial equations. Indeed, algebraic techniques have been successfully applied against a number of multivariate schemes and in stream cipher cryptanalysis \cite{ars:thesis2005,courtois-meier:eurocrypt2003,courtois:crypto2003,faugere-joux:crypto03,faugere-perret:eurocrypt06,faugere-perret:crypto06,faugere-levy-perret:crypto2008}. On the other hand, the feasibility of algebraic cryptanalysis against block ciphers still remains the source of much speculation. Although it has received much attention since it has been proposed in \cite{courtois-pieprzyk:asiacrypt02,alg-aes-book} against the US NIST Advanced Encryption Standard (AES) and the Serpent block cipher, so far this method has had limited success in targeting modern block ciphers.
+
+In this chapter we will first give a survey of algorithms that are used by cryptographers to solve polynomial systems of equations (typically over $\GFZ$); some of which we will use in later chapters of this work. We will then discuss how algebraic attacks scale to bigger systems by giving rough complexity estimates and experimental evidence for reduced variants of well-known block ciphers. We will conclude that new approaches are needed in order to advance this research.
+
+Parts of this chapter are directly taken or adapted from the 2008 ECrypt report titled ``D.STVL 7 Algebraic Cryptanalysis of Symmetric Primitives'' \cite{d-stvl7} to which the author contributed.
+
+\section{\texorpdfstring{Gröbner}{Groebner} Based Methods}
+
+One of the most popular and efficient method for solving  polynomial systems of equations are Gröbner basis algorithms (cf.\ Section~\ref{sec:solvingmq}). We refer to Part~\ref{part:gb} for a presentation of some of the most efficient algorithms.
+
+\section{Linearisation Based Methods}
+
+The method of \emph{linearisation} is a well-known technique for solving large systems of multivariate polynomial equations. For a given set of polynomials each monomial is interpreted as a new variable. This linearised system is then solved. The solution for the linearised system is then checked against the original non-linear system of polynomials. We discussed linearisation implicitly already in Chapter~\ref{chapter:f4} since Algorithm \ref{alg:gausselim} is essentially the main step of one variant of linearlisation.
+
+The effectiveness of the method clearly depends of the number of linearly independent polynomials in the system. For example, in the case of boolean functions, the total number of monomials of degree less than or equal to 2 (excluding the constant) is $\binom{n}{2}+n$. Thus if the system consists of $m$ polynomials of degree 2, it can be solved if the considered matrix has this rank. Note that the method also tolerates a smaller rank: it is possible to perform an exhaustive search on the affine space of solutions when the dimension of the kernel of the matrix is not too large.
+
+Concerning the complexity, we observe that the cost of the linear algebra operations is $\ord{N^\omega}$, $N$ being the size of the considered matrix and $\omega$ being the exponent of linear algebra. We may even optimistically use $\omega\approx 2+\epsilon$ in the case of sparse matrices.
+
+\subsection{The XL algorithm and variants}
+
+In order to apply the linearisation method, the number of \emph{linearly independent} equations in the system needs to be approximately the same as the number of monomials in the system. When this is not the case, a number of techniques have been proposed that attempt to generate enough linearly independent equations. The most publicised is the XL algorithm (standing for \emph{eXtended Linearisation}), which was introduced in~\cite{courtois-klimov-patarin-shamir:eurocrypt2000}. XL is presented in Section~\ref{sec:matrixf5-introduction} of this thesis. 
+
+We note, that research has shown that the XL algorithm and Gröbner basis methods are closely related. In fact in \cite{ars-faugere:asiacrypt04} it is shown that a variant of XL is a redundant version of the $F_4$ algorithm and that the XL algorithm terminates for a degree $D$ if and only if it terminates in degree $D$ for the lexicographical ordering.  Furthermore, we have also already seen in Chapter~\ref{chapter:f5matrix} that XL is a redundant variant of matrix-$F_5$ and that matrix-$F_5$ will not exceed the degree reached by XL.
+
+For quadratic polynomials, we have the following complexity result for XL: when the number of polynomials is $m=n+c$, then the minimum degree for XL to succeed for a generic system is
+  \[
+  D\geq \frac{n}{\sqrt{c-1}+1}.
+  \]
+Since the number of monomials is $\binom{n}{D}$ in the binary case, and $\binom{n+D}{D}$ in the general case, this theorem implies that XL has an exponential complexity (cf.\ \cite{diem:asiacrypt04,yang-cheng:acisp04}).
+
+\subsubsection{XSL}
+Due to its simplicity XL has received considerable attention since its introduction and many variants exist. Very prominent for block cipher is the method proposed in~\cite{courtois-pieprzyk:asiacrypt02}. The \emph{XSL} method is based on the XL algorithm, but attempts to use the sparsity and specific structure of the equations; instead of multiplying the equations by all monomials of degree
+$\leq D-2$ (supposing that the original equations were quadratic), in the XSL algorithm the equations are multiplied only by ``carefully selected monomials''~\cite{courtois-pieprzyk:asiacrypt02}. This has the intention to create less new terms when generating the new equations. Many versions of the XSL algorithm are found in literature, where the description of the method often leave some room for interpretation and such the analysis of the algorithm is not straight-forward. However, it is now known \cite{Cid2005a,lim-khoo:fse2007} that, as presented in \cite{courtois-pieprzyk:asiacrypt02}, the algorithm cannot solve the system arising from the AES, and some doubts are cast on whether the algorithm in its current form can provide an efficient method for solving the AES-like systems of equations.
+
+\subsubsection{GeometricXL}
+The XL algorithm was generalised to \emph{GeometricXL} in \cite{murphy-paterson:jmc2008}. The key idea is the fact that when solving polynomial systems both the problem formulation and the solution to the problem are geometric invariant, i.e. invariant under a linear coordinate transformation. Thus we expect there to be a geometric invariant algorithm to solve this problem. It was shown in \cite{murphy-paterson:jmc2008} that the XL algorithm is a special case of an algorithm finding intersections of hyperplanes which the authors call GeometricXL. This generalisation allows a better understanding of XL and may offer some advantage in certain situations when compared to XL; especially when considering multivariate public-key cryptosystems where linear changes of coordinates are common to hide the structure of the system. Essentially, the maximal degree $D$ reached during a GeometricXL execution is the least possible degree reachable by XL under any linear coordinate transformation. For example, consider the equation system 
+\begin{align*}
+ f_1 &= 15x_0^2 + x_1^2 + 5x_1x_2,\\
+ f_2 &= 23x_0^2 + x_2^2 + 9x_1x_2\\
+\end{align*}
+over $\F_{37}$. An XL style algorithm adapted for homogeneous systems will not need to increase the degree during the computation. However, if we apply a linear coordinate transform:
+\begin{align*}
+\left(\begin{array}{r}
+x_{0} \\
+x_{1} \\
+x_{2}
+\end{array}\right)
+\rightarrow
+\left(\begin{array}{rrr}
+2 & 26 & 10 \\
+26 & 4 & 13 \\
+33 & 21 & 2
+\end{array}\right) \cdot 
+\left(\begin{array}{r}
+x_{0} \\
+x_{1} \\
+x_{2}
+\end{array}\right)
+\end{align*}
+to get:
+\begin{align*}
+ f_1 &=  6x_0^2 + 2x_0x_1  + 3x_0x_2  +   x_1^2 + 16x_1x_2 + 3x_2^2,\\
+ f_2 &= 18x_0^2 + 35x_0x_1 + 15x_0x_2 + 26x_1^2 + 12x_1x_2 + x_2^2\\
+\end{align*}
+the system is only soluble by an XL style algorithm for $D=4$. GeometricXL solves the same system with $D=2$. Instead of
+searching for a univariate or bivariate polynomial in the linear span of the generated polynomials, it searches for any polynomial which factors into linear parts. A technical requirement of this algorithm is that the characteristic of the finite field $\F$ is larger than the maximal
+degree $D$. Thus, in particular for the case of $\F_2$, the algorithm is not applicable as is. Later, the same authors proposed the ``EGHAM Process'' \cite{murphy-paterson:ccc2009} which generalises the GeometricXL algorithm to fields with even characteristic.
+
+We provide a study implementation of the GeometricXL and parts of the EGHAM Process  at
+\begin{center}
+\url{http://bitbucket.org/malb/algebraic_attacks/src/tip/geometricxl.py}.
+\end{center}
+We give an example below. First we construct a random `easy' system of polynomials, i.e.\ a lexicographical Gröbner basis denoted as $e$. Then, we rotate this system using some randomly chosen rotation. The result is the system $h$.
+
+\begin{lstlisting}
+sage: e,h = random_example(K=GF(127),n=3)
+sage: e.basis_is_groebner()
+True
+sage: e
+Ideal (
+ 17*x0^2 + 50*x0 - 42, 
+ -6*x1^2 - 58*x1 + 20*x0^2 - 15*x0 + 15, 
+ x2^2 + 29*x2*x0 + 50*x1^2 - 48*x1 + 8*x0^2 - 47*x0
+) of Multivariate Polynomial Ring in x2, x1, x0 
+  over Finite Field of size 127
+
+sage: h.basis_is_groebner()
+False
+sage: h
+Ideal (
+ -40*x2^2 + 36*x2*x1 - 7*x2*x0 - 39*x2 + 30*x1^2 - 54*x1*x0 
+   + 62*x1 + 37*x0^2 - 5*x0 - 42, 
+ 2*x2^2 + 30*x2*x0 - 5*x2 + 59*x1^2 - 53*x1*x0 - 24*x1 
+   + 27*x0^2 + 54*x0 + 15, 
+ -14*x2^2 - x2*x1 - 26*x2*x0 + 21*x2 - 6*x1^2 - 9*x1*x0 
+   - 13*x1 - 51*x0^2 - 39*x0
+) of Multivariate Polynomial Ring in x2, x1, x0 
+  over Finite Field of size 127
+\end{lstlisting}
+
+GeometricXL recovers linear factors and thus candidates for common roots at $D=2$:
+
+\begin{lstlisting}
+sage: hH = h.homogenize()
+sage: f = GeometricXL(hH, D=2); f.factor(False)
+    0.000s -- 1. D: 2
+    0.010s -- 3. |L|: 3
+    0.017s -- 4. |S|: 3
+    |F|:    6 |M|:   10
+    |F|:    7 |M|:   10
+    0.051s -- 5. |min_rank_solutions|: 0
+    0.001s -- 6. |min_rank_solutions|: 1
+(6) * (53*x2 + 46*x1 - 16*x0 + h) * (-43*x2 + 13*x1 + x0 + h)
+\end{lstlisting}
+
+While any Gröbner basis algorithm would have to reach at least degree 8 for the lexicographical monomial ordering.
+
+\begin{lstlisting}
+sage: gb = h.groebner_basis()
+sage: gb[-1].degree()
+8
+\end{lstlisting}
+
+\subsubsection{ElimLin}
+The \emph{ElimLin} algorithm can also be viewed as an XL variant. It was first
+referred to in \cite{Courtois2006a} and later described in \cite{alg-des}. The
+algorithm uses linear equations from the equation system to derive substitution
+rules. The algorithm consists of two steps: 
+\begin{enumerate}
+ \item Substitute the leading monomial $\LM(l_i)$ of each linear polynomial $l_i$ ($0 \leq i < n$) by $l_i - \LM(l_i)$ in all polynomials $p_j$
+containing $\LM(l_i)$. This is equivalent to computing the remainder $r_j$ of polynomial division of $p_j$ by $l_0,\dots,l_{n-1}$
+ \item Perform Gaussian reduction on the polynomials $p_j$. If new linear polynomials arise, repeat from 1.
+\end{enumerate}
+The performance of this algorithm is related to the heuristic sparse selection strategy employed to choose the replacement variables which is unpublished.
+
+The elimination of variables using linear leading terms is implemented  in \Sage under the name \mbox{\texttt{eliminate\-\_linear\_variables}}:
+
+\begin{lstlisting}
+sage: sr = mq.SR(1,2,2,4,gf2=True,polybori=True) # small scale AES
+sage: F,s = sr.polynomial_system(); F
+Polynomial System with 120 Polynomials in 72 Variables
+
+sage: F.eliminate_linear_variables(maxlength=10^4,\
+        skip=lambda h,t:str(h).startswith("k"))
+Polynomial System with 104 Polynomials in 56 Variables
+\end{lstlisting}
+
+
+\subsubsection{MutantXL and variants}
+XL-based algorithms have recently received some renewed attention with the introduction of the concept of ``mutants'' \cite{mohamed-werner-ding-buchmann:cans09,mxl2,mohamed-cabarcas-ding-buchmann-bulygin:icisc09}. Assume that XL is performed at degree $D$. Polynomials that have degree less than $D$ after the elimination step are called ``mutants''. These mutants are considered separately, in order to arrive faster at a solution. While the connection of XL-style algorithms and Gröbner basis algorithms has been studied extensively, the connection of this concept and -- for instance -- the normal selection strategy in $F_4$ has not received attention in literature so far.
+
+\section{The Raddum-Semaev Algorithms}
+
+In \cite{Raddum2006} a different approach to equation system solving over finite fields is presented which entirely focuses on the solution set -- the variety -- rather than the polynomial system. The key idea is to consider the varieties for each equation $f_i$ restricted to the variables in the equation independently. The subalgorithm \emph{Agreeing} considers pairs of resticted varieties for equations $f_i$ and $f_j$ and removes all those solutions -- called configurations -- from each restricted variety that are  conflicting. These conflicting configurations cannot lead to a common solution. For reduced round block ciphers with very few rounds this algorithm is sufficient to produce the unique common solution. However, for a larger number of rounds the system can be brought into a conflict free state without being reduced to a very small set of common solutions.
+
+For this situation the \emph{Glueing} and the \emph{Splitting} algorithms were also given. The former ``glues'' two varieties together, i.e. it considers all
+possible combinations of solutions for $f_i$ with solutions for $f_j$. The latter basically guesses one bit of information by considering only half of the
+possible solutions to a given equation $f_i$. If this guess leads to an empty solution set -- i.e. two configurations contradict completely -- the
+algorithm backtracks. 
+
+An alternative description of these algorithms was presented by Thomas Dullien in his Diplomarbeit~\cite{dullien-diplom}. Instead of focusing on the varieties, a description based on polynomials is given; thus, it is easier to compare the Raddum-Semaev algorithm with other approaches.
+
+Later Raddum and Semaev introduced a generalised technique which does not consider multivariate polynomials over finite fields and their solution sets but multiple right hand side linear (MRHS) equations~\cite{Raddum2008}.
+
+\section{SAT Solvers}
+\label{sec:sat}
+A new development in algebraic cryptanalysis of block ciphers is the use of SAT solvers \cite{Bard2007a, bard-phd, SNC09} to solve systems of equations over $\F_2$. Here the cryptanalyst converts the equation system which is in Algebraic Normal Form (ANF) to the Conjunctive Normal Form (CNF) of boolean expressions. Then an off-the-shelf SAT solver software is used to solve the resulting SAT problem. In Conjunctive Normal Form, literals (variables) and their negates are combined in clauses via logical OR ($\vee$). These clauses can be combined using logical AND ($\wedge$). 
+
+To convert from ANF to CNF two approaches can be found in literature.
+
+In Gregory Bard and Nicolas Courtois' approach \cite{alg-des} every monomial (this includes the constant $1$) is first renamed as a new variable. This results in a linear system in these new variables. Then -- because logical XOR, which is equivalent to addition over $\F_2$ results in very long conjugations -- all sums are split into subsums of a parameterised length by introducing new intermediate variables, so for example $a + b + c + e + d + f$ splits into $a + b +c + x$ and $x + d + e + f$. These equations are then converted to CNF. Also, the relationship $t = \prod x_i$ for some newly introduced linearlised variable $t$ is encoded as a CNF formula. We provide an implementation of this conversion at \url{http://bitbucket.org/malb/algebraic_attacks/src/tip/anf2cnf.py} and give an example below.  
+
+\begin{lstlisting}
+sage: B.<a,b> = BooleanPolynomialRing()
+sage: aa = ANFSatSolver(B)
+sage: print aa.cnf([a*b + b + 1])
+p cnf 4 6
+2 -4 0
+3 -4 0
+4 -2 -3 0
+1 0
+4 3 0
+-4 -3 0
+\end{lstlisting}
+
+An alternative approach is available as part of the \PolyBoRi software \cite{polybori} and described in depth in Michael Brickenstein's PhD thesis \cite{brickenstein-phd}. The conversion is essentially truth table based, except that due to the underlying ZDD structure of boolean polynomials in \PolyBoRi the representation does not necessarily grow exponentially with the number of variables in a polynomial -- similarly to Karnaugh tables (cf.\ \cite{digital-systems-2009}) in boolan minimisation. For many typical block ciphers this approach seems to be much more efficient than the Bard-Courtois approach \cite{brickenstein-phd}. We give an example below:
+
+\begin{lstlisting}
+sage: B.<a,b> = BooleanPolynomialRing()
+sage: aa = CNFEncoder(B)
+sage: print aa.dimacs_cnf([a*b + b + 1])
+c cnf generated by PolyBoRi
+p cnf 2 2
+2 0
+-1 0
+\end{lstlisting}
+
+An ANF to CNF conversion implementation which combines both approaches is still outstanding. This combination would be beneficial in some situations because the \PolyBoRi approach relies on the fact that few variables appear in each polynomial. If this assumption is violated it would be more efficient to fall back to the Bard-Courtois approach.
+
+The dominant family of SAT solvers in use today is the Chaff family~\cite{bard-phd}. The main idea is to use simplification rules,  guessing and backtracking until a contradiction or a solution is found. Specifically, variables can have three possible values: true, false and not-yet-known. Any clause containing a true variable can be discarded, since  it doesn't encode any further information. Any clause that has all variables set to false will trigger a backtrack. Now assume a clause has $n$ variables and $n-1$ are set to false while one is still not-yet-known. Then this variable must be set to true. This assignment will affect other clauses and might trigger an avalanche effect. This rule is called ``unit propagation'' rule. If no further such simplifications can be made, then an assignment is guessed. If a contradiction is found, i.e. all variables in a clause are set to false, then the algorithm either backtracks and adds the negative of the last guess to the list of clauses or -- if the algorithm cannot backtrack -- then it will just return ``unsatisfiable''. The 3-SAT problem is a well known NP-complete problem, so the runtime of a SAT solving algorithm is expected to be exponential.  While due to the great demand for SAT solvers many good implementations exist with good heuristics, no tight complexity bounds exist. Since the algorithms are randomised, assessing the runtime for a particular problem instance is hard. An introduction to SAT solvers from a cryptographic perspective can be found in Gregory Bard's PhD thesis \cite{bard-phd}.
+
+A variant of one of the best SAT solvers in the field -- \MiniSat 2.0 -- adapted to cryptographic problems -- called \CryptoMiniSat -- is described in \cite{SNC09}.
+
+\section{Mixed Integer Programming}
+\label{sec:mip}
+In 2009 the application of Mixed Integer Programming (or integer optimisation) was proposed as a technique for solving multivariate polynomial systems over \GFZ \cite{biviummip}. Integer optimisation deals with the problem of minimising (or maximising) a function in several variables subject to linear equality and inequality constraints and integrality restrictions on some of or all the variables. A linear Mixed Integer Programming (MIP) minimisation problem is defined as a problem of the form
+\[
+\underset{x}{\min}\{c^T x | Ax ≤ b, x ∈ \field{Z}^k × \field{R}^l\},
+\]
+where $c$ is an $n$-vector, $A$ is an $m × n$-matrix ($n = k + l$) and $b$ is an $m$-vector. This means that we minimise the linear function $c^T x$ (the inner product of $c$ and $x$) subject to linear equality and inequality constraints given by $A$ and $b$. We restrict $k \geq 0$ variables to integer values and $l \geq 0$ variables are real valued. The set $S$ of all $x ∈ \field{Z}^k × \field{R}^l$ that satisfies the linear constraints $Ax ≤ b$
+\[
+S = \{x ∈ \field{Z}_k × \field{R}_l , Ax ≤ b\}
+\]
+is called the feasible set. If $S = \varnothing$ the problem is infeasible. Any $x \in S$ which minimises $c^T x$ is an optimal solution. We note that minimisation and maximisation problems can be transformed into each other and thus that they are essentially equivalent.
+
+\begin{example}
+\label{example:mip}
+Maximise $x + 5y$ ($c = (1,5)$) subject to the constraints
+$x + 0.2y \leq 4$ and  $1.5x + 3y \leq  4$ where $x \geq 0$ is real valued and $y \geq 0$ is integer valued. 
+
+The optimal value for $c^T x$ is $5 \frac{2}{3}$ for $x=\frac{2}{3}$ and $y = 1$.
+\end{example}
+
+We can compute Example~\ref{example:mip} using \Sage:
+
+\begin{lstlisting}
+sage: p = MixedIntegerLinearProgram()
+sage: x, y = p.new_variable(), p.new_variable()
+sage: p.set_integer(y[0])
+sage: p.add_constraint(x[0] + 0.2*y[0], max=4)
+sage: p.add_constraint(1.5*x[0] + 3*y[0], max=4)
+sage: p.set_min(x[0],0); p.set_min(y[0],0)
+sage: p.set_objective(x[0] + 5*y[0])
+sage: p.solve()
+5.6666666666666661
+\end{lstlisting}
+
+Note that many Mixed Integer Programming solvers do not perform arbitrary precision arithmetic but use fixed precision floating-point arithmetic. In fact, the main advantage of MIP solvers compared to other branch-and-cut solvers is that they can relax the problem to a floating point Linear Programming (LP) problem in order to obtain lower and upper bounds. These bounds can then be used to cut search branches. This relaxation also allows one to prove optimality of a solution without exhaustively searching for all possible solutions.
+
+We can convert a polynomial $f \in \F_2[x_0,\dots,x_{n-1}]$ to a set of linear (in-)equality constraints as follows. Let $\mathcal{Z}$ be a function that takes a polynomial over $\F_2$ and lifts it to the integers; thus $\{0,1\} \in \F_2$ are treated as $\{0,1\} \in \Z$.
+
+\begin{enumerate}
+ \item Evaluate $\mathcal{Z}(f)$ on all $S = \{x \mid x \in \F_2^n, f(x) = 0\}$ lifted to the integers. Let $\ell = \min\{\mathcal{Z}(f)(x) \mid x \in S\}$ and $u = \max\{\mathcal{Z}(f)(x) \mid x \in S\}$. Introduce some integer-valued variable $\frac{\ell}{2} \leq m \leq \frac{u}{2}$ and add the appropriate constraints to enforce these barriers. Replace each monomial in $f - 2m$ by a new variable; denote the linearised polynomial as $g$; add $\mathcal{Z}(g) = 0$  as linear constraint.
+ \item For each monomial variable $t = \prod_{i=1}^{N} x_i$ in $f - 2m$ with $N > 1$
+ \begin{itemize}
+   \item add a constraint $x_i \geq t$ and
+   \item add a constraint $0 \leq \sum_{i=1}^{N} x_i - t \leq N-1$.
+ \end{itemize}
+\end{enumerate}
+ 
+This conversion is called the ``Integer Adapted Standard Conversion'' \cite{biviummip} in literature. This conversion requires that each polynomial which is converted has few variables, since all solutions -- restricted to those variables -- must be enumerated. An implementation is provided by the author at \url{http://bitbucket.org/malb/algebraic_attacks/src/tip/anf2mip.py}.
+
+\begin{example}
+Consider $f = ac + a + b + c + 1$
+\begin{enumerate}
+ \item We have that $S = \{x \mid x \in \F_2^3, f(x) =0\} = \{(1, 0, 0),(0, 1, 0),(0, 0, 1),(1, 0, 1)\}$, $\ell = 1$, $u = 2$,
+ \item thus we add $M + a + b + c + 1 - 2m = 0$ and
+ \item $a \geq M$, $c \geq M$, $0 \leq a + c - M \leq 1$ as linear constraints.
+\end{enumerate}
+\end{example}
+
+We compute the same example using the \texttt{anf2mip.py} script:
+
+\begin{lstlisting}
+sage: B.<a,b,c> = BooleanPolynomialRing()
+sage: f = a*c + a + b + c + 1
+sage: bc = BooleanPolynomialMIPConverter()
+sage: p = bc.integer_adapted_standard_conversion([f]); p
+Mixed Integer Program  ( minimization, 5 variables, 4 constraints )
+sage: p.constraints()
+[(-2 x_0 +x_1 +x_2 +x_3 +x_4, -1, -1), 
+ (x_1 -1 x_2, -1, 0), 
+ (x_1 -1 x_3, -1, 0), 
+ (-1 x_1 +x_2 +x_3, 0, 1)]
+\end{lstlisting}
+
+To find a feasible or optimal solution to the set of linear constraints produced an off-the-shelf MIP solver such as SCIP \cite{scip} or Gurobi \cite{gurobi} is used.
+
+\section{Application to Cryptology}
+
+Being of exponential nature, the algorithms introduced earlier should be of very limited use in cryptology, given the large sizes involved. It is known however that $F_5$ was used successfully for solving the HFE challenge I~\cite{faugere-joux:crypto03}. In fact, this experiment has also been reproduced with an independent implementation of $F_4$~\cite{steel:F404}, and it now takes a few hours to break HFE challenge~I with the \Magma software~\cite{magma} on a workstation.
+
+The reason is that the theorems above hold for \emph{generic} systems or \emph{regular sequences}, which are basically systems with no particular properties. In the case on finite fields, random systems take the role of generic systems. It turns out however that the HFE systems of equations are not random-like~\cite{courtois:rsa2001,faugere-joux:crypto03}, and it appears that
+$F_5$ (and also $F_4$ as reported in~\cite{steel:F404}) is sensitive to this fact, i.e.\ it is a distinguisher for HFE systems. From the implementation of XL made in~\cite{ars-faugere:asiacrypt04}, it seems that the XL algorithm is not sensitive to this fact.
+
+For the case of block ciphers, although no practical attack has ever been reported, it appears they also give rise to very structured systems. Table~\ref{tab:degreeD-biryukov-canniere-bardet} is an extension (from~\cite{bardet:thesis2004}) of the table given in~\cite{biryukov-canniere:fse2003}, where systems of quadratic equations have been constructed for various ciphers; in this case the \emph{expected} degree reached by the $F_5$ algorithm and the size of the matrices have been added. We can see that the expected degrees are quite large and that the matrices should be in principle too large to be tractable.
+
+One should bear in mind however that the sizes given in Table~\ref{tab:degreeD-biryukov-canniere-bardet} are the ones that would be reached if these systems were generic. It may be well that the systems are non generic, in which case $F_5$ may succeed with a lower $D$ and smaller matrices. With the current state of knowledge, only practical experiments could tell how these systems behave.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+Cipher & Variables & Linear equations & Quadratic equations &D& Matrix size\\
+\hline
+Khazad & 6464 & 1664 & 6000 & 379 & $2^{2076}$\\
+\hline
+Misty1 & 3856 & 2008 & 1848 & 179 & $2^{1040}$\\
+\hline
+Kasumi & 4264 & 2264 & 2000 & 193 & $2^{1129}$\\
+\hline
+Camelia-128 & 3584 & 1920 & 4304 & 78 & $2^{538}$\\
+\hline
+Rijndael-128 & 3296 & 1696 & 4600 & 69 & $2^{479}$\\
+\hline
+Serpent-128 & 16640 & 8320 & 9360 & 703 & $2^{4196}$\\
+\hline
+\end{tabular}
+\end{center}
+\caption{The degree $D$ for the systems of equations constructed
+in~\cite{biryukov-canniere:fse2003}}
+\label{tab:degreeD-biryukov-canniere-bardet}
+\end{table}
+
+Note that the AES can also be modelled as 8576 equations in 4288 variables  over $\F_{2^8}$ \cite{murphy-robshaw:crypto2002}.
+
+\section{Scalability of Pure Algebraic Cryptanalysis}
+Since it is often an open research problem by itself to estimate precisely the complexity of algorithms for solving polynomial systems (as discussed in the previous section), experimental evidence has to be considered to evaluate the performance of a given algorithm. However, equation systems for full scale encryption algorithms are usually too complicated or simply too big for current algorithms to handle within reasonable time and with reasonable resources. 
+
+Therefore, simplified variants are considered and results for these reduced variants serve as a measure for the performance of pure algebraic attacks. One strategy is to consider round reduced variants. Since most modern block ciphers -- including the AES and the DES -- repeat the same operations $N_r$ times it is straight-forward to consider a related cipher with fewer rounds. Though the reduced cipher has weaker security it still might give an insight into the behaviour of a given algorithm. This strategy is usually followed for the DES \cite{alg-des,Raddum2006}. However, since the systems of equations for one round (out of ten) of AES-128 can already be quite large in \cite{cid-murphy-robshaw:fse2005} small scale variants of the AES were introduced. These systems aim to emulate the algebraic structure of the AES and are denoted SR(n,r,c,e) where $n$ is the number of rounds, $r$ and $c$ are the number of rows and columns resp. in the AES state space and $e$ the size of the words in the state space. Thus, SR(10,4,4,8) is a $4 \cdot 4 \cdot 8=128$ bit block cipher with 10 rounds which is up to an
+affine transformation equivalent to the AES-128. Table~\ref{tab:runtimes} compiles reported timings against several small scale variants of AES and DES for one plaintext-ciphertext pair.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c|c|r|r|}
+\hline
+Cipher & Method & System & System RAM & Wall time\\
+\hline
+SR( 4,1,1,4) & MRHS \cite{Raddum2008} & PC & 1~GB& 0.032s\\
+SR(10,1,1,4) & MRHS \cite{Raddum2008} & PC & 1~GB& 0.32s\\
+SR(10,1,1,4) & \PolyBoRi \cite{polybori} & Opteron 2.2Ghz & 16~GB& 0.14s\\
+SR(10,1,1,4) & \PolyBoRi \cite{bulgin-brickenstein:eprint2008} & Opteron 2.2Ghz & 16~GB & 0.02s\\
+SR(10,1,2,4) & \PolyBoRi \cite{polybori} & Opteron 2.2Ghz & 16~GB& 6.7s\\
+SR(10,1,2,4) & \PolyBoRi \cite{bulgin-brickenstein:eprint2008} & Opteron 2.2Ghz & 16~GB & 0.2s\\
+SR(10,1,1,8) & \PolyBoRi \cite{bulgin-brickenstein:eprint2008} & Opteron 2.2Ghz & 16~GB & 2s\\
+SR(10,2,2,4) & \PolyBoRi \cite{bulgin-brickenstein:eprint2008} & Opteron 2.2Ghz & 16~GB & 1205s\\
+4r DES       & ElimLin \cite{alg-des} & Centrino 1.6Ghz & --& $2^{19} \cdot 8$s\\
+5r DES       & ElimLin \cite{alg-des}& Centrino 1.6Ghz & --& $2^{23} \cdot 173$s\\
+6r DES       & \MiniSat \cite{alg-des}& Centrino 1.6Ghz & --& $2^{20} \cdot 68$s\\
+
+\hline
+\end{tabular}
+\end{center}
+\caption{Reported runtimes of various algorithms against reduced ciphers.}
+\label{tab:runtimes}
+\end{table}
+
+From the Table~\ref{tab:runtimes} we can see that algebraic attacks are far from threatening the security of modern block ciphers. Indeed, no result is available in literature where a modern block cipher was broken using algebraic attacks faster than with other techniques.
+
+Thus, in the next chapters we will discuss a variety of techniques where algebraic techniques are used to improve existing cryptographic attack techniques. 

@@ -1,0 +1,254 @@
+In this chapter we consider algebraic techniques in higher order differential attacks. Some of the results in this chapter are published in the paper ``Algebraic Precomputations in Differential and Integral Cryptanalysis'' by Carlos Cid, Thomas Dullien, Jean-Charles Faugère, Ludovic Perret and the author \cite{acdfp:inscrypt2010}. Some of the results against round reduced variants of the block cipher KTANTAN-32 were presented in the rump session of the Early Symmetric Cryptography Seminar 2010 in Remich, Luxemburg.
+
+\section{Introduction}
+\label{sec:algebraic-integral-attacks}
+Higher order differentials (HOD) were introduced by Lars Knudsen in \cite{Knudsen1995}. We can define the derivative of a function as follows:
+
+\begin{definition}[Lai \cite{Lai1994}] Let $(S, +)$ and $(T, +)$ be Abelian groups. For a function $f: S \rightarrow T$, the derivative of $f$ at the point $a \in S$ is defined as $$\Delta_a f(x) = f(x+a) - f(x).$$
+The $i^{\textnormal{th}}$ derivative of $f$ at the points $a_0,\dots,a_{i-1}$ is defined as $$\Delta^{(i)}_{a_0,\dots,a_{i-1}} f(x) = \Delta_{a_{i-1}} (\Delta_{a_0,\dots,a_{i-2}}^{(i-1)} f(x)).$$
+\end{definition}
+
+For the following we assume that we work over $\GFZ$, that is $f: \F_2^k \rightarrow \F_2$. Let $L[a_0,\dots,a_{N-1}]$ be the set of all linear combinations of $a_0,\dots,a_{N-1}$. We have that $$ \Delta^{(N)}_{a_0,\dots,a_{N-1}} f(x) = \sum_{\delta \in L[a_0,\dots,a_{N-1}]} f(x + \delta).$$
+
+If $a_0,\dots,a_{N-1}$ are linearly dependent, we have that $\Delta^{(N)}_{a_0,\dots,a_{N-1}} f(x) = 0$.
+
+The differentials used in differential cryptanalysis correspond to first order derivatives. It thus makes sense to consider higher order differentials. That is, the attacker considers higher order derivatives which hold with high probability for an input set related by $L[a_0,\dots,a_{N-1}]$. This idea was later specialised by Knudsen to the \emph{square attack} where one input byte of a byte-oriented SP-network takes all possible values while all other bytes remain fixed. Attacks where one byte takes all possible values like in the square attack are also referred to as \emph{integral attacks} and these attacks have been used to attack a wide variety of byte-oriented ciphers.
+
+In \cite{bit-pattern-ia} Muhammad Reza Z'Aba, Håvard Raddum, Matt Henricksen and Ed Dawson extend the notion of integral attacks to bit-oriented ciphers, that is ciphers which do not perform operations on a byte basis but on a bit level. In \cite{bit-pattern-ia} the authors consider the block ciphers \PRESENT, NOEKEON and Serpent.
+
+The first work combining algebraic and higher-order differential attacks is \cite{algebraic-higher-order-dc} by Jean-Charles Faugère and Ludovic Perret. The authors use 
+higher-order differentials to explain the improved performance of their Gröbner basis based attacks against the Curry and Flurry families of block ciphers \cite{flurry-curry}. 
+
+The following discussion of algebraic and higher-order differential attacks is taken from \cite{algebraic-higher-order-dc}.
+
+First, consider the simplest case where the number of points is $N=2$ and we have $a_0 = \delta_0$. Let $T_{K_i}(\textbf{X}_i)$ be the round function of some block cipher with the round key $K_i$; variables typesetted  bold represent vectors of variables. Select a random message $P'$ and a difference $\delta_0$ and construct an equation system $\overline{F}$ for $P',C'$ and $P'',C''$ where $P'' = P' + \delta_0$. We have there are polynomials in the ideal $I$ spanned by $\overline{F}$ which correspond to
+\begin{eqnarray*}
+\textbf{X}_1' - T_{K_1}(P') = \textbf{0} \textnormal{ and }
+\textbf{X}_1'' - T_{K_1}(P' + \delta_0) = \textbf{0}.
+\end{eqnarray*}
+This in turn implies that $\textbf{X}_1' - \textbf{X}_1''- \Delta_{\delta_0} T_{K_1}(P')$, where $\Delta_{\delta_0} T_{K_1}(P')$ is some constant, is in the ideal $I$. This fact is exploited in  Chapter~\ref{chapter:algebraic_differential_cryptanalysis} where we guess $\Delta_{\delta_0} T_{K_1}(P')$ explicitly.
+
+We can iterate the process. Let $a_0,\dots a_{N-1}$ be a set of $N ≥ 1$ linearly dependent vectors, and $P'$ be an arbitrary plaintext. We consider the ideal
+$$I^N = \left\langle \bigcup_{a \in L[a_0,\dots,a_{N-1}]} F(P' \oplus a, T_{K_i}(P' \oplus a))\right\rangle$$
+where $F(P,C)$ is the polynomial system implied by the encryption of $P$ to $C$.
+
+We will denote by $\textbf{X}_i^{(j)}$ the intermediates variables used at the $i^{\textnormal{th}}$ round and corresponding to the $j^\textnormal{th}$ message. For the first round, we have that for all $k$, $0 ≤ k < \#L[a_0\dots,a_{N-1}]$:
+$$\textbf{X}_1^{(k)} − \textbf{X}_1^{(0)} - \Delta_aT_{K_1}(P') \in I^N, \textnormal{ with } a \in L[a_0 ,\dots, a_{N-1}].$$
+As previously, we have shown that there exist polynomials of low degree in the ideal corresponding to derivatives. But, we will also create equations corresponding to the higher order derivatives. For instance, let $a_0, a_1 \in L[a_0,\dots,a_{N-1}]$. We have:
+\begin{eqnarray*}
+\textbf{X}_1^{(0)} − T_{K_1} (P' ) \in I^N &, & \textbf{X}_1^{(2)} − T_{K_1} (P' \oplus a_0 ) \in I^N,\\
+\textbf{X}_1^{(1)} − T_{K_1} (P' \oplus a_1 ) \in I^N &, &  \textbf{X}_1^{(3)} − T_{K_1} (P' \oplus a_0 \oplus a_1) \in I^N.
+\end{eqnarray*}
+
+Therefore $\textbf{X}_1^{(3)} − \sum_{k=0}^{2} \textbf{X}_1^{(k)} - \Delta_{a_0,a_1} T_{K_1}(P') \in I^N$. Moreover, if $a_0$ and $a_1$ are linearly dependent, then $\Delta_{a_0,a_1} T_{K_1}(P')$ is equal to zero. Thus, the ideal  $I^N$ will include linear relations between the intermediates variables $\textbf{X}_1^{(j)}$. Then, such new linear equations will induce derivatives and high order derivatives in the subsequent rounds of the cipher. In our case, where $a_0$ and $a_1$ are linearly dependent we know that $\textbf{X}_1^{(3)} = \sum_{k=0}^{2} \textbf{X}_1^{(k)}$.
+If we consider the second round, we have:
+$$\textbf{X}_2^{(0)} - T_{K_2}(\textbf{X}_1^{(0)}) \in I^N, \textnormal{ and } \textbf{X}_2^{(3)} - T_{K_2}(\textbf{X}_1^{(0)} + \textbf{X}_1^{(1)} + \textbf{X}_1^{(2)}) \in I^N.$$
+This implies that the equations $\textbf{X}_2^{(3)} − \textbf{X}_2^{(0)} = \Delta_{\textbf{X}_1^{(1)} + \textbf{X}_1^{(2)}} T_{K_2} (\textbf{X}_1^{(0)})$ is in the ideal $I^N$. This approach can be iterated for generating differentials of higher orders and thus new polynomials between the intermediates variables of later rounds.
+
+In \cite{algebraic-higher-order-dc} these polynomials are implicit, that is they are not explicitly added to the initial polynomial system. Of course, the mere existence of such polynomials in the ideal does not imply that a Gröbner basis algorithm will be able to find such equations and exploit them. However, we expect these polynomials to be relatively easy to find because they involve only variables from the first few rounds. Indeed, experimental evidence suggests that this technique  reduces the maximum degree reached during a Gröbner basis computation (cf.~\cite{algebraic-higher-order-dc} and Section~\ref{sec:ahod-experiments}).
+
+\section{Experimental Results}
+\label{sec:ahod-experiments}
+
+In this section we apply algebraic higher-order differential (AHOD) attacks to reduced round variants of the block ciphers \PRESENT and KTANTAN32.
+
+\subsection{PRESENT}
+
+In \cite{bit-pattern-ia} \emph{bit-pattern based integral attacks} against up to 7 rounds of \PRESENT are proposed. These attacks are based on a 3.5 round distinguisher. The attacker prepares 16 chosen plaintexts which agree in all bit values except the bits at the positions 51, 55, 59, 63. These four bits take all possible values $(0,0,0,0),(0,0,0,1),\dots,(1,1,1,1)$. In \cite{bit-pattern-ia} the authors show that the input bits to the 4th round are then balanced. That is, the sum of all bits at the same bit position across all 16 encryptions is zero. If $X_{i,j,k}$ denotes the $k$-th input bit of the $j$-th round of the $i$-th encryption, we have that $0 = \sum_{i=0}^{15} X_{i,4,k} \textnormal{ for } 0 \leq k < 64.$ 
+
+We show below that more algebraic structure can be found. For this purpose we set up an equation system for \PRESENT-80-4 for 16 plaintexts of the form given above. We also added all information about relations between encryptions from \cite{bit-pattern-ia} to the system in algebraic form. These relations are of the form $\sum_{i \in I} X_{i,j,k}$ for $I \subset \{0\dots,15\}$. These relations would be found by the Gröbner basis algorithm eventually, but adding them directly can speed up the computation. Then we computed a Gröbner basis up to degree 2 only using \PolyBoRi. This computation takes about 5 minutes and returns more than 500 linear polynomials in the input variables to the fourth round. All these polynomials relate bits from different encryptions, that is they contain $X_{i,j,k}$ and $X_{i',j',k'}$ with $i \neq i'$. 
+
+The exact number of subkey bits we can recover using these polynomials varies with the values of the ciphertext bits. On average we can recover 50 subkey bits from the last round key of \PRESENT-80-4 using $2^4$ chosen plaintexts by performing trial decryptions and comparing the relations between the inputs of the $4$th round with the expected relations\footnote{We note that considering the full equation system instead of only the equations of the $4$th round we can recover the full encryption key using $2^4$ chosen plaintext. The overall Gröbner basis computation for this task takes only a few minutes but the running time varies between instances.}.
+
+The same strategy for finding algebraic relations can be applied to \PRESENT-80-5 where we are looking for polynomials which relate the input variables for the fifth round. Using \PolyBoRi with the same options as above, we found 26 linear polynomials. We can represent 12 of them as
+$$
+X_{i,5,k} + X_{i+1,5,k} + X_{6,5,k} + X_{7,5,k} + X_{ 8,5,k} + X_{ 9,5,k} + X_{14,5,k} + X_{15,5,k},
+$$
+with $i \in \{0,2,4\}$ and $k \in \{51,55,59,63\}$.
+
+Another 12 polynomials are of the form
+\begin{align*}
+ & X_{i,5,k} + X_{i,5,k+32} + X_{i+1,5,k} + X_{i+1,5,k+32} + X_{i+8,5,k} + X_{i+8,5,k+32} +\\
+ & X_{i+9,5,k} + X_{i+9,5,k+32} + X_{6,5,k} + X_{6,5,k+32} + X_{7,5,k} + X_{7,5,k+32} + \\
+ & X_{14,5,k} + X_{14,5,k+32} + X_{15,5,k} + X_{15,5,k+32}.
+\end{align*}
+for $i \in \{0,2,4\}$ and $k \in \{3,7,11,15\}$.
+
+The remaining two polynomials can be represented by
+\begin{align*}
+& X_{4,5,k} + X_{4,5,k+32} + X_{4,5,k+48} + X_{5,5,k} + X_{5,5,k+32} + X_{5,5,k+48} +\\
+& X_{6,5,k} + X_{6,5,k+32} + X_{6,5,k+48} + X_{7,5,k} + X_{7,5,k+32} + X_{7,5,k+48} +\\
+& X_{12,5,k} + X_{12,5,k+32} + X_{12,5,k+48} + X_{13,5,k} + X_{13,5,k+32} + X_{13,5,k+48} +\\
+& X_{14,5,k} + X_{14,5,k+32} + X_{14,5,k+48} + X_{15,5,k} + X_{15,5,k+32} + X_{15,5,k+48}
+\end{align*}
+for $k \in \{3,7\}$.
+
+Using the 26 polynomials listed above we expect to recover the round-key for the last round of \PRESENT-80-5 using $3 \cdot 2^4$ chosen plaintexts. For each S-box we have to guess the four subkey bits that separate the S-box output from the ciphertext. For each S-Box $12,13,14$ and $15$ we have $3$ linear equations to filter out wrong guesses on four bits. For each pair of S-boxes $(0,8)$, $(1,9)$, $(2,10)$ and $(3,11)$ we have again three linear equations to filter out wrong guesses, however this time we are filtering on eight bits. Thus, we need $2 \cdot 2^4$ chosen plaintexts to recover $16$ bits and $3 \cdot 2^4$ chosen plaintext to recover $64$ subkey bits. In \cite{bit-pattern-ia} $5 \cdot 2^4$ chosen plaintexts are required. We mention that we can reduce the number of required texts further to $2^4$ if we consider the polynomials from \PRESENT-80-4 and \PRESENT-80-5 together.
+
+We were unable to obtain any polynomials for the input variables of the sixth round. However, just as in \cite{bit-pattern-ia} we can extend our attack on \PRESENT-80-5 to an attack on \PRESENT-80-6 by guessing bits in the first round. Our improvements for \PRESENT-80-5 translate directly into an improvement for \PRESENT-80-6, dropping the data complexity from $2^{22.4}$ to $2^{21}$  chosen texts (or $2^{20}$ if we consider the relations arising for the 4th round as well). Similarly, this additional information can be exploited for the \PRESENT-128-7 attack from \cite{bit-pattern-ia}.
+
+\subsection{KTANTAN32}
+
+In Table~\ref{tab:ahod-ktantan32-polybori} we summarise experimental results using \PolyBoRi against reduced variants of KTANTAN32 \cite{CDK09}. We consider structures of $2^n$ input plaintexts. Each plaintext takes a different value in $0,\dots,2^{n-1}$ for the least significant bits and and a random but fixed value for the remaining bits. No attempt was made to find the optimal positions for plaintext bits to vary. We also restrict the degree using the \texttt{deg\_bound} option to either 2 or 3. All experiments use the \PolyBoRi options  \texttt{faugere=False}, \texttt{linear\_al\-gebra\_in\_last\_block=False} and \texttt{heuristic=False}. No key bits were guessed in Table~\ref{tab:ahod-ktantan32-polybori}. In Table~\ref{tab:ahod-ktantan32-minisat} we give results using the SAT solver \MiniSat. As we can see, using \MiniSat we can go slightly further than with \PolyBoRi and a degree bound of 2 or 3.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c|c|r||c|c|c|r|}
+\hline
+$N_r$ & $\log_2 n$ & deg bound & $t$ & $N_r$ & $\log_2 n$ & deg bound & $t$\\
+\hline
+57 & 3 & 2 &    -- & 57 & 3 & 3 & 59298.85s \\
+58 & 3 & 2 &    -- & 58 & 3 & 3 &      --\\
+\hline
+57 & 4 & 2 &  9.02s  & 57 & 4 & 3 &  13.11s \\
+58 & 4 & 2 & 19.73s  & 58 & 4 & 3 & 102.47s \\
+59 & 4 & 2 &    --   & 59 & 4 & 3 &     --\\
+\hline
+57 & 5 & 2 &  14.03s & 57 & 5 & 3 &     15.05s \\
+58 & 5 & 2 &  23.89s & 58 & 5 & 3 &     25.17s \\
+59 & 5 & 2 &  27.43s & 59 & 5 & 3 &     29.06s \\
+60 & 5 & 2 &  37.37s & 60 & 5 & 3 &     39.77s \\
+61 & 5 & 2 &     --  & 61 & 5 & 3 &  47191.97s \\
+62 & 5 & 2 &     --  & 62 & 5 & 3 &        --  \\
+\hline
+57 & 6 & 2 &   60.68s & 57 & 6 & 3 &  66.02s \\
+58 & 6 & 2 &   66.81s & 58 & 6 & 3 &  73.38s \\
+59 & 6 & 2 &   75.32s & 59 & 6 & 3 &  82.68s \\
+60 & 6 & 2 &   86.32s & 60 & 6 & 3 &  95.17s \\
+61 & 6 & 2 &  103.46s & 61 & 6 & 3 & 113.53s \\
+62 & 6 & 2 &  262.66s & 62 & 6 & 3 & 282.85s \\
+\hline
+57 & 7 & 2 & 273.92s & 57 & 8 & 2 & 1368.54s\\
+58 & 7 & 2 & 311.63s & 58 & 8 & 2 & 1527.65s\\
+59 & 7 & 2 & 343.29s & 59 & 8 & 2 & 1737.21s\\
+60 & 7 & 2 & 381.17s & 60 & 8 & 2 & --      \\
+61 & 7 & 2 & 420.61s & 61 & 8 & 2 & --      \\
+62 & 7 & 2 & --      & 62 & 8 & 2 & --      \\
+\hline
+\end{tabular}
+\end{center}
+\caption{AHOD attacks against KTANTAN32 using \PolyBoRi.}
+\label{tab:ahod-ktantan32-polybori}
+\end{table}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c|r||c|c|r|}
+\hline
+$N_r$ & $\log_2 n$ & $t$ & $N_r$ & $\log_2 n$ & $t$\\
+\hline
+56 & 3 &     22.47 & 56 & 4 &    53.16\\
+57 & 3 &     83.05 & 57 & 4 &     0.84\\
+58 & 3 &    773.45 & 58 & 4 &   133.64\\
+59 & 3 &    253.35 & 59 & 4 &    12.94\\
+60 & 3 &   7353.70 & 60 & 4 &   987.03\\
+61 & 3 &  17316.40 & 61 & 4 & 13683.50\\
+62 & 3 &  41191.10 & 62 & 4 &   120.98\\
+63 & 3 &  14676.10 & 63 & 4 &  9375.71\\
+64 & 3 & 191432.00 & 64 & 4 &  6632.50\\
+65 & 3 &        -- & 65 & 4 &       --\\
+\hline
+56 & 5 &     0.76 & 56 & 6 &    390.95\\
+57 & 5 &     8.89 & 57 & 6 &     15.35\\
+58 & 5 &    58.24 & 58 & 6 &     13.52\\
+59 & 5 &   229.64 & 59 & 6 &   5543.62\\
+60 & 5 &    13.54 & 60 & 6 &   1178.47\\
+61 & 5 &   488.27 & 61 & 6 &    374.73\\
+62 & 5 &  4524.71 & 62 & 6 &  13343.70\\
+63 & 5 & 46256.40 & 63 & 6 &  49401.50\\
+64 & 5 & 12034.20 & 64 & 6 &  39518.80\\
+65 & 5 & 59004.10 & 65 & 6 & 122397.00\\
+\hline         
+\end{tabular}
+\end{center}
+\caption{AHOD attacks against KTANTAN32 using \MiniSat.}
+\label{tab:ahod-ktantan32-minisat}
+\end{table}
+
+In order to increase the number of rounds we can guess some key bits. In Tables \ref{tab:ahod-ktantan32-polybori-guess} and \ref{tab:ahod-ktantan32-minisat-guess} we give experimental results where we guess the first $m$ key bits used by the cipher. In Table~\ref{tab:ahod-ktantan32-polybori-guess} we restrict the maximal allowed degree during a Gröbner basis computation to two. In both tables $t$ is the time for one application of the respective solving algorithm. The column `cycles' gives an approximation of CPU cycles needed for the complete attack on the 2.33Ghz \CTD. That is, the `cycles' column contains the value $2^m \cdot 2.33 \cdot 10^9 \cdot t$.  Since this would be very imprecise for SAT solvers due to their highly variable running time and the low number of experiments we conducted, we skip this column in Table~\ref{tab:ahod-ktantan32-minisat-guess}. We note however, that all rows in Table~\ref{tab:ahod-ktantan32-minisat-guess} are better than exhaustive key search, if only slightly. In all experiments we `guessed' the correct values, since these instances should be the most difficult. We expect wrong guesses to be resolvable slightly faster and thus expect our complexity estimates to be pessimistic. To verify this assumption we ran $2^{12}$ experiments for KTANTAN32 restricted to 100 rounds and $2^5$ chosen plaintexts where we guessed 40 bits at random. The average running time for the SAT solver was 12.8 seconds (minimum: 0.020s, median: 0.060s, maximum: 14799.700s).  Thus, considering KTANTAN32 resricted to 100 rounds we expect this attack to cost 32 chosen plaintexts and $\approx 2^{74.8}$ CPU cycles. For comparison we expect a single round of KTANTAN32 to cost at least two CPU cycles -- one cycle for each non-linear update. Thus, we expect a brute-force attack to require $2^{80} \cdot 2 \cdot N$ CPU cylces for $N$ rounds. For 80 rounds, we get $2^{87.32}$ CPU cycles on our 2.33 Ghz \CTD. 
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c|c|r|r|}
+\hline
+$N_r$ & $\log_2 n$ & $m$ & $t$ & $\log_2$ cycles\\
+\hline
+64 & 4 & 16 &  5.59s & 49.60\\
+65 & 4 & 16 & 33.11s & 52.17\\
+66 & 4 & 16 &     -- & --\\
+\hline
+70 & 4 & 32 &  2.33s & 64.34\\
+71 & 4 & 32 &  2.55s & 64.47\\
+72 & 4 & 32 &  8.22s & 66.16\\
+73 & 4 & 32 & 24.77s & 67.75\\
+74 & 4 & 32 &     -- & --\\
+\hline
+76 & 5 & 32 & 32.52s & 68.14\\
+77 & 5 & 32 & 32.35s & 68.13\\
+78 & 5 & 32 & 42.92s & 68.54\\
+79 & 5 & 32 & -- & --\\
+\hline
+80 & 6 & 32 &  119.22s & 70.02\\
+81 & 6 & 32 &  116.71s & 69.98\\
+82 & 6 & 32 & 2404.06s & 74.35\\
+\hline
+84 & 6 & 40 &  136.73s & 78.21\\
+\hline
+84 & 7 & 40 &  517.23s & 80.13\\
+85 & 7 & 40 & 1158.34s & 81.29\\
+\hline
+\end{tabular}
+\end{center}
+\caption{AHOD + guessing attacks against KTANTAN32 using \PolyBoRi.}
+\label{tab:ahod-ktantan32-polybori-guess}
+\end{table}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|c|c|c|r||c|c|c|r|}
+\hline
+$N_r$ & $\log_2 n$ & $m$ & $t$ & $N_r$ & $\log_2 n$ & $m$ & $t$ \\
+\hline
+ 92 & 2 & 32 &  3020.21s  &  94 & 5 & 32 &  3884.56s \\
+ 93 & 2 & 32 &  8322.33s  &  95 & 5 & 32 &   494.82s \\
+ 94 & 2 & 32 & 16421.40s  &  96 & 5 & 32 & 81962.20s \\
+ 95 & 2 & 32 & 30039.50s  &  97 & 5 & 32 &  1248.12s \\
+\hline                      \hline                        
+ 95 & 2 & 40 &  4817.65s  &  99 & 5 & 40 &  2659.33s \\
+ 96 & 2 & 40 &  1559.37s  & 100 & 5 & 40 &  2058.17s \\
+ 97 & 2 & 40 &  8272.08s  & 101 & 5 & 40 & 42131.30s \\
+ 98 & 2 & 40 & 13414.10s  & 102 & 5 & 40 & 26205.60s \\ 
+\hline                      \hline               
+ 92 & 3 & 32 &   815.31s  &  97 & 6 & 32 & 48440.10s \\ 
+ 93 & 3 & 32 &  1574.34s  &  98 & 6 & 32 & 29726.10s \\ 
+ 94 & 3 & 32 &    21.58s  &  99 & 6 & 32 &  9709.03s \\ 
+ 95 & 3 & 32 & 18276.60s  & 100 & 6 & 32 & 37691.50s \\ 
+\hline                      \hline               
+ 99 & 3 & 40 &  3104.99s  &  99 & 6 & 40 &  9739.37s \\ 
+100 & 3 & 40 &  2382.78s  & 100 & 6 & 40 & 61011.70s \\ 
+101 & 3 & 40 &  1617.73s  & 101 & 6 & 40 &  4818.93s \\ 
+102 & 3 & 40 & 16862.40s  & 102 & 6 & 40 & 46540.20s \\ 
+\hline                      \hline               
+ 92 & 4 & 32 &   572.30s  &  94 & 7 & 32 &  4943.55s \\ 
+ 93 & 4 & 32 &  1489.71s  &  95 & 7 & 32 &  5887.44s \\ 
+ 94 & 4 & 32 &     0.12s  &  96 & 7 & 32 & 74700.10s \\ 
+ 95 & 4 & 32 &  1686.13s  &  97 & 7 & 32 & 90527.70s \\ 
+\hline                      \hline               
+ 98 & 4 & 40 &  5486.68s  &  99 & 7 & 40 & 16238.50s \\ 
+ 99 & 4 & 40 &  3625.15s  & 100 & 7 & 40 &  3562.30s \\ 
+100 & 4 & 40 & 16547.00s  & 101 & 7 & 40 & 69109.90s \\ 
+101 & 4 & 40 & 33146.60s  & 102 & 7 & 40 & 48302.30s \\ 
+\hline
+\end{tabular}
+\end{center}
+\caption{AHOD + guessing attacks against KTANTAN32 using \MiniSat.}
+\label{tab:ahod-ktantan32-minisat-guess}
+\end{table}
+
+
+\section{Conclusion \& Future Work}
+In this chapter we have shown that one can improve upon existing higher-order differential attacks using algebraic techniques. In the case of the block cipher \PRESENT we demonstrated that much more algebraic structure is present in systems arising from the relations in \cite{bit-pattern-ia} than were given in the original work.
+
+In the case of KTANTAN32, which has a very simple algebraic structure, one can break up to 100 rounds out of 254 rounds using only $2^5$ chosen plaintexts in time complexity considerably smaller than exhaustive key search. Furthermore, up to 65 rounds can be broken in practical time complexity on a desktop PC.
+
+Since the square attack is a form of higher order differentials it is a natural question to ask  whether our techniques are applicable to the AES. While the answer is positive \emph{in principle} so far we were unable to obtain results due to the fact that AES equation systems are more difficult to compute in practice than both \PRESENT and KTANTAN32. We note however, that if we compute additional algebraic relations, then the computation has to be performed only once and that any progress in that direction could potentially improve some of the best cryptanalytical results available against the AES.
