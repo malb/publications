@@ -1,0 +1,211 @@
+\begin{thebibliography}{10}
+
+\bibitem{agrawal-gentry-halevi-sahai:eprint2012}
+Shweta Agrawal, Craig Gentry, Shai Halevi, and Amit Sahai.
+\newblock Discrete {G}aussian {L}eftover {H}ash {L}emma over infinite domains.
+\newblock Cryptology ePrint Archive, Report 2012/714, 2012.
+\newblock \url{http://eprint.iacr.org/}.
+
+\bibitem{ajtai-kumar-sivakumar:ccc2002}
+Mikl{\'o}s Ajtai, Ravi Kumar, and D.~Sivakumar.
+\newblock Sampling short lattice vectors and the closest lattice vector
+  problem.
+\newblock In {\em IEEE Conference on Computational Complexity}, pages 53--57,
+  2002.
+
+\bibitem{SCC12_AG}
+Martin Albrecht, Carlos Cid, Jean-Charles Faug\`ere, Robert Fitzpatrick, and
+  Ludovic Perret.
+\newblock On the complexity of the {A}rora-{G}e algorithm against {LWE}.
+\newblock In {\em SCC '12: Proceedings of the 3nd International Conference on
+  Symbolic Computation and Cryptography}, pages 93--99, Castro-Urdiales, July
+  2012.
+
+\bibitem{albrecht:bitbucket2012}
+Martin~R. Albrecht.
+\newblock {\tt bkw-estimator.py}, 2012.
+\newblock available at \url{https://bitbucket.org/malb/research-snippets/}.
+
+\bibitem{albrecht-farshim-faugere-perret:asiacrypt2011}
+Martin~R. Albrecht, Pooya Farshim, Jean-Charles Faug{\`e}re, and Ludovic
+  Perret.
+\newblock Polly {C}racker, revisited.
+\newblock In {\em Advances in Cryptology -- ASIACRYPT 2011}, volume 7073 of
+  {\em Lecture Notes in Computer Science}, pages 179--196, Berlin, Heidelberg,
+  New York, 2011. Springer Verlag.
+\newblock full version available as Cryptology ePrint Archive, Report 2011/289,
+  2011 \url{http://eprint.iacr.org/}.
+
+\bibitem{albrecht-fitzpatrick-cabracas-goepfert-schneider:bitbucket2013}
+Martin~R. Albrecht, Robert Fitzpatrick, Daniel Cabracas, Florian Göpfert, and
+  Michael Schneider.
+\newblock A generator for {LWE} and {Ring-LWE} instances, 2013.
+\newblock available at
+  \url{http://www.iacr.org/news/files/2013-04-29lwe-generator.pdf}.
+
+\bibitem{arora-ge:icalp2011}
+Sanjeev Arora and Rong Ge.
+\newblock New algorithms for learning in presence of errors.
+\newblock In Luca Aceto, Monika Henzinger, and Jiri Sgall, editors, {\em
+  ICALP}, volume 6755 of {\em Lecture Notes in Computer Science}, pages
+  403--415, Berlin, Heidelberg, New York, 2011. Springer Verlag.
+
+\bibitem{baigneres-junod-vaudenay:asiacrypt2004}
+Thomas Baigneres, Pascal Junod, and Serge Vaudenay.
+\newblock How far can we go beyond {L}inear {C}ryptanalysis?
+\newblock In Pil~Joong Lee, editor, {\em Advances in Cryptology -- ASIACRYPT
+  2004}, volume 3329 of {\em Lecture Notes in Computer Science}, pages
+  432--450, Berlin, Heidelberg, New York, 2004. Springer Verlag.
+
+\bibitem{DBLP:journals/jacm/BlumKW03}
+Avrim Blum, Adam Kalai, and Hal Wasserman.
+\newblock Noise-tolerant learning, the parity problem, and the statistical
+  query model.
+\newblock {\em J. ACM}, 50(4):506--519, 2003.
+
+\bibitem{brakerski-langlois-peikert-regev-stehle:stoc13}
+Zvika Brakerski, Adeline Langlois, Chris Peikert, Oded Regev, and Damien
+  Stehl{\'e}.
+\newblock Classical hardness of {L}earning with {E}rrors.
+\newblock to appear STOC 2013, 2013.
+
+\bibitem{Brakerski2011a}
+Zvika Brakerski and Vinod Vaikuntanathan.
+\newblock Efficient fully homomorphic encryption from (standard) {LWE}.
+\newblock In Rafail Ostrovsky, editor, {\em IEEE 52nd Annual Symposium on
+  Foundations of Computer Science, FOCS 2011}, pages 97--106. IEEE, 2011.
+
+\bibitem{chen-nguyen:asiacrypt2011}
+Yuanmi Chen and Phong~Q. Nguyen.
+\newblock {BKZ} 2.0: better lattice security estimates.
+\newblock In {\em Advances in Cryptology - ASIACRYPT 2011}, volume 7073 of {\em
+  Lecture Notes in Computer Science}, pages 1--20, Berlin, Heidelberg, 2011.
+  Springer Verlag.
+
+\bibitem{duembgen-arxiv2010}
+Lutz Duembgen.
+\newblock Bounding standard gaussian tail probabilities.
+\newblock {\em arXiv:1012.2063}, 2010.
+
+\bibitem{FL06}
+Pierre-Alain Fouque and {\'E}ric Levieil.
+\newblock An improved {LPN} algorithm.
+\newblock In Roberto~De Prisco and Moti Yung, editors, {\em Security and
+  Cryptography for Networks, 5th International Conference, SCN 2006}, volume
+  4116 of {\em Lecture Notes in Computer Science}, pages 348--359. Springer
+  Verlag, 2006.
+
+\bibitem{gama-nguyen-regev:eurocrypt2010}
+Nicolas Gama, Phong~Q. Nguyen, and Oded Regev.
+\newblock Lattice enumeration using extreme pruning.
+\newblock In {\em Advances in Cryptology -- EUROCRYPT 2010}, volume 6110 of
+  {\em Lecture Notes in Computer Science}, pages 257--278. Springer Verlag,
+  2010.
+
+\bibitem{Gentry09:phd}
+Craig Gentry.
+\newblock {\em A fully homomorphic encryption scheme}.
+\newblock PhD thesis, Stanford University, 2009.
+\newblock Available at \url{http://crypto.stanford.edu/craig}.
+
+\bibitem{GPV08}
+Craig Gentry, Chris Peikert, and Vinod Vaikuntanathan.
+\newblock Trapdoors for hard lattices and new cryptographic constructions.
+\newblock In {\em STOC 08: Proceedings of the 40th annual ACM symposium on
+  Theory of computing}, pages 197--206. ACM, 2008.
+
+\bibitem{DBLP:conf/codcry/HanrotPS11}
+Guillaume Hanrot, Xavier Pujol, and Damien Stehl{\'e}.
+\newblock Algorithms for the shortest and closest lattice vector problems.
+\newblock In Yeow~Meng Chee, Zhenbo Guo, San Ling, Fengjing Shao, Yuansheng
+  Tang, Huaxiong Wang, and Chaoping Xing, editors, {\em IWCC}, volume 6639 of
+  {\em Lecture Notes in Computer Science}, pages 159--190. Springer, 2011.
+
+\bibitem{hanrot-pujol-stehle:crypto2011}
+Guillaume Hanrot, Xavier Pujol, and Damien Stehl{\'e}.
+\newblock Analyzing blockwise lattice algorithms using dynamical systems.
+\newblock In Phillip Rogaway, editor, {\em Advances in Cryptology -- CRYPTO
+  2011}, volume 6841 of {\em Lecture Notes in Computer Science}, pages
+  447--464. Springer Verlag, 2011.
+
+\bibitem{mpmath}
+Fredrik Johansson et~al.
+\newblock {\em mpmath: a {P}ython library for arbitrary-precision
+  floating-point arithmetic (version 0.17)}, February 2011.
+\newblock {\tt http://code.google.com/p/mpmath/}.
+
+\bibitem{LindnerP10}
+Richard Lindner and Chris Peikert.
+\newblock Better key sizes (and attacks) for {LWE}-based encryption.
+\newblock In {\em Topics in Cryptology – CT-RSA 2011}, volume 6558 of {\em
+  Lecture Notes in Computer Science}, pages 319--339, Berlin, Heidelberg, New
+  York, 2011. Springer Verlag.
+
+\bibitem{DBLP:conf/ctrsa/LiuN13}
+Mingjie Liu and Phong~Q. Nguyen.
+\newblock Solving {BDD} by enumeration: An update.
+\newblock In Ed~Dawson, editor, {\em CT-RSA}, volume 7779 of {\em Lecture Notes
+  in Computer Science}, pages 293--309. Springer, 2013.
+
+\bibitem{lyubashevsky-micciancio-peikert-rosen:fse2008}
+Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, and Alon Rosen.
+\newblock {SWIFFT}: A modest proposal for {FFT} hashing.
+\newblock In Kaisa Nyberg, editor, {\em Fast Software Encryption}, volume 5086
+  of {\em Lecture Notes in Computer Science}, pages 54--72. Springer Verlag,
+  2008.
+
+\bibitem{micciancio-regev:pqc2009}
+Daniele Micciancio and Oded Regev.
+\newblock Lattice-based cryptography.
+\newblock In Daniel~J. Bernstein, Johannes Buchmann, and Erik Dahmen, editors,
+  {\em Post-Quantum Cryptography}, pages 147--191. Springer Verlag, Berlin,
+  Heidelberg, New York, 2009.
+
+\bibitem{DBLP:conf/issac/MorelSV09}
+Ivan Morel, Damien Stehl{\'e}, and Gilles Villard.
+\newblock {H-LLL}: using householder inside {LLL}.
+\newblock In Jeremy~R. Johnson, Hyungju Park, and Erich Kaltofen, editors, {\em
+  Symbolic and Algebraic Computation, International Symposium, ISSAC 2009},
+  pages 271--278. ACM, 2009.
+
+\bibitem{nguyen:eurocrypt2011}
+Phong~Q. Nguyen.
+\newblock Lattice reduction algorithms: Theory and practice.
+\newblock In Kenneth~G. Paterson, editor, {\em Advances in Cryptology -
+  EUROCRYPT 2011}, volume 6632 of {\em Lecture Notes in Computer Science},
+  pages 2--6. Springer Verlag, 2011.
+
+\bibitem{nguyen-stehle:talgs2009}
+Phong~Q. Nguyen and Damien Stehl{\'e}.
+\newblock Low-dimensional lattice basis reduction revisited.
+\newblock {\em ACM Transactions on Algorithms}, 5(4), 2009.
+
+\bibitem{DBLP:journals/iacr/PujolS09}
+Xavier Pujol and Damien Stehl{\'e}.
+\newblock Solving the shortest lattice vector problem in time $2^{2.465n}$.
+\newblock {\em IACR Cryptology ePrint Archive}, 2009:605, 2009.
+
+\bibitem{regev:acm09}
+Oded Regev.
+\newblock On lattices, learning with errors, random linear codes, and
+  cryptography.
+\newblock {\em J. ACM}, 56(6), 2009.
+
+\bibitem{DBLP:conf/coco/Regev10}
+Oded Regev.
+\newblock The learning with errors problem (invited survey).
+\newblock In {\em IEEE Conference on Computational Complexity}, pages 191--204.
+  IEEE Computer Society, 2010.
+
+\bibitem{rueckert-schneider:eprint2010}
+Markus R{\"u}ckert and Michael Schneider.
+\newblock Estimating the security of lattice-based cryptosystems.
+\newblock {\em IACR Cryptology ePrint Archive}, 2010:137, 2010.
+
+\bibitem{sagemath}
+W.\thinspace{}A. Stein et~al.
+\newblock {\em {S}age {M}athematics {S}oftware ({V}ersion 5.2)}.
+\newblock The Sage Development Team, 2012.
+\newblock {\tt http://www.sagemath.org}.
+
+\end{thebibliography}

@@ -1,0 +1,166 @@
+Given $n \in \Z$, select a positive integer $b\leq n$ (the window width), and let $a:= \abn$ (the addition depth).
+Given an LWE oracle (which by abuse of notation, we will also denote by $\Ldis$), we denote by ${\Bdis{\ell}}$ a related oracle which outputs samples where the first $b \cdot \ell$ coordinates of each $\avec_i$ are zero, generated under the distribution (which again by abuse of notation, we denote by ${\Bdis{\ell}}$) obtained as follows: 
+\begin{itemize}
+\item if $\ell=0$, then $\Bdis{0}$ is simply $\Ldis$;
+\item if $0<\ell<a$, the distribution $\Bdis{\ell}$ is obtained by taking the difference of two vectors from $\Bdis{\ell-1}$ that agree on the elements 
+$(\avec_{((\ell-1)\cdot b)},\avec_{((\ell-1)\cdot b+1)},\ldots,\avec_{(\ell\cdot b-1)}).$
+\end{itemize}
+We can then describe the first stage of the BKW algorithm as the (recursively constructed) series of sample oracles ${\Bdis{\ell}}$, for $0 \leq \ell <  a$. Indeed, we define ${\Bdis{0}}$ as the oracle which simply returns samples from $\Ldis$, while ${\Bdis{\ell}}$ is constructed from ${\Bdis{\ell-1}}$, for $\ell \geq 1$. We will make use of a set of tables $T$ (maintained across oracle calls) to store (randomly-chosen) vectors that will be used to reduce samples arising from our oracles. 
+More explicitly, given a parameter $b \leq n$ for the window width, and letting $a = \abn$, we can describe the oracle ${\Bdis{\ell}}$ as  follows:
+\begin{enumerate}
+\item For $\ell = 0$, we can obtain samples from ${\Bdis{0}}$ by simply calling the LWE oracle $\Ldis$ and returning the output.
+\item For $\ell = 1$, we repeatedly query the oracle ${\Bdis{0}}$ to obtain (at most) $(q^b-1)/2$ samples $(\avec,c)$ with distinct non-zero vectors for the first $b$ coordinates of $\avec$. We only collect $(q^b-1)/2$ such vectors because we exploit the symmetry of $\Zq$ and that of the noise distribution. We use these samples to populate the table $T^1$, indexed by the first $b$ entries of $\avec$. We store $(\avec, c)$ in the table. During this course of this population, whenever we obtain a sample $(\mathbf{a'},c')$ from ${\Bdis{0}}$, if either the first $b$ entries of $\mathbf{a}'$ (resp.\ their negation) match the first $b$ entries of a vector $\avec$ such that the pair $(\avec,c)$ is already in $T^1$, we return $(\avec'\pm \avec,c'\pm c)$, as a sample from ${\Bdis{1}}$. Note that, if the first $b$ entries in $\mathbf{a}'$ are zero, we return $(\mathbf{a}',c')$ as a sample from ${\Bdis{1}}$. Further calls to the oracle ${\Bdis{1}}$ proceed in a similar manner, but using (and potentially adding entries to) the same table $T^1$. 
+
+\item For $1 < \ell < a$, we proceed as above:  we make use of the table $T^{\ell}$ (constructed by calling ${\Bdis{\ell - 1}}$ up to $(q^b-1)/2$ times) to reduce any output sample from ${\Bdis{\ell - 1}}$ which has the $b$ entries in its $\ell$-th block already in  $T^{\ell}$, to generate a sample from  ${\Bdis{\ell}}$.
+\end{enumerate}
+
+Pseudo-code for the oracle ${\Bdis{\ell}}$, for $0 < \ell < a$, is given in Algorithm~\ref{alg:bdis} (the case $\ell = a$ will be discussed below). 
+
+\begin{algorithm}[H]
+\label{alg:bdis}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\KwIn{$b$ -- an integer $0 < b \leq n$}
+\KwIn{$\ell$ -- an integer $0 < \ell < a$}
+\Begin{
+$T^{\ell} \gets$ array indexed by $\Zq^b$ maintained across all runs of ${\Bdis{\ell}}$\;
+query ${\Bdis{\ell-1}}$ to obtain $(\avec,c)$\;
+\If{$\avec_{(b\cdot(\ell-1),b\cdot\ell)}$ is all zero vector}{\Return $(\avec,c)$\;}
+\While{$T^{\ell}_{\avec_{(b\cdot(\ell-1),b\cdot\ell})}  = \varnothing$ \KwAnd $T^{\ell}_{-\avec_{(b\cdot(\ell-1),b\cdot\ell})}  = \varnothing$}{
+  $T^{\ell}_{\avec_{(b\cdot(\ell-1),b\cdot\ell)}} \gets (\avec,c)$\;
+  query ${\Bdis{\ell-1}}$ to obtain $(\avec,c)$\;
+  \If{$\avec_{(b\cdot(\ell-1),b\cdot\ell)}$ is all zero vector}{\Return $(\avec,c)$\;}
+}
+\eIf{$T^{\ell}_{\avec_{(b\cdot(\ell-1),b\cdot\ell})}  \neq \varnothing$}{
+   $(\avec',c') \gets T^{\ell}_{\avec_{(b\cdot(\ell-1),b\cdot\ell)}}$\;
+   \Return $(\avec - \avec',c - c')$\;
+}{   $(\avec',c') \gets T^{\ell}_{-\avec_{(b\cdot(\ell-1),b\cdot\ell)}}$\;
+   \Return $(\avec + \avec',c + c')$\;
+}
+
+
+
+
+}
+\caption{${\Bdis{\ell}}$ for $0 < \ell < a$}
+\end{algorithm}
+
+
+Then, given an LWE oracle $\Ldis$ outputting samples of the form $(\avec,\dotp{\avec}{\svec} + e)$, where $\avec , \svec \in \Zq^n$, the oracle
+${\Bdis{a-1}}$ can be seen as another LWE oracle outputting samples of the form $(\avec',\dotp{\avec'}{\solvec} + e')$, where $\avec' , \solvec \in \Zq^k$, with $k = n \bmod b$, if $b$ does not divide $n$, or $k=b$ otherwise,
+and $e'$ is generated with a different distribution (related to the original error distribution and the value $a$).
+The vector $\solvec$ is defined to be the last $k$ components of $\svec$. For the remainder of this section we will assume that $n \bmod b = 0$, and therefore $k=b$ (this is done to simplify the notation, but all the results obtained can be easily adapted when the last block has length $k < b$).
+
+We note that, in our analysis below, we make the assumption for simplicity that all tables are completely filled during the elimination stage of the algorithm, thus giving conservative time and space bounds. In practise, especially in the final tables, this will not be the case and birthday-paradox arguments could be applied to derive a more realistic (lower) complexity. Typically,   if the number of samples required for hypothesis-testing is small, the birthday paradox implies that the storage required for the final table can be reduced by a square-root factor.
+
+Moreover, in this work we introduce an additional parameter $d \leq b$ which does not exist in the original BKW algorithm~\cite{DBLP:journals/jacm/BlumKW03}. This parameter is used to reduce the number of hypotheses that need to be tested in the second stage of the algorithm, and arises from the fact we work with primes $q > 2$. At times, instead of working with the last block of length $b$, which could lead to potentially exponentially many hypotheses $q^b$ to be tested, 
+we may employ a final reduction phase -- $\Bdis{a}$ -- to reduce the samples to $d<b$ non-zero entries in $\avec$. Thus $d$ will represent the number of components in our final block, i.e., the number of elements of the secret over which we conduct hypothesis tests. So after running the ${\Bdis{a-1}}$ algorithm, we may decide to split the final block to obtain vectors over $\Zq^d$. If so, we run the reduction function described above once more, which we will denote by $\Bdis{a}$. In the simple case where we do not split the last block (i.e., $d=b$), we adopt the convention that we will also call the $\Bdis{a}$ function, but it will perform no extra action (i.e., it simply calls ${\Bdis{a-1}}$). Thus we have that for a choice of $0 \leq d \leq b$, the oracle ${\Bdis{a}}$ will output samples of the form $(\avec',\dotp{\avec'}{\solvec} + e')$, where $\avec' , \solvec \in \Zq^d$. We pick $d=0$ in the decision variant.
+
+\heading{On choosing $b$ and $d$} In general, as discussed above, choosing the parameter $d$ to be small (e.g. $1$ or $2$) leads to the best results. However, in general one could also relax the condition $d \leq b$ to $d \leq n$ where $d=n$ is equivalent to straight-forward exhaustive search. Finally, a natural question is -- should all the blocks be of equal length or should some be shorter than others? Intuitively, choosing blocks which are all of equal size (or as close as possible) appears to be the optimal strategy, though we do not formally investigate this here. To ease the presentation, we assume throughout this paper that this is  the case.
+
+From the constructions above, it follows that the cost of one call to ${\Bdis{\ell}}$ is at most $\lceil q^b/2\rceil$ calls to ${\Bdis{\ell-1}}$. We also need at most one addition of two outputs of ${\Bdis{\ell-1}}$, which have the first $b\cdot \ell$ entries in common. This operation requires $n+1 -b\cdot \ell$ additions in $\Zq$. Furthermore, since we maintain $T^{\ell}$  across different runs of ${\Bdis{\ell}}$, this cost is amortised across different runs of ${\Bdis{\ell}}$. Hence, when $\ell > 0$ the cost of calling ${\Bdis{\ell}}$ a total of $m$ times  is upper bounded by:
+$$m + \frac{q^b-1}{2} \mbox{ calls to } {\Bdis{\ell-1}} \mbox{ and } m \mbox{ additions of outputs of } {\Bdis{\ell-1}}.
+$$
+Overall we obtain Lemma~\ref{lem:firststep}.
+
+\begin{lemma}
+\label{lem:firststep}
+Let $n\ge 1$ be the dimension of the LWE secret vector, $q$ be a positive integer, and $d,b \in \mathbb{Z}$ with $1 \le d \leq b \le n$, and define $a = \abn$. The cost of calling $\Bdis{a}$, which returns samples $(\avec_i,c_i)$ with at most the $d$ rightmost entries of $\avec_i$ non-zero, $m$ times is upper bounded by 
+\begin{eqnarray*}
+\naddssteponeexactT + \naddssteponeexactM \\< \naddssteponeT + \naddssteponeM
+\end{eqnarray*}
+additions in $\Zq$ and $\ncallsT + \ncallsM \mbox{ calls to } \Ldis.$
+\end{lemma}
+
+\begin{proof}
+We may think of the $\Bdis{\ell}$ oracles as constructing the matrix 
+\[
+B = \left(\begin{array}{ccccccccccccc}
+   T^1 &        &         &        &        &        & \\
+ 0     & \hdots &       0 &    T^2 &        &        &  \\
+ 0     & \hdots &       0 &      0 & \hdots & 0      &    T^3 &        &  \\
+\vdots & \ddots &  \vdots & \vdots & \ddots & \vdots & \vdots & \ddots &  \\
+ 0     & \hdots &       0 &      0 & \hdots & 0      &      0 & \hdots & 0 & T^{a-1}\\
+ 0     & \hdots &       0 &      0 & \hdots & 0      &      0 & \hdots & 0 & 0 & T^{a}\\\
+ 0     & \hdots &       0 &      0 & \hdots & 0      &      0 & \hdots & 0 & \hdots & 0 & M\\
+\end{array}\right)
+\]
+where, for $1 \leq i \leq a-1$, $T^i$ represents a submatrix of $(q^b-1)/2$ rows and 
+$n+1 -b\cdot(i-1)$ columns (the $+1$ accounts for the $c_i$ column).
+According to our convention, $T^a$ is either a submatrix of $(q^{b-d}-1)/2$ rows and 
+$n+1 - b\cdot(a-1)$ columns if we split the last block (i.e. $d<b$), or an empty matrix.
+Finally $M$ represents a submatrix with $m$ rows and $d + 1$ columns. 
+The matrix $B$ has therefore at most $(a-1) \cdot ((q^b-1)/2) + ((q^{b-d}-1)/2) + m < \ncallsT + \ncallsM$ 
+rows and hence needs as many calls to $\Ldis$ to be constructed. This proves the second 
+claim.
+
+For the upper-bound on the number of additions necessary in $\Zq$, we have the following (we treat the worst case, where full construction of all $T$ tables is necessary before obtaining any samples from $\Bdis{a}$): The construction of $a$ $T$-tables is required, only $a-1$ (at most) of which require additions.
+\begin{enumerate}
+
+\item The construction of table $T^1$ requires $0$ ring additions.
+
+\item The construction of table $T^2$ requires at most $((q^{b}-1)/2)\cdot(n+1 - b)$ additions.
+
+\item The construction of table $T^3$ requires at most $((q^{b}-1)/2)\cdot ((n+1 - b) + (n+1 - 2b) )$ additions.
+
+\item In general, for $2<i < a$, the construction of table $T^i$ requires at most 
+\begin{eqnarray*}
+\left(\frac{q^b-1}{2}\right)\cdot \left( (i-1) \cdot (n+1) - \sum_{j=1}^{i-1}j\cdot b \right) 
+& = & \left(\frac{q^b-1}{2}\right)\cdot(i-1)\cdot \left((n+1) - \frac{i}{2}\cdot b \right).
+\end{eqnarray*}
+
+\item The construction of $T^a$ - the above expression is an upper bound for $i=a$.
+
+\item Thus, the construction of all the $T^i$ tables requires at most
+\begin{equation*}
+\left(\frac{q^b-1}{2}\right)\cdot   \sum_{j=2}^a \left((j-1) \cdot((n+1) -\frac{j}{2}\cdot b) \right) 
+ =  \left(\frac{q^b-1}{2}\right)\cdot \left(  \frac{a(a-1)}{2}\cdot (n+1)  - \sum_{k=1}^{a-1} \frac{k(k+1)}{2}\cdot b \right)
+\begin{comment}\\
+& = & \left(\frac{q^b-1}{2}\right)\cdot \left(  \frac{a(a-1)}{2}\cdot (n+1)  - \frac{ba(a-1)}{4}-\frac{b}{2}\left(\sum_{k=1}^{a-1}{k^2}\right) \right)\\
+\end{comment}
+\end{equation*}
+$$=\left(\frac{q^b-1}{2}\right)\cdot \left(  \frac{a(a-1)}{2}\cdot (n+1)  - \frac{ba(a-1)}{4}-\frac{b}{6}\left(
+(a-1)^3+\frac{3}{2}(a-1)^2+\frac{1}{2}(a-1)\right) \right)$$
+additions in $\Zq$.
+\item Now, for the construction of our $m$ final samples, the construction of each of these 
+samples requires at most
+\begin{eqnarray*}
+(n+1-b)+(n+ 1-2b)+\ldots+(n+1 -a\cdot b) & = & \sum_{i=1}^{a}{\left(n+1-ib\right)} \\
+& < & a\cdot \left( (n+1) - \frac{n}{2} \right)\\
+& = & \frac{a}{2}\cdot \left( n+2  \right)\\
+\end{eqnarray*}
+additions (in $\Zq$).
+
+\item Thus, the number of additions (in $\Zq$) incurred through calling $\Bdis{a}$ $m$ times is upper-bounded by:
+\begin{equation*}
+\naddssteponeexactT + \naddssteponeexactM
+\end{equation*}
+\end{enumerate}
+and this concludes the proof of the lemma.
+\qed
+\end{proof}
+
+The memory requirements for storing the tables $T^i$ are established in Lemma~\ref{lem:firststepmemory} below.
+
+\begin{lemma}
+\label{lem:firststepmemory}
+Let $n\ge 1$ be the dimension of the secret, $q$ be a positive integer, and $d,b \in \mathbb{Z}$ with $1 \le d \leq b \le n$, and define $a = \abn$. The memory required to store the table $T^i$ is upper bounded by 
+\begin{equation*}
+\nstore
+\end{equation*}
+$\Zq$ elements, each of which requires $\lceil\log_2(q)\rceil$ bits of storage.
+\end{lemma}
+
+\begin{proof}
+The table $T^1$ has $\frac{q^b}{2}$ entries each of which holds $n+1$ elements of $\Zq$. The table $T^2$ has the same number of entries but holds on $n+1-b$ elements of $\Zq$. Overall, we get that all tables together hold
+\begin{eqnarray*}
+\sum_{i=1}^{a} \left( \frac{q^b}{2} \right) \cdot \bigg(n+1 - (i-1)b\bigg) &=& \left( \frac{q^b}{2} \right) \sum_{i=1}^{a} n+1 - (i-1)b\\
+\begin{comment}
+ &=& \left( \frac{q^b}{2} \right) \cdot \left( a(n+1+b) - b\frac{(a+1)a}{2}\right)\\
+\end{comment}
+ &=& \left( \frac{q^b}{2} \right) \cdot a\cdot \left(n+1 - b\frac{a-1}{2}\right)\\
+\end{eqnarray*}
+$\Zq$ elements.\qed
+\end{proof}
+Note however that, while the original LWE oracle $\Ldis$ may output zero vectors (which offer no information for the hypothesis tests in the search variant) with probability $q^{-n}$, the oracle $\Bdis{a}$ may output such zero vectors with noticeable probability. In particular, calling $\Bdis{a}$ $m$ times does not guarantee that we get $m$ samples with non-zero coefficients in $\avec_i$. The  probability of obtaining a zero vector from $\Bdis{a}$ is $\frac{1}{q^d}$, and thus expect to have to call the oracle $\Bdis{a}$ around ${q^d}/{(q^d-1)} \cdot m$ times to obtain $\approx m$ useful samples with good probability.
+

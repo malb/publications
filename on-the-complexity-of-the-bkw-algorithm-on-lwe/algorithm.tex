@@ -1,0 +1,100 @@
+\section{The BKW Algorithm}
+\label{sec:bkw-algorithm}
+
+The BKW algorithm was proposed by Blum, Kalai and Wasserman~\cite{DBLP:journals/jacm/BlumKW03} as a method for solving the LPN problem, with sub-exponential complexity, requiring $2^{\bigO{n / \log n}}$ samples and time. The algorithm can be adapted for tackling Search- and Decision-LWE, with complexity $2^{\bigO{n}}$, when the modulus is taken to be polynomial in $n$. 
+
+To describe and analyse the BKW algorithm we use terminology and intuitions from linear algebra. Recall that noise-free linear systems of equations are solved by (a) transforming them into a triangular shape, (b) recovering a candidate solution in one variable for the univariate linear equation produced and (c) extending this solution by back substitution. Similarly, if we are only interested in \emph{deciding} whether a linear system of equations does have a common solution, the standard technique is to produce a triangular basis and express other rows as linear combinations of this basis, i.e., to attempt to reduce them to zero.
+
+The BKW algorithm -- when applied to Search-LWE -- can be viewed as consisting of three stages somewhat analogous to those of linear system solving: 
+\begin{description}
+ \item[(a) sample reduction] is a form of Gaussian elimination which, instead of treating each component independently, considers `blocks' of $b$ components per iteration, where $b$ is a parameter of the algorithm.
+ \item[(b) hypothesis testing] tests candidate sub-solutions to recover components of the secret vector {\bf s}.
+ \item[(c) back substitution] such that the whole process can be continued on a smaller LWE instance.
+\end{description}
+
+On a high-level, to aid intuition, if the standard deviation of $\chi$ was zero and hence all equations were noise-free, we could obviously recover $\svec$ by simple Gaussian elimination. When we have non-zero noise, however, the number of row-additions conducted during Gaussian elimination result in the noise being `amplified' to such levels that recovery of $\svec$ would generally be impossible. Thus the motivation behind the BKW algorithm can be thought of as using a greater number of rows but eliminating many variables with single additions of rows rather than just one. If we can perform a Gaussian elimination-like reduction of the sample matrix using few enough row additions, the resulting noise in the system is still `low enough' to allow us to recover one or a few components of $\svec$ at a time. While, mainly for convenience of analysis, we choose a nested-oracle approach below to define the algorithm, the above intuitive approach is essentially equivalent.
+
+The way we study the complexity of the BKW algorithm for solving the LWE problem is closely related to the method described in~\cite{FL06}: given an oracle that returns samples according to the probability distribution $\Ldis$, we use the algorithm's first stage to construct an oracle returning samples according to another distribution, which we call $\Bdis{a}$, where $a = \abn$ denotes the number of `levels' of addition. The complexity of the algorithm is related to the number of operations performed in this transformation, to obtain the required number of samples for hypothesis testing.
+
+We now study the complexity of the first stage of the BKW algorithm.
+
+\subsection{Sample Reduction}
+
+\input{step1.tex}
+
+
+\subsection{Hypothesis Testing}
+\label{sec:hypothesis}
+\input{approach1}
+
+\subsection{Back Substitution}
+\label{sec:backsubstitution}
+
+Given a candidate solution for $\solvec$ which is correct with very high probability we can perform backsubstitution in our tables $T^i$ similarly to solving a triangular linear system. It is easy to see that backsubstitution costs $2d$ operations per row. Furthermore, by Lemma~\ref{lem:firststep} we have $a \cdot( \lceil q^b/2\rceil )$ rows in all tables $T^i$.
+
+After backsubstitution, we start the BKW algorithm again in stage one where all the tables $T^i$ are already filled. To recover the next $d$ components of $\svec$ then, we ask for $m$ fresh samples which are reduced using our modified tables $T^i$ and perform hypothesis testing on these $m$ samples.
+
+\subsection{Complexity of BKW}\label{subsection:complexity_search}
+
+We can now state our main theorem.
+\begin{theorem}[Search-LWE]\label{theorem:complexity1}
+Let $(\avec_i,c_i)$ be samples following $\Ldis$, $0 < b \leq n$, $d \leq b$ parameters, $0 < \PrS < 1$ the targeted success rate and $q$ prime. Let $a = \abn$ and $m$ be as in Lemma~\ref{lem:m} when $\PrS' = \left(\PrS\right)^{1/\lceil n/d\rceil}$. Then, the expected cost of the BKW algorithm to recover $\svec$ with success probability $\PrS$ is
+\begin{equation}\label{eq:theorem:complexity1:tables}\naddssteponeexactT\end{equation}
+additions/subtractions in $\Zq$ to produce the elimination tables,
+\begin{equation}\label{eq:theorem:complexity1:samples}\nonzerocorr \cdot \frac{\gnd +1}{2} \cdot \naddssteponeexactM\end{equation}
+additions/subtractions in $\Zq$ to produce samples for hypothesis testing.
+For the hypothesis-testing step 
+\begin{equation}\label{eq:theorem:complexity1:hypothesis}\gnd \cdot  \left(\naddssteptwo \right)\end{equation}
+arithmetic operations in $\Zq$ are required and 
+\begin{equation}\label{eq:theorem:complexity1:backsubstitution}\left(\gnd +1\right) \cdot d \cdot a \cdot \left\lceil\frac{q^b}{2}\right\rceil\end{equation}
+operations in $\Zq$ for backsubstitution.
+Furthermore,
+\begin{equation}\label{eq:theorem:complexity1:calls}\ncallsT + \nonzerocorr \cdot \gnd \cdot \ncallsM \end{equation}
+calls to $\Ldis$ and storage for
+\begin{equation}\label{eq:theorem:complexity1:store}\nstore\end{equation}
+elements in $\Zq$ are needed.
+\end{theorem}
+
+\begin{proof}
+In order to recover $\svec$ we need every run of stage 1 to be successful, hence we have $\PrS = \left(\PrS'\right)^{\lceil n/d\rceil}$ and consequently $\PrS' = \left(\PrS\right)^{1/\lceil n/d\rceil}$.
+
+Furthermore, we have:
+\begin{itemize}
+ \item The cost of constructing the tables $T^i$ in Equation~(\ref{eq:theorem:complexity1:tables}) follows from Lemma~\ref{lem:firststep}. 
+ \item Lemma~\ref{lem:firststep} and the fact that with probability $\frac{1}{q^d}$ the oracle $\Bdis{a}$ returns an all-zero sample establish that to produce $m$ non-zero samples for hypothesis testing, $\nonzerocorr \cdot \naddssteponeexactM$ operations are necessary. We need to produce $m$ such samples $\gnd$ times. However, as we proceed the number of required operations linearly approaches zero. Hence, we need $\frac{\gnd+1}{2} \cdot \nonzerocorr \cdot \naddssteponeexactM$ operations as in Equation~(\ref{eq:theorem:complexity1:samples}).
+ \item The cost of Algorithm~\ref{alg:counterupdate} in Equation~(\ref{eq:theorem:complexity1:hypothesis}) which also is run $\gnd$ times  follows from Lemma~\ref{lem:counterupdate}.
+ \item There are $a \cdot \left\lceil\frac{q^b}{2}\right\rceil$ rows in all tables $T^i$ each of which requires $2d$ operations in backsubstitution. We need to run backsubstitution $\gnd$ times, but each time the cost decreases linearly. From this follows Equation~(\ref{eq:theorem:complexity1:backsubstitution}).
+ \item The number of samples needed in Equation~(\ref{eq:theorem:complexity1:calls}) follows from Lemma~\ref{lem:firststep} and that with probability $\frac{1}{q^d -1}$ the oracle $\Bdis{a}$ returns a sample which is useless to us.\qed
+ \item The storage requirement in Equation~(\ref{eq:theorem:complexity1:store}) follows from Lemma~\ref{lem:firststepmemory}.
+\end{itemize}
+\end{proof}
+
+We would like to express the complexity of the BKW algorithm as a function of $n,q,\alpha$ explicitly. In that regard, Theorem~\ref{theorem:complexity1} does not deliver yet. However, from the fact that we can distinguish $\chi_a$ and $\U_a$ in subexponential time if the standard deviation $\sqrt{2^a}\alpha q < q/2$ (i.e, the standard deviation of the discrete Gaussian distribution over $\Z$ corresponding to $\chi_a$), we can derive the following simple corollary eliminating $m$.
+\begin{corollary}\label{cor:complexity1}
+\informaltheorem
+\end{corollary}
+
+\begin{proof}
+From the condition $\sqrt{2^a} \cdot \alpha \cdot q  < q/2$ follows that we must set $a = \log_2(1/(2\alpha)^2)$. If $a$ is set this way we have that we can distinguish $\chi_a$ from $\U(\Zq)$ in $\poly$. Now, since $q^b$ is superpoynomial in $n$ we have that  $m \leq q^b$ and Theorem~\ref{theorem:complexity1} is dominated by terms involving $q^b$. \qed
+\end{proof}
+
+In many cryptographic applications solving the Decision-LWE problem is equivalent to breaking the cryptographic assumption. Furthermore, in many such constructions $q$ may not be a prime. Hence, we also establish the cost of distinguishing $\Ldis$ from random with a given success probability for arbitrary moduli $q$.
+\begin{corollary}[Decision-LWE]\label{cor:distinguish}
+Let $(\avec_i,c_i)$ be samples following $\Ldis$, $0 < b \leq n$ be a parameter, $0 < \PrS < 1$ the targeted success rate and $a = \abn$ the addition depth. Then, the expected cost of the BKW algorithm to distinguish $\Ldis$ from random with success probability $\PrS$ is
+\begin{equation}\naddssteponeexactT\end{equation}
+additions/subtractions in $\Zq$ to produce elimination tables,
+\begin{equation}\naddssteponeexactM \textnormal{ with } m = \PrS/\exp\left(-\frac{\pi^{2} \sigma^{2} 2^{{a + 1}}}{q^{2}}\right)\end{equation}
+additions/subtractions in $\Zq$ to produce samples. Furthermore,
+\begin{equation}\ncallsT + \ncallsM \end{equation}
+calls to $\Ldis$ and storage for
+\begin{equation}\nstore\end{equation}
+elements in $\Zq$ are needed.
+\end{corollary}
+
+\begin{proof}
+No hypothesis testing, backsubstitution and accounting for all zero samples is necessary and hence any terms referring to those can be dropped from Theorem~\ref{theorem:complexity1}.
+
+Choosing $m = \exp\left(-\frac{\pi^{2} \sigma^{2} 2^{{a + 1}}}{q^{2}}\right)/\PrS$ leads to a distinguishing advantage of $\PrS$ (cf.\ \cite{LindnerP10}). \qed
+\end{proof}
+
+

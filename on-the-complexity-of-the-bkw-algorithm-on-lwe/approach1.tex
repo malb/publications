@@ -1,0 +1,187 @@
+To give concrete estimates for the time and data complexity of solving a Search-LWE instance using BKW, we formulate the problem of solving an LWE instance as the problem of distinguishing between two different distributions. Assume we have $m$ samples  in $\Zq^d \times \Zq$ from $\Bdis{a}$. It follows that we have $\Zq^d$ hypotheses to test. In what follows, we examine each hypothesis in turn and derive a hypothesised set of noise values as a result (each one corresponding to one of the $m$ samples). We show that if we have guessed incorrectly for the subvector $\solvec$ of $\svec$ then the distribution of these hypothesised noise elements will be (almost) uniform while if we guess correctly then these hypothesised noise elements will be distributed according to $\chi_{a}$.  That is, if we have that the noise distribution associated with samples from $\Ldis$ is $\chi = \chi_{\alpha,q}$, then it follows from  Lemmas~\ref{lem:noisedist} and \ref{lem:firststep} that the noise distribution of samples obtained from $\Bdis{\ell}$ follows 
+$\chi_{\sqrt{2^{\ell}}\alpha,q}$ if all inputs are independent, i.e., we are adding $2^\ell$ discrete Gaussians and produce a discrete Gaussian with standard deviation increased by a factor of $\sqrt{2^\ell}$. For the sake of simplicity, we denote this distribution by $\chi_\ell$ in the remainder of this work and also assume that the oracle $\Bdis{a}$ performs non-trivial operations on the output of $\Bdis{a-1}$, i.e., the oracle $\Bdis{a}$ performs a further reduction step. In other words we assume that the final oracle $\Bdis{a}$ results in a further increase in the standard deviation of the noise distribution associated with the final samples which are used to test hypotheses for elements of $\svec$. We hence make the following assumption in this section:
+
+\begin{assumption}
+If we let $\solvec := \svec_{(n-d,n)} = (\svec_{(n-d)},\ldots,\svec_{(n-1)})$, then the output of ${\Bdis{a}}$  is generated as $$\avec \sample \Zq^d, e \sample \chi_{a}: (\avec,\dotp{\avec}{\solvec} + e).$$
+\end{assumption}
+
+\begin{remark}
+This section only refers to the Search-LWE problem in which we assume $q$ is prime for ease of analysis and exposition. This restriction does not apply to our results below on the decision variant.
+\end{remark}
+
+For our hypothesis-testing strategies, we think of each of the samples returned by $\Bdis{a}$ as giving rise to many equations $$f_i =- c_i \pm j + \sum_{k=0}^{d-1} (\avec_i)_{(k)} x_{(k)}  \textnormal{ for } 0 \leq j < q/2.$$ Given a number of these samples, in order to get an estimate for $\solvec$, we run through $q^d$ hypotheses and compute an array of scores $S$ indexed by the possible guesses in $\Zq^d$. That is, a function $W$ assigns a weight to elements in $\Zq$ which represent the noise under the hypothesis $\svec' = \vvec$. For each guess $\vvec$ we sum over the weighted noises $W(-c_i + \sum_{k=0}^{d-1}(\avec_i)_{(k)}\cdot v_{(k)})$. If $W$ is such that the counter $S_\vvec$ grows proportionally to the likelihood that $\vvec$ is the correct guess, then the counter  $S_{\solvec}$ will grow fastest. Pseudo-code is given in Algorithm~\ref{alg:counterupdate}.
+
+\begin{algorithm}[H]
+\label{alg:counterupdate}
+\KwIn{$F$ -- a set of $m$ samples following $\Bdis{a}$}
+\KwIn{$W$ -- a weight function mapping members of $\Zq$ to real numbers}
+\SetKw{KwAnd}{and}
+\SetKw{KwOr}{or}
+\Begin{
+$S \gets$ array filled with zeros indexed by $\Zq^d$\;
+\For{$\vvec \in \Zq^d$}{
+  $w_\vvec \gets \emptyset$\;
+  \For{$f_i \in F$}{
+    write $f_i$ as $-c_i + \sum_{k=0}^{d-1} (\avec_i)_{(k)}\cdot x_{(k)}$\;
+    $j \gets \dotp{\avec_i}{\vvec} - c_i$\;
+    $w_{\vvec} \gets w_\vvec \cup \{ W(j)\}$\;
+  }
+  $S_\vvec \gets \sum_{w_i \in w_\vvec} w_i/m$\; 
+  }
+\Return{$S$}
+}
+\caption{Analysing candidates.}
+\end{algorithm}
+
+
+\begin{lemma}
+\label{lem:counterupdate}
+Running hypothesis testing costs $\naddssteptwo$ operations in $\Zq$.
+\end{lemma}
+
+\begin{proof}
+Evaluating $\dotp{\avec_i}{\vvec} - c_i$ at some point in $\Zq^d$ naively costs $2d$ operations in $\Zq$ which implies an overall cost of $2d\cdot m\cdot q^d$. However, we can reorder the elements in $\Zq^d$ such that the element at index $h$ differs from the element at index $h+1$ by an addition of a unit vector in $\Zq^d$. Evaluating $\dotp{\avec_i}{\vvec} - c_i$ on all $\Zq^d$ points ordered in such a way reduces to one operation in $\Zq$:  addition of $\avec_{i,(j)}$ where $j$ is the index at which two consecutive elements differ. Hence, Algorithm~\ref{alg:counterupdate} costs $\naddssteptwo$ operations in $\Zq$. \qed
+\end{proof}
+
+
+Recall that $\chi_{a}$ is the distribution of the errors under a right guess. Now, let $\U_{a}$ denote the distribution of errors under a wrong guess $\vvec \neq \solvec$.
+By the Neyman-Pearson Lemma, the most powerful test of whether samples follow one of two known distributions is the log-likelihood ratio.
+
+Hence, for $j$, with $\lowerbound \leq j \leq \upperbound$,  we set: 
+\begin{equation}
+W(j) := \log_2\left(\frac{\Pr[ e \sample \chi_{a} : e = j]}{\Pr[e \sample \U_{a} : e = j]}\right). 
+\end{equation}
+Next, we establish the relation between $\tilde{p}_j := \Pr[e \sample \U_{a} : e = j]$ and $p_j:=\Pr[ e \sample \chi_{a} : e = j]$.
+
+\begin{lemma}\label{lem:tildepj}
+Given a wrong guess $\vvec$ for $\solvec$, for each element $f_{i} = -c_i + \sum_{k=0}^{d-1} (\avec_i)_{(k)} x_{(k)} \in \Zq[x]$, with $c_i = \dotp{\avec_i}{\solvec} - e_i$, the probability of error $j$ appearing is
+\begin{equation}
+\tilde{p}_j := \Pr[e \sample \U_{a} : e = j] = \frac{q^{d-1}-p_j}{q^d-1}
+\end{equation}
+if $q$ is prime.
+\end{lemma}
+\begin{proof}
+We write $\vvec=\solvec+\tvec$. Since $\vvec$ is a wrong guess, we must have $\tvec\neq\mathbf{0}$.
+For a fixed $\solvec$ and for $\avec_i, \tvec\neq\mathbf{0}$, it holds that:
+\begin{eqnarray*}
+\tilde{p}_j & = & \Pr[e \sample \U_{a} : e = j]=\Pr[\dotp{\avec_i}{\vvec}-c_i=j]=\Pr[\dotp{\avec_i}{\tvec}-e_i=j]\\
+& = & \sum_{y=\lceil -q/2\rceil}^{\lfloor q/2\rfloor}{\left(\Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}=y}]\cdot\Pr[j+e_i=y]\right)}.
+\end{eqnarray*}
+This is equal to:
+\begin{eqnarray*}
+& \mathlarger{\sum_{y=\lowerbound}^{y=-1}}   & {\left(\Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}=y}]\cdot\Pr[j+e_i=y]\right)}\\
++ &  \mathlarger{\sum_{y=1}^{y=\upperbound}} & {\left(\Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}=y}]\cdot\Pr[j+e_i=y]\right)}\\
++ & & \Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}=0}]\cdot\Pr[e_i=-j].
+\end{eqnarray*}
+Now, since our $q$ is prime, for any two non-zero elements $y,z\in\Zq$, we have that:
+\begin{equation*}
+\Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}}=y]=\Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}}=z].
+\end{equation*}
+We denote this probability by $p_{(\neq 0)}$. Conversely, we denote the probability of obtaining 
+$\langle\avec_i,\tvec\rangle=0$ by $p_{(=0)}$. Then we clearly have $p_{(\neq 0)}=\frac{1-p_{(=0)}}{q-1}$.
+Thus we can write:
+\begin{eqnarray*}
+\tilde{p}_j & = & \left(p_{(\neq 0)}\sum_{y=\lceil -q/2\rceil}^{y=-1}{\Pr[j+e_i=y]}\right) + \left(p_{(\neq 0)}\sum_{y=\lceil -q/2\rceil}^{y=-1}{\Pr[j+e_i=y]}\right)\\
+& + &\Pr[\sum_{k=0}^{d-1}{{\avec_i}_{(k)}\tvec_{(k)}=0}]\cdot\Pr[e_i=-j].
+\end{eqnarray*}
+Note that $$
+1- p_{-j}=\Pr[e_i \sample \chi_{a} : e_i \not = -j]= \sum_{y=\lceil -q/2\rceil}^{y=-1}{\Pr[j+e_i=y]}+\sum_{y=1}^{\lfloor q/2\rfloor}{\Pr[j+e_i=y]}.
+$$ 
+By definition, $p_{-j}=p_j$. Thus:
+\begin{equation*}
+\tilde{p}_j=p_{(\neq 0)}\cdot(1-p_{j})+p_{(=0)}\cdot p_j.
+\end{equation*}
+Now, to determine $p_{(=0)}$, the exclusion of zero-vectors from the set of all possible dot products reduces the number of zero dot products from 
+$q^d+q^{2d-1}-q^{d-1}$ to $q^{2d-1}-q^{d-1}-q^d+1$. Thus we have that the probability of 
+obtaining a zero dot product is:
+$$p_{(=0)}=\frac{q^{2d-1}-q^{d-1}-q^d+1}{q^{2d}-2q^d+1}=\frac{q^{d-1}-1}{q^d-1}.$$
+Thus, we have:
+$$\tilde{p}_j=(1-p_j)\cdot{\frac{q^{d-1}}{q^d-1}}+p_j\cdot\frac{q^{d-1}-1}{q^d-1}=\frac{q^{d-1}-p_j}{q^d-1}$$
+as required. \qed
+\end{proof}
+
+For the final backsubstitution stage, we wish to ensure that the score for the correct guess $\vvec=\solvec$ is highest among the entries of $S$. Thus, what remains to be established is the size $m = \abs{F}$ needed such that the score for the right guess $\vvec = \solvec$ is the highest. Under our sample independence assumptions, by the Central Limit theorem, the distribution of $S_\vvec$ approaches a Normal distribution as $m$ increases. Hence, for sufficiently large $m$ we may approximate the discrete distribution $S_\vvec$ by a normal distribution \cite{baigneres-junod-vaudenay:asiacrypt2004}. 
+If $\N{\mu,\sigma^2}$ denotes a Normal distribution with mean $\mu$ and standard deviation $\sigma$ we denote the distribution for $\vvec = \solvec$ by $D_c = \N{\E_c,\Var_c}$ and for $\vvec \neq \solvec$ by $D_w = \N{\E_w,\Var_w}$. 
+
+Establishing $m$ hence first of all means establishing $\E_c,\E_w,\Var_c$ and $\Var_w$. We start with $\E_c$.
+\begin{lemma}\label{lem:ec}
+Let $(\avec_0,c_0),\ldots,(\avec_{m-1},c_{m-1})$ be samples following $\Bdis{a}$, $q$ be a positive integer, $\vvec \in \Zq^d$,  $p_j := \Pr(e \sample \chi_{a} : e = j)$, $w_j := W(j)$ and $S_\vvec = \frac{1}{m}\sum_{i=0}^{m-1}{W(\langle  \avec_i,\vvec\rangle -c_i)}$.
+When $\vvec=\solvec$, $\E(S_\vvec)$ is given by:
+\begin{equation}
+\E_c=\E(S_\vvec \mid \vvec = \solvec)=\sum_{j=\lowerbound}^{\upperbound}{p_jw_j}= p_0w_0 + 2\cdot\sum_{j=1}^{j=\upperbound}{p_jw_j}.
+\end{equation}
+\end{lemma}
+\begin{proof}
+First, we remark that:
+\begin{eqnarray*}
+\Pr[\dotp{\avec_i}{\solvec} = c_i + u] & = & \Pr[\dotp{\avec_i}{\solvec} = \dotp{\avec_i}{\solvec} + e_i +u] =  \Pr[-e_{i} = u] =  p_u.\\
+\end{eqnarray*}
+The expected value for $S_\vvec$ in the case of a correct guess is then given by:
+\begin{eqnarray*}
+\E_c := \E(S_{\vvec} \mid \vvec = \solvec) & = & 
+\sum_{j=\lowerbound}^{\upperbound}{\Pr[e_i=j]\cdot W(j)} =  \sum_{j=\lowerbound}^{\upperbound}{p_j w_j}.
+\end{eqnarray*}
+Finally, for all $j,1\leq j\leq \upperbound$, we have $p_{-j}w_{-j}=p_{j}w_{j}$. Thus: 
+$$
+\sum_{j=\lowerbound}^{\upperbound}{p_j w_j}=p_0w_0 + 2\cdot\sum_{j=1}^{j=\upperbound}{p_jw_j}.
+$$
+\qed
+\end{proof}
+We now examine $\E_w=\E(S_{\vvec}\mid \vvec\neq \solvec)$. To begin with, we fix a wrong guess $\vvec$, such that $\vvec = \solvec + \tvec $ with $\tvec \neq 0$.
+\begin{lemma}\label{lem:ew}
+Let $(\avec_0,c_0),\ldots,(\avec_{m-1},c_{m-1})$  be samples following $\Bdis{a}$, $q$ be a positive integer, $\vvec \in \Zq^d$,  $\tilde{p}_j := \Pr(e \sample \U_{a} : e = j)$, ${p}_j := \Pr(e \sample {\chi}_{a} : e = j)$, $w_j := W(j)$, and $S_\vvec = \frac{1}{m}\sum_{i=0}^{m-1}{W(\langle \avec_i,\vvec \rangle -c_i)}$. If $\vvec\neq \solvec$, we have:
+\begin{equation}
+\E_w = \E(S_{\vvec}\mid \vvec\neq \solvec) = \sum_{j=\lowerbound}^{\upperbound}{\tilde{p}_jw_j} = 
+\sum_{j=\lowerbound}^{\upperbound}{\frac{q^{d-1}-p_j}{q^d-1}w_j}.
+\end{equation}
+\end{lemma}
+Since the proof of Lemma~\ref{lem:ew} is analogous to Lemma~\ref{lem:ec} we omit it here. We now look at the variances $\Var_c$ and $\Var_w$.
+
+\def\Varc{\frac{1}{m} \sum_{j=\lowerbound}^{\upperbound} p_j \cdot (w_j - \E_c)^2}
+\def\Varw{\frac{1}{m} \sum_{j=\lowerbound}^{\upperbound} \tilde{p}_j \cdot (w_j - \E_w)^2}
+
+\begin{lemma}\label{lem:var}
+Let $(\avec_0,c_0),\ldots,(\avec_{m-1},c_{m-1})$ be samples following $\Bdis{a}$, $q$ be a positive integer, $\vvec \in \Zq^d$, $p_j := \Pr(e \sample \chi_{a} : e = j)$, $\tilde{p}_j := \Pr(e \sample \U_{a} : e = j)$, $w_j := W(j)$ and $S_\vvec = \sum_{i=0}^{m-1}\frac{1}{m} W(\dotp{\avec_i}{\vvec} - c_i)$.
+
+If $\vvec=\solvec$, then \begin{equation}\Var_c:=\Var(S_\vvec \mid \vvec = \solvec)= \Varc.\end{equation}
+
+If $\vvec\neq\solvec$, then \begin{equation}\Var_w:=\Var(S_\vvec \mid \vvec \neq \solvec)= \Varw.\end{equation}
+\end{lemma}
+
+\begin{proof}
+In the case of $\vvec=\solvec$ we have that for $m=1$, $$\Var_c = \sum_{j=\lowerbound}^{\upperbound}{p_{j}\cdot{}\big(w_j-\E_c\big)^2}.$$ In the case of adding then normalising $m$ samples we can use the fact that when adding random variables of zero covariance, the sum of the variances is the variance of the sum. 
+Thus the variance in the case of adding $m$ samples and normalising is given by:
+$$\Var_c = m\cdot\sum_{j=\lowerbound}^{\upperbound}{p_{j}\cdot{}\left(\frac{w_{j}}{m}-\frac{\E_c}{m}\right)^2}=\Varc$$
+A similar argument holds in the case of $\Var_w$.\qed
+\end{proof}
+
+Finally, given $\E_c$, $\E_w$, $\Var_c$, and $\Var_w$, we can estimate the rank of the right secret in dependence of the number of samples $m$ considered. We denote by $Y_h$ the random variable determined by the rank of a correct score $S_\solvec$ in a list of $h$ elements. Now, for a list of length $q^d$ and a given rank $0 \leq r < q^d$, the probability of $Y_{q^d}$ taking rank $r$ is given by a binomial-normal compound distribution. Finally, we get Lemma~\ref{lem:m}, which essentially states that for whatever score the right secret gets, in order for it to have rank zero the remaining $q^d-1$ secrets must have smaller scores.
+
+\begin{lemma}\label{lem:m}
+Let $\E_c$, $\E_w$, $\Var_c$ and $\Var_w$ be as in Lemmas \ref{lem:ec}, \ref{lem:ew} and \ref{lem:var}. Let also $Y_{q^d}$ be the random variable determined by the rank of a correct score $S_\solvec$ in the list $S$ of $q^d$ elements. Then, the number of samples $m$ required for $Y_{q^d}$ to take rank zero with probability $\PrS'$ is recovered by solving
+\begin{eqnarray*}
+\PrS'&=&\int_{x}{\left[\frac{1}{2}\left(1+\erf\left(\frac{x-\E_w}{\sqrt{2\Var_w}}\right)\right)\right]^{(q^d-1)} \cdot \left( \frac{1}{\sqrt{2\pi \Var_c}}e^{-\frac{(x-\E_c)^2}{2\Var_c}} \right)}\ \mathrm{d}x,
+\end{eqnarray*}
+for $m$.
+\end{lemma}
+
+\begin{proof}
+$Y_{q^d}$ follows a binomial-normal compound distribution given by $\Pr[Y_{q^d}=r] =$
+\begin{equation*}
+\int_{x}{\left(\binom{q^d-1}{r}\cdot \Pr[e \sample D_w: e \geq x]^{r} \cdot \Pr[e \sample D_w: e < x]^{(q^d-r-1)} \cdot \Pr[e \sample D_c: e = x]\right)}\ 
+\mathrm{d}x.
+\end{equation*}
+Plugging in $r=0$ and $\Pr[Y_{q^d}=r] = \PrS'$ we get:
+\begin{eqnarray*}
+\PrS' 
+  &=& \int_{x}{\Pr[e \sample D_w: e < x]^{(q^d-1)} \cdot \Pr[e \sample D_c: e = x]}\ \mathrm{d}x\\
+  &=&\int_{x}{\left[\frac{1}{2}\left(1+\erf\left(\frac{x-\E_w}{\sqrt{2\Var_w}}\right)\right)\right]^{(q^d-1)} \cdot \left( \frac{1}{\sqrt{2\pi \Var_c}}e^{-\frac{(x-\E_c)^2}{2\Var_c}} \right)}\ \mathrm{d}x
+\end{eqnarray*}
+as required. \qed
+\end{proof}
+
+Using Lemma~\ref{lem:m} we can hence estimate the number of non-zero samples $m$ we need to recover subvector $\solvec$.
+
+\begin{remark}
+We note that Algorithm~\ref{alg:counterupdate} not only returns an ordering of the hypotheses but also a score for each hypothesis. Hence, we can simply sample from $\Bdis{a}$ until the distance between the first and second highest rated hypothesis is above a certain threshold. 
+\end{remark}
