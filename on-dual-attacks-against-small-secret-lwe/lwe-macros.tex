@@ -1,0 +1,86 @@
+% general math
+
+\newcommand{\ZZ}[1][blank]{\ensuremath{
+    \ifthenelse{\equal{#1}{blank}}
+    {\mathbb{Z}}
+    {\mathbb{Z}\left[#1\right]}}\xspace}
+\newcommand{\QQ}[1][blank]{\ensuremath{
+	\ifthenelse{\equal{#1}{blank}}
+	{\mathbb{Q}}
+	{\mathbb{Q}\left[#1\right]}}\xspace}
+\newcommand{\ZZq}[1][blank]{\ensuremath{
+	\ifthenelse{\equal{#1}{blank}}
+	{\mathbb{Z}_q}
+	{\mathbb{Z}_q\left[#1\right]}}\xspace}
+
+
+  \newcommand{\mat}[1]{\ensuremath{\mathbf{#1}}\xspace}
+  \newcommand{\omat}[1]{\ensuremath{\overline{\mat{#1}}}\xspace}
+\renewcommand{\vec}[1]{\ensuremath{\mathbf{#1}}\xspace}
+  \newcommand{\ovec}[1]{\ensuremath{\overline{\vec{#1}}}\xspace}
+  \newcommand{\vecnorm}[1]{\ensuremath{\left\|{#1}\right\|}\xspace}
+  \newcommand{\ip}[2]{\ensuremath{\left\langle {#1},{#2}\right\rangle}\xspace}
+  \newcommand{\round}[1]{\ensuremath{\left\lfloor{#1}\right\rceil}\xspace}
+  \newcommand{\shortvec}[1]{\tilde{\mathbf{#1}}\xspace}  
+
+% lattices  
+  
+  \newcommand{\vol}[1]{\ensuremath{\textnormal{vol}\left(#1\right)}\xspace}
+  \newcommand{\optm}{\ensuremath{\sqrt{\frac{n \log{q}}{\log{δ_0}}}}\xspace}
+  
+  
+% complexity
+
+\renewcommand{\O}[1]{\ensuremath{{\mathcal{O}\left(#1\right)}}\xspace}
+  \newcommand{\softO}[1]{\ensuremath{{\tilde{\mathcal{O}}\left(#1\right)}}\xspace}
+  \newcommand{\poly}{\ensuremath{{{\rm poly}(n)}}\xspace}
+\def\sample{\ensuremath{\gets_{\$}}}
+
+% distributions
+
+\newcommand{\E}[1]{\ensuremath{\textnormal{E}[{#1}]}\xspace}
+\DeclareMathOperator{\erf}{erf}
+
+\newcommand{\D}[2][\ZZ]{\ensuremath{\mathcal{D}_{{#1},{#2}}}\xspace}
+\newcommand{\U}[1]{\ensuremath{\mathcal{U}\left({#1}\right)}\xspace}
+\newcommand{\B}[2][]{\ensuremath{\mathcal{B}_{#1}^{#2}}\xspace}
+\newcommand{\Ldis}[1][q]{\ensuremath{L_{\s,\chi,{#1}}}\xspace}
+\newcommand{\Id}[1][n]{\ensuremath{\mat{I}_{#1}}\xspace}
+\newcommand{\Ze}[1][n \times n]{\ensuremath{\mat{0}_{#1}}\xspace}
+
+% lwe
+
+\newcommand{\aq}{\ensuremath{αq}\xspace}
+\newcommand{\pq}{\ensuremath{\frac{p}{q}}\xspace}
+
+\newcommand{\DecisionLWE}{\textnormal{Decision-LWE}\xspace}
+\newcommand{\SearchLWE}{\textnormal{Search-LWE}\xspace}
+
+
+\newcommand{\vecvec}[2]{{\ifthenelse{\equal{#2}{blank}}
+                          {\ensuremath{\vec{#1}}}
+                          {\ensuremath{\vec{#1}_{\left({#2}\right)}}}\xspace}}
+
+\renewcommand{\a}[1][blank]{\vecvec{a}{#1}}
+\renewcommand{\b}[1][blank]{\vecvec{b}{#1}}
+\renewcommand{\c}[1][blank]{\vecvec{c}{#1}}
+  \newcommand{\e}[1][blank]{\vecvec{e}{#1}}
+  \newcommand{\s}[1][blank]{\vecvec{s}{#1}}
+\renewcommand{\v}[1][blank]{\vecvec{v}{#1}}
+  \newcommand{\w}[1][blank]{\vecvec{w}{#1}}
+  \newcommand{\A}[1][blank]{\ifthenelse{\equal{#1}{blank}}
+                                {\ensuremath{\mat{A}}}
+                                {\ensuremath{\mat{A}_{#1}}}\xspace}
+ 
+\newcommand{\Q}[1][⋅]{\ensuremath{\mathcal{Q}_{\s}\left( {#1} \right)}\xspace}
+ 
+% misc
+  
+  \newcommand{\fe}{\ensuremath{f(\epsilon)}\xspace}
+  \newcommand{\mprime}{\ensuremath{\sqrt{\frac{n(\log{q}-\log{\sigma})}{\log{\delta}}}}\xspace}
+  \newcommand{\lambdaonebaigal}{\ensuremath{\sqrt{2\,m+n} \cdot \sigma}\xspace}
+  \newcommand{\lambdatwobaigal}{\ensuremath{\left(q^m (\xi\sigma)^n\right)^{1/(m+n)} \sqrt{\frac{m+n}{2 \pi e}}}\xspace}
+  \newcommand{\splodge}{\ensuremath{\tau \sqrt{4 \pi e}}\xspace}
+\newcommand{\myqed}{\ensuremath{\qed}\xspace}
+
+
